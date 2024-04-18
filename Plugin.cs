@@ -12,7 +12,8 @@ namespace KindredVignettes;
 [Bloodstone.API.Reloadable]
 public class Plugin : BasePlugin
 {
-    Harmony _harmony;
+    static Harmony _harmony;
+    public static Harmony Harmony => _harmony;
     internal static ManualLogSource PluginLog;
 
     public override void Load()

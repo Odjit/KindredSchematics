@@ -3191,6 +3191,7 @@ namespace KindredVignettes.Data;
             { "TM_WorldChest_Simple_SludgePools_01_Empty", new(866003444) },
             { "TM_WorldChest_Simple_SludgePools_01_Full", new(-1203166929) },
         });
-            public static Dictionary<int, string> NameFromPrefab = Named.ToDictionary(x => x.Value.GuidHash, x => x.Key);
-
+    
+    public static Dictionary<int, string> NameFromPrefab = Named.ToDictionary(x => x.Value.GuidHash, x => x.Key);
+    public static Dictionary<string, PrefabGUID> LowerCaseNameToPrefab = Named.ToDictionary(x => x.Key.ToLower(), x => x.Value);
 }

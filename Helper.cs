@@ -10,6 +10,8 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using VampireCommandFramework;
 using System.Collections.Generic;
+using UnityEngine;
+using ProjectM.Tiles;
 
 namespace KindredVignettes;
 
@@ -212,5 +214,75 @@ internal static partial class Helper
         {
 			Buffs.RemoveBuff(player, Prefabs.EquipBuff_ShroudOfTheForest);
         }
+    }
+
+	public static IEnumerable<Entity> GetAllEntitiesInRadius<T>(float2 center, float radius)
+	{
+        var entities = GetEntitiesByComponentType<T>(includeSpawn: true, includeDisabled: true);
+        foreach (var entity in entities)
+		{
+            if (!entity.Has<Translation>()) continue;
+            var pos = entity.Read<Translation>().Value;
+            if (Vector2.Distance(center, pos.xz) <= radius)
+			{
+                yield return entity;
+            }
+        }
+    }
+
+	public static IEnumerable<Entity> GetAllEntitiesInBox<T>(float2 center, float2 halfSize)
+	{
+        var entities = GetEntitiesByComponentType<T>(includeSpawn: true, includeDisabled: true);
+        foreach (var entity in entities)
+		{
+            if (!entity.Has<Translation>()) continue;
+            var pos = entity.Read<Translation>().Value;
+            if (Mathf.Abs(center.x - pos.x) <= halfSize.x && Mathf.Abs(center.y - pos.z) <= halfSize.y)
+			{
+                yield return entity;
+            }
+        }
+    }
+
+	public static void DestroyEntitiesForBuilding(IEnumerable<Entity> entities)
+	{
+		foreach (var entity in entities)
+		{
+            var prefabName = GetPrefabGUID(entity).LookupName();
+            if (!prefabName.StartsWith("TM_") && !prefabName.StartsWith("Chain_")) continue;
+
+            if (entity.Has<SpawnChainChild>())
+                entity.Remove<SpawnChainChild>();
+
+            if (entity.Has<DropTableBuffer>())
+                entity.Remove<DropTableBuffer>();
+
+            DestroyUtility.Destroy(Core.EntityManager, entity);
+        }
+	}
+
+	public static Entity FindClosest<T>(Vector3 pos, string startsWith = null)
+	{
+        var closestEntity = Entity.Null;
+        var closestDistance = float.MaxValue;
+        var entities = GetEntitiesByComponentType<T>(includeSpawn: true, includeDisabled: true);
+        foreach (var entity in entities)
+		{
+            if (!entity.Has<Translation>()) continue;
+			if (startsWith != null)
+			{
+				var prefabName = GetPrefabGUID(entity).LookupName();
+				if (!prefabName.StartsWith(startsWith)) continue;
+			}
+
+            var entityPos = entity.Read<Translation>().Value;
+            var distance = Vector3.Distance(pos, entityPos);
+            if (distance < closestDistance)
+			{
+                closestDistance = distance;
+                closestEntity = entity;
+            }
+        }
+        return closestEntity;
     }
 }
