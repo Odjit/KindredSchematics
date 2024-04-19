@@ -24,13 +24,13 @@ namespace KindredVignettes.ComponentSaver
 
             var diff = new DyeableCastleObject_Save();
 
-            if ( srcData.ActiveColorIndex!= dstData.ActiveColorIndex)
+            if (srcData.ActiveColorIndex != dstData.ActiveColorIndex)
                 diff.ActiveColorIndex = dstData.ActiveColorIndex;
-            if ( srcData.NumColorChoices!= dstData.NumColorChoices)
+            if (srcData.NumColorChoices != dstData.NumColorChoices)
                 diff.NumColorChoices = dstData.NumColorChoices;
-            if ( srcData.PrevColorIndex!= dstData.PrevColorIndex)
+            if (srcData.PrevColorIndex != dstData.PrevColorIndex)
                 diff.PrevColorIndex = dstData.PrevColorIndex;
-            if ( srcData.ColorSwatchAssetGuid!= dstData.ColorSwatchAssetGuid)
+            if (srcData.ColorSwatchAssetGuid != dstData.ColorSwatchAssetGuid)
                 diff.ColorSwatchAssetGuid = dstData.ColorSwatchAssetGuid;
 
             if (diff.Equals(default(DyeableCastleObject_Save)))
@@ -39,20 +39,26 @@ namespace KindredVignettes.ComponentSaver
             return diff;
         }
 
-        public override void ApplyDiff(Entity entity, JsonElement diff, Entity[] entitiesBeingLoaded)
+        public override object SaveComponent(Entity entity, EntityMapper entityMapper)
         {
-            var dyeDiff = diff.Deserialize<DyeableCastleObject_Save>(VignetteService.GetJsonOptions());
-            var data = entity.Read<DyeableCastleObject>();
+            throw new System.NotImplementedException();
+        }
 
-            if (dyeDiff.Equals(default(DyeableCastleObject)))
-                return;
+        public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
+        {
+            var dyeDiff = jsonData.Deserialize<DyeableCastleObject_Save>(VignetteService.GetJsonOptions());
+
+            if (!entity.Has<DyeableCastleObject>())
+                entity.Add<DyeableCastleObject>();
+
+            var data = entity.Read<DyeableCastleObject>();
 
             if (dyeDiff.ActiveColorIndex.HasValue)
                 data.ActiveColorIndex = dyeDiff.ActiveColorIndex.Value;
 
             if (dyeDiff.NumColorChoices.HasValue)
                 data.NumColorChoices = dyeDiff.NumColorChoices.Value;
-              
+
             if (dyeDiff.PrevColorIndex.HasValue)
                 data.PrevColorIndex = dyeDiff.PrevColorIndex.Value;
 
@@ -60,16 +66,6 @@ namespace KindredVignettes.ComponentSaver
                 data.ColorSwatchAssetGuid = dyeDiff.ColorSwatchAssetGuid.Value;
 
             entity.Write(data);
-        }
-
-        public override object SaveComponent(Entity entity, EntityMapper entityMapper)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override void AddComponent(Entity entity, JsonElement data, Entity[] entitiesBeingLoaded)
-        {
-            throw new System.NotImplementedException();
         }
     }
 }

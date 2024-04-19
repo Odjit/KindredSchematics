@@ -19,8 +19,7 @@ namespace KindredVignettes
         public PrefabGUID prefab { get; set; }
         public Vector3 translation { get; set; }
         public Quaternion rotation { get; set; }
-        public ComponentData[] diffs { get; set; }
-        public ComponentData[] additions { get; set; }
+        public ComponentData[] componentData { get; set; }
         public int[] removals { get; set; }
     }
 
@@ -34,8 +33,7 @@ namespace KindredVignettes
             diffData.translation = entity.Read<Translation>().Value;
             diffData.rotation = entity.Read<Rotation>().Value;
 
-            var diffs = new List<ComponentData>();
-            var additions = new List<ComponentData>();
+            var componentData = new List<ComponentData>();
             var removals = new List<int>();
             if (Core.PrefabCollection.PrefabLookupMap.TryGetValue(diffData.prefab, out var prefabEntity))
             {
@@ -60,7 +58,7 @@ namespace KindredVignettes
                         {
                             var diff = saver.DiffComponents(prefabEntity, entity, entityMapper);
                             if(diff != null)
-                                diffs.Add(new ComponentData {
+                                componentData.Add(new ComponentData {
                                     component = entityComponent.GetManagedType().Name,
                                     data = diff
                                 });
@@ -76,7 +74,7 @@ namespace KindredVignettes
                         var saver = ComponentSaver.ComponentSaver.GetComponentSaver(entityComponent.TypeIndex);
                         if (saver != null)
                         {
-                            additions.Add(new ComponentData
+                            componentData.Add(new ComponentData
                             {
                                 component = entityComponent.GetManagedType().Name,
                                 data = saver.SaveComponent(entity, entityMapper)
@@ -95,19 +93,13 @@ namespace KindredVignettes
                             Core.Log.LogInfo($"Removing component {prefabComponent}");
                             removals.Add(prefabComponent.TypeIndex);
                         }
-                        else
-                        {
-                            Core.Log.LogInfo($"Skipping removal of {prefabComponent}");
-                        }
                         prefabIndex++;
                         entityIndex--;
                     }
                 }
 
-                if(diffs.Count > 0)
-                    diffData.diffs = diffs.ToArray();
-                if(additions.Count > 0)
-                    diffData.additions = additions.ToArray();
+                if(componentData.Count > 0)
+                    diffData.componentData = componentData.ToArray();
                 if(removals.Count > 0)
                     diffData.removals = removals.ToArray();
             }

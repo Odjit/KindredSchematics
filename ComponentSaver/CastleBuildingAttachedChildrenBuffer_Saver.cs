@@ -14,11 +14,6 @@ namespace KindredVignettes.ComponentSaver
             return SaveComponent(dst, entityMapper);
         }
 
-        public override void ApplyDiff(Entity entity, JsonElement diff, Entity[] entitiesBeingLoaded)
-        {
-            AddComponent(entity, diff, entitiesBeingLoaded);
-        }
-
         public override object SaveComponent(Entity entity, EntityMapper entityMapper)
         {
             var children = Core.EntityManager.GetBuffer<CastleBuildingAttachedChildrenBuffer>(entity);
@@ -31,7 +26,7 @@ namespace KindredVignettes.ComponentSaver
             return childEntities;
         }
 
-        public override void AddComponent(Entity entity, JsonElement data, Entity[] entitiesBeingLoaded)
+        public override void ApplyComponentData(Entity entity, JsonElement data, Entity[] entitiesBeingLoaded)
         {
             DynamicBuffer<CastleBuildingAttachedChildrenBuffer> children;
             if (entity.Has<CastleBuildingAttachedChildrenBuffer>())
@@ -41,7 +36,7 @@ namespace KindredVignettes.ComponentSaver
             children.Clear();
 
             var childEntities = data.Deserialize<int[]>(VignetteService.GetJsonOptions());
-            foreach(var i in childEntities)
+            foreach (var i in childEntities)
                 children.Add(new CastleBuildingAttachedChildrenBuffer { ChildEntity = entitiesBeingLoaded[i] });
         }
     }

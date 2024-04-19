@@ -1,20 +1,16 @@
-﻿using BepInEx.Unity.IL2CPP.Utils.Collections;
-using KindredVignettes.JsonConverters;
+﻿using KindredVignettes.JsonConverters;
 using ProjectM;
 using ProjectM.CastleBuilding;
 using ProjectM.Physics;
 using ProjectM.Tiles;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using Unity.Entities;
-using Unity.Entities.UniversalDelegates;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
-using UnityEngine.Rendering.HighDefinition;
 
 namespace KindredVignettes.Services
 {
@@ -204,8 +200,7 @@ namespace KindredVignettes.Services
             {
                 var diff = vignette.entities[i];
                 var entity = createdEntities[i+1];
-                ComponentSaver.ComponentSaver.ApplyDiffs(entity, diff.diffs, createdEntities);
-                ComponentSaver.ComponentSaver.ApplyAdditions(entity, diff.additions, createdEntities);
+                ComponentSaver.ComponentSaver.ApplyComponentData(entity, diff.componentData, createdEntities);
                 ComponentSaver.ComponentSaver.ApplyRemovals(entity, diff.removals);
             }
 

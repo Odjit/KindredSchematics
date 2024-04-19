@@ -64,26 +64,10 @@ abstract class ComponentSaver
 
     public abstract object DiffComponents(Entity src, Entity dst, EntityMapper entityMapper);
 
-    public abstract void ApplyDiff(Entity entity, JsonElement diff, Entity[] entitiesBeingLoaded);
-
-    public static void ApplyDiffs(Entity entity, ComponentData[] diffs, Entity[] entitiesBeingLoaded)
-    {
-        if(diffs == null)
-            return;
-        foreach (var diff in diffs)
-        {
-            var differ = GetComponentSaver(diff.component);
-            if (differ != null)
-            {
-                differ.ApplyDiff(entity, (JsonElement)diff.data, entitiesBeingLoaded);
-            }
-        }
-    }
-
     public abstract object SaveComponent(Entity entity, EntityMapper entityMapper);
-    public abstract void AddComponent(Entity entity, JsonElement data, Entity[] entitiesBeingLoaded);
+    public abstract void ApplyComponentData(Entity entity, JsonElement data, Entity[] entitiesBeingLoaded);
 
-    public static void ApplyAdditions(Entity entity, ComponentData[] additions, Entity[] entitiesBeingLoaded)
+    public static void ApplyComponentData(Entity entity, ComponentData[] additions, Entity[] entitiesBeingLoaded)
     {
         if(additions == null)
             return;
@@ -92,7 +76,7 @@ abstract class ComponentSaver
             var differ = GetComponentSaver(addition.component);
             if (differ != null)
             {
-                differ.AddComponent(entity, (JsonElement)addition.data, entitiesBeingLoaded);
+                differ.ApplyComponentData(entity, (JsonElement)addition.data, entitiesBeingLoaded);
             }
         }
     }

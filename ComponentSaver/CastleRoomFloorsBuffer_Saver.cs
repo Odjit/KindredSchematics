@@ -8,15 +8,9 @@ namespace KindredVignettes.ComponentSaver
     [ComponentType(typeof(CastleRoomFloorsBuffer))]
     internal class CastleRoomFloorsBuffer_Saver : ComponentSaver
     {
-
         public override object DiffComponents(Entity src, Entity dst, EntityMapper entityMapper)
         {
             return SaveComponent(dst, entityMapper);
-        }
-
-        public override void ApplyDiff(Entity entity, JsonElement diff, Entity[] entitiesBeingLoaded)
-        {
-            AddComponent(entity, diff, entitiesBeingLoaded);
         }
 
         public override object SaveComponent(Entity entity, EntityMapper entityMapper)
@@ -31,7 +25,7 @@ namespace KindredVignettes.ComponentSaver
             return floorEntities;
         }
 
-        public override void AddComponent(Entity entity, JsonElement data, Entity[] entitiesBeingLoaded)
+        public override void ApplyComponentData(Entity entity, JsonElement data, Entity[] entitiesBeingLoaded)
         {
             DynamicBuffer<CastleRoomFloorsBuffer> floors;
             if (entity.Has<CastleRoomFloorsBuffer>())

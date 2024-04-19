@@ -100,9 +100,18 @@ namespace KindredVignettes.ComponentSaver
             return diff;
         }
 
-        public override void ApplyDiff(Entity entity, JsonElement diff, Entity[] entitiesBeingLoaded)
+        public override object SaveComponent(Entity entity, EntityMapper entityMapper)
         {
-            var wallpaperDiff = diff.Deserialize<Wallpaper_TwoSplits_Diff>();
+            throw new System.NotImplementedException();
+        }
+
+        public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingSaved)
+        {
+            var wallpaperDiff = jsonData.Deserialize<Wallpaper_TwoSplits_Diff>();
+
+            if (!entity.Has<Wallpaper_TwoSplits>())
+                entity.Add<Wallpaper_TwoSplits>();
+
             var data = entity.Read<Wallpaper_TwoSplits>();
 
             if (wallpaperDiff.Data_0.HasValue)
@@ -121,16 +130,6 @@ namespace KindredVignettes.ComponentSaver
                 data.OverrideOrientation = (WallpaperOrientation)wallpaperDiff.OverrideOrientation.Value;
 
             entity.Write(data);
-        }
-
-        public override object SaveComponent(Entity entity, EntityMapper entityMapper)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override void AddComponent(Entity entity, JsonElement data, Entity[] entitiesBeingSaved)
-        {
-            throw new System.NotImplementedException();
         }
     }
 }

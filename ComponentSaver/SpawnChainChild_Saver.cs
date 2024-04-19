@@ -33,20 +33,6 @@ namespace KindredVignettes.ComponentSaver
             return diff;
         }
 
-        public override void ApplyDiff(Entity entity, JsonElement diff, Entity[] entitiesBeingLoaded)
-        {
-            var spawnChainChild = diff.Deserialize<SpawnChainChild_Save>(VignetteService.GetJsonOptions());
-            var data = entity.Read<SpawnChainChild>();
-
-            if (spawnChainChild.SpawnChain.HasValue)
-                data.SpawnChain = entitiesBeingLoaded[spawnChainChild.SpawnChain.Value];
-
-            if (spawnChainChild.SpawnChainElementIndex.HasValue)
-                data.SpawnChainElementIndex = spawnChainChild.SpawnChainElementIndex.Value;
-
-            entity.Write(data);
-        }
-
         public override object SaveComponent(Entity entity, EntityMapper entityMapper)
         {
             var data = entity.Read<SpawnChainChild>();
@@ -57,16 +43,22 @@ namespace KindredVignettes.ComponentSaver
             return addition;
         }
 
-        public override void AddComponent(Entity entity, JsonElement data, Entity[] entitiesBeingLoaded)
+        public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
         {
-            var spawnChainChildSave = data.Deserialize<SpawnChainChild_Save>(VignetteService.GetJsonOptions());
-            entity.Add<SpawnChainChild>();
-            entity.Write(new SpawnChainChild
-            {
-                SpawnChain = entitiesBeingLoaded[spawnChainChildSave.SpawnChain.Value],
-                SpawnChainElementIndex = spawnChainChildSave.SpawnChainElementIndex.Value
-            });
+            var spawnChainChildSave = jsonData.Deserialize<SpawnChainChild_Save>(VignetteService.GetJsonOptions());
 
+            if (!entity.Has<SpawnChainChild>())
+                entity.Add<SpawnChainChild>();
+
+            var data = entity.Read<SpawnChainChild>();
+
+            if (spawnChainChildSave.SpawnChain.HasValue)
+                data.SpawnChain = entitiesBeingLoaded[spawnChainChildSave.SpawnChain.Value];
+
+            if (spawnChainChildSave.SpawnChainElementIndex.HasValue)
+                data.SpawnChainElementIndex = spawnChainChildSave.SpawnChainElementIndex.Value;
+
+            entity.Write(data);
         }
     }
 }

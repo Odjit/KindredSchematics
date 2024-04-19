@@ -13,11 +13,6 @@ namespace KindredVignettes.ComponentSaver
             return SaveComponent(dst, entityMapper);
         }
 
-        public override void ApplyDiff(Entity entity, JsonElement diff, Entity[] entitiesBeingLoaded)
-        {
-            AddComponent(entity, diff, entitiesBeingLoaded);
-        }
-
         public override object SaveComponent(Entity entity, EntityMapper entityMapper)
         {
             var parents = Core.EntityManager.GetBuffer<CastleBuildingAttachToParentsBuffer>(entity);
@@ -30,7 +25,7 @@ namespace KindredVignettes.ComponentSaver
             return parentEntities;
         }
 
-        public override void AddComponent(Entity entity, JsonElement data, Entity[] entitiesBeingLoaded)
+        public override void ApplyComponentData(Entity entity, JsonElement data, Entity[] entitiesBeingLoaded)
         {
             DynamicBuffer<CastleBuildingAttachToParentsBuffer> parents;
             if (entity.Has<CastleBuildingAttachToParentsBuffer>())

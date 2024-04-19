@@ -1,5 +1,4 @@
 ﻿using KindredVignettes.Services;
-using ProjectM;
 using ProjectM.CastleBuilding;
 using System.Text.Json;
 using Unity.Entities;
@@ -32,9 +31,18 @@ namespace KindredVignettes.ComponentSaver
             return diff;
         }
 
-        public override void ApplyDiff(Entity entity, JsonElement diff, Entity[] entitiesBeingLoaded)
+        public override object SaveComponent(Entity entity, EntityMapper entityMapper)
         {
-            var dyeDiff = diff.Deserialize<CastleRoom_Save>(VignetteService.GetJsonOptions());
+            throw new System.NotImplementedException();
+        }
+
+        public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
+        {
+            var dyeDiff = jsonData.Deserialize<CastleRoom_Save>(VignetteService.GetJsonOptions());
+
+            if (!entity.Has<CastleRoom>())
+                entity.Add<CastleRoom>();
+
             var data = entity.Read<CastleRoom>();
 
             if (dyeDiff.IsMissingWalls.HasValue)
@@ -43,16 +51,6 @@ namespace KindredVignettes.ComponentSaver
                 data.HasRoof = dyeDiff.HasRoof.Value;
 
             entity.Write(data);
-        }
-
-        public override object SaveComponent(Entity entity, EntityMapper entityMapper)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override void AddComponent(Entity entity, JsonElement data, Entity[] entitiesBeingLoaded)
-        {
-            throw new System.NotImplementedException();
         }
     }
 }

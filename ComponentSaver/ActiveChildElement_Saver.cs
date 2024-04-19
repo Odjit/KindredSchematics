@@ -33,25 +33,24 @@ namespace KindredVignettes.ComponentSaver
             return diff;
         }
 
-        public override void ApplyDiff(Entity entity, JsonElement diff, Entity[] entitiesBeingLoaded)
+        public override object SaveComponent(Entity entity, EntityMapper entityMapper)
         {
-            var activeChildElement = diff.Deserialize<ActiveChildElement_Save>(VignetteService.GetJsonOptions());
+            throw new System.NotImplementedException();
+        }
+
+        public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
+        {
+            var activeChildElement = jsonData.Deserialize<ActiveChildElement_Save>(VignetteService.GetJsonOptions());
+
+            if (!entity.Has<ActiveChildElement>())
+                entity.Add<ActiveChildElement>();
+
             var data = entity.Read<ActiveChildElement>();
             if (activeChildElement.ChainElementIndex.HasValue)
                 data.ChainElementIndex = activeChildElement.ChainElementIndex.Value;
             if (activeChildElement.ActiveEntityId.HasValue)
                 data.ActiveEntity = entitiesBeingLoaded[activeChildElement.ActiveEntityId.Value];
             entity.Write(data);
-        }
-
-        public override object SaveComponent(Entity entity, EntityMapper entityMapper)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override void AddComponent(Entity entity, JsonElement data, Entity[] entitiesBeingLoaded)
-        {
-            throw new System.NotImplementedException();
         }
     }
 }
