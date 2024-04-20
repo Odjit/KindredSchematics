@@ -14,7 +14,8 @@ namespace KindredVignettes
         public System.Object data { get; set; }
     }
 
-    public struct TileData
+    public struct EntityData
+
     {
         public PrefabGUID prefab { get; set; }
         public Vector3 translation { get; set; }
@@ -25,9 +26,9 @@ namespace KindredVignettes
 
     internal class EntityPrefabDiff
     {
-        public static TileData DiffFromPrefab(Entity entity, EntityMapper entityMapper)
+        public static EntityData DiffFromPrefab(Entity entity, EntityMapper entityMapper)
         {
-            var diffData = new TileData();
+            var diffData = new EntityData();
             // Compare the two entities and return a list of differences
             diffData.prefab = entity.Read<PrefabGUID>();
             diffData.translation = entity.Read<Translation>().Value;

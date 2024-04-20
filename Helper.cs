@@ -12,6 +12,7 @@ using VampireCommandFramework;
 using System.Collections.Generic;
 using UnityEngine;
 using ProjectM.Tiles;
+using Unity.Physics;
 
 namespace KindredVignettes;
 
@@ -98,7 +99,7 @@ internal static partial class Helper
 	public static void RepairGear(Entity Character, bool repair = true)
 	{
 		Equipment equipment = Character.Read<Equipment>();
-		NativeList<Entity> equippedItems = new(Allocator.Temp);
+        NativeList<Entity> equippedItems = new(Allocator.Temp);
 		equipment.GetAllEquipmentEntities(equippedItems);
 		foreach (var equippedItem in equippedItems)
 		{
@@ -244,7 +245,73 @@ internal static partial class Helper
         }
     }
 
-	public static void DestroyEntitiesForBuilding(IEnumerable<Entity> entities)
+	public static float3 ConvertPosToGrid(float3 pos)
+	{
+		return new float3(Mathf.FloorToInt(pos.x * 2) + 6400, pos.y, Mathf.FloorToInt(pos.z * 2) + 6400);
+	}
+
+    public static bool GetAabb(Entity entity, out Aabb aabb)
+    {
+        aabb = new Aabb();
+        if (entity.Has<TileBounds>())
+        {
+            var bounds = entity.Read<TileBounds>();
+
+			if (bounds.Value.Max.x == 0 && bounds.Value.Max.y == 0 && bounds.Value.Min.x == 0 && bounds.Value.Min.y == 0)
+				return false;
+
+            var minHeight = 0f;
+            var maxHeight = 0f;
+
+            if (entity.Has<TileData>())
+            {
+                var tileData = entity.Read<TileData>();
+                if (tileData.Data.IsCreated)
+                {
+                    unsafe
+                    {
+                        TileBlob tileBlob = *(TileBlob*)tileData.Data.GetUnsafePtr();
+                        minHeight = tileBlob.MinHeight;
+                        maxHeight = tileBlob.MaxHeight;
+                    }
+                }
+            }
+
+            // Handling at least a minumum height
+            if (maxHeight <= 0.1)
+            {
+                maxHeight = 0.1f;
+            }
+
+            var translation = entity.Read<Translation>().Value;
+
+            aabb.Min = new float3(bounds.Value.Min.x, minHeight + translation.y, bounds.Value.Min.y);
+            aabb.Max = new float3(bounds.Value.Max.x, maxHeight + translation.y, bounds.Value.Max.y);
+            return true;
+        }
+        return false;
+    }
+
+	public static bool IsEntityInAabb(Entity entity, Aabb aabb)
+	{
+		if (!entity.Has<Translation>()) return false;
+		var pos = entity.Read<Translation>().Value;
+		return aabb.Contains(ConvertPosToGrid(pos)) || GetAabb(entity, out var otherAabb) && aabb.Overlaps(otherAabb);
+    }
+
+    public static IEnumerable<Entity> GetAllEntitiesInTileAabb<T>(Aabb aabb)
+    {
+        var entities = GetEntitiesByComponentType<T>(includeSpawn: true, includeDisabled: true);
+        foreach (var entity in entities)
+        {
+            if (IsEntityInAabb(entity, aabb))
+            {
+                yield return entity;
+            }
+        }
+    }
+
+    public static void DestroyEntitiesForBuilding(IEnumerable<Entity> entities)
 	{
 		foreach (var entity in entities)
 		{

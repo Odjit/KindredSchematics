@@ -8,7 +8,6 @@ namespace KindredVignettes.ComponentSaver
     [ComponentType(typeof(CastleBuildingFusedChildrenBuffer))]
     internal class CastleBuildingFusedChildrenBuffer_Saver : ComponentSaver
     {
-
         public override object DiffComponents(Entity src, Entity dst, EntityMapper entityMapper)
         {
             return SaveComponent(dst, entityMapper);

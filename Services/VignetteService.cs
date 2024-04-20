@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text.Json;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Physics;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -22,9 +23,9 @@ namespace KindredVignettes.Services
         struct Vignette
         {
             public Vector3 location {get; set;}
-            public Vector2? halfSize { get; set; } 
-            public float? radius { get; set;}
-            public TileData[] entities { get; set; }
+            public Aabb boundingBox { get; set; }
+            public Aabb[] aabbs { get; set; }
+            public EntityData[] entities { get; set; }
         }
 
         readonly List<Entity> usersClearingEntireArea = [];
@@ -70,41 +71,50 @@ namespace KindredVignettes.Services
 
         public void SaveVignette(string name, float3 location, float? radius=null, Vector2? halfSize = null)
         {
+            var gridLocation = Helper.ConvertPosToGrid(location);
             var vignette = new Vignette
             {
                 location = location,
-                halfSize = halfSize,
-                radius = radius,
+                boundingBox = new Aabb { Min = gridLocation, Max = gridLocation },
                 entities = []
             };
 
             IEnumerable<Entity> entities;
-            if (vignette.radius != null) entities = Helper.GetAllEntitiesInRadius<Translation>(location.xz, vignette.radius.Value);
-            else if (vignette.halfSize != null) entities = Helper.GetAllEntitiesInBox<Translation>(location.xz, vignette.halfSize.Value);
+            if (radius != null) entities = Helper.GetAllEntitiesInRadius<Translation>(location.xz, radius.Value);
+            else if (halfSize != null) entities = Helper.GetAllEntitiesInBox<Translation>(location.xz, halfSize.Value);
             else
             {
                 Core.Log.LogError($"Vignette {name} has no radius or halfSize");
                 return;
             }
 
-            var entityPrefabDiffs = new List<TileData>();
+            var entityPrefabDiffs = new List<EntityData>();
+            var aabbs = new List<Aabb>();
             var entitiesSaving = entities.Where(entity =>
             {
                 if (entity.Has<CastleHeart>())
                     return false;
                 
                 var prefabName = entity.Read<PrefabGUID>().LookupName();
-                return prefabName.StartsWith("TM_") || prefabName.StartsWith("Chain_") || prefabName.StartsWith("BP_") ||
-                       entity.Has<CastleRoom>();
+                return prefabName.StartsWith("TM_") || prefabName.StartsWith("Chain_") || prefabName.StartsWith("BP_");
             });
 
             var entityMapper = new EntityMapper(entitiesSaving);
-            for (var i=1; i< entityMapper.Count; ++i)
+            for (var i=1; i<entityMapper.Count; ++i)
             {
-                entityPrefabDiffs.Add(EntityPrefabDiff.DiffFromPrefab(entityMapper[i], entityMapper));
+                var entity = entityMapper[i];
+                entityPrefabDiffs.Add(EntityPrefabDiff.DiffFromPrefab(entity, entityMapper));
+                if (Helper.GetAabb(entity, out var aabb))
+                {
+                    
+                    aabbs.Add(aabb);
+                    aabb.Include(vignette.boundingBox);
+                    vignette.boundingBox = aabb;
+                }
             }
 
             vignette.entities = entityPrefabDiffs.ToArray();
+            vignette.aabbs = aabbs.ToArray();
             
             var json = JsonSerializer.Serialize(vignette, GetJsonOptions());
 
@@ -115,7 +125,7 @@ namespace KindredVignettes.Services
             File.WriteAllText($"{CONFIG_PATH}/{name}.vignette", json);
         }
 
-        public bool LoadVignette(string name, Entity userEntity, Entity charEntity, Vector3? newCenter=null)
+        public bool LoadVignette(string name, Entity userEntity, Entity charEntity, float expandClear, Vector3? newCenter=null)
         {
             string json;
             try
@@ -149,16 +159,29 @@ namespace KindredVignettes.Services
                 translation.y = Mathf.Round(translation.y);
                 translation.z = Mathf.Round(translation.z / 5) * 5;
             }
-            Core.Log.LogWarning($"Translation: {translation}");
+
+            var gridTranslation = new float3(translation.x * 2, translation.y, translation.z * 2);
+
+            var aabb = vignette.boundingBox;
+            aabb.Min += gridTranslation;
+            aabb.Max += gridTranslation;
+            aabb.Expand(expandClear);
 
             IEnumerable<Entity> entities;
-            if (vignette.radius != null)  entities = Helper.GetAllEntitiesInRadius<TileModel>(((float3)center).xz, vignette.radius.Value);
-            else if (vignette.halfSize != null) entities = Helper.GetAllEntitiesInBox<TileModel>(((float3)center).xz, vignette.halfSize.Value);
-            else
-            {
-                Core.Log.LogError($"Vignette {name} has no radius or halfSize");
-                return false;
-            }
+            entities = Helper.GetAllEntitiesInTileAabb<TileModel>(aabb).
+                Where(x =>
+                {
+                    foreach(var aabb in vignette.aabbs)
+                    {
+                        var newAabb = aabb;
+                        newAabb.Min += gridTranslation;
+                        newAabb.Max += gridTranslation;
+                        newAabb.Expand(expandClear);
+                        if (Helper.IsEntityInAabb(x, newAabb))
+                            return true;
+                    }
+                    return false;
+                });
 
             Helper.DestroyEntitiesForBuilding(entities);
 
@@ -182,7 +205,6 @@ namespace KindredVignettes.Services
 
             // Disable spawn chain system for one frame
             InitializeNewSpawnChainSystem_Patch.skipOnce = true;
-            
 
             // First pass create all the entities
             var createdEntities = new Entity[vignette.entities.Length+1];
@@ -212,7 +234,7 @@ namespace KindredVignettes.Services
             return true;
         }
 
-        private static Entity SpawnEntity(Entity userEntity, Vector3 translation, int teamValue, Entity castleHeartEntity, Entity castleTeamReference, TileData diff, Entity prefab)
+        private static Entity SpawnEntity(Entity userEntity, Vector3 translation, int teamValue, Entity castleHeartEntity, Entity castleTeamReference, EntityData diff, Entity prefab)
         {
             var entity = Core.EntityManager.Instantiate(prefab);
             entity.Write(new Translation { Value = diff.translation + translation });

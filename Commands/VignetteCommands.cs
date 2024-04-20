@@ -8,10 +8,10 @@ using VampireCommandFramework;
 
 namespace KindredVignettes.Commands
 {
-    [CommandGroup("vignette", "Vignette commands")]
+    [CommandGroup("vignette", "v")]
     internal class VignetteCommands
     {
-        [Command("list", description: "Lists all saved vignettes")]
+        [Command("list", "l", description: "Lists all saved vignettes")]
         public static void ListVignettes(ChatCommandContext ctx)
         {
             var vignetteNames = Core.VignetteService.GetVignetteNames();
@@ -36,8 +36,8 @@ namespace KindredVignettes.Commands
             }
         }
 
-        [Command("save", description: "Saves the current area to a vignette", adminOnly: true)]
-        public static void SaveVignette(ChatCommandContext ctx, string vignetteName, float radius)
+        [Command("save", "s", description: "Saves the current area to a vignette", adminOnly: true)]
+        public static void SaveVignette(ChatCommandContext ctx, string vignetteName, float radius=5)
         {
             var userEntity = ctx.Event.SenderUserEntity;
             var userPos = userEntity.Read<Translation>().Value;
@@ -47,7 +47,7 @@ namespace KindredVignettes.Commands
         }
 
         static readonly Dictionary<Entity, float2> cornerPos = [];
-        [Command("setcorner", description: "Sets a corner for saving", adminOnly: true)]
+        [Command("setcorner", "sc", description: "Sets a corner for saving", adminOnly: true)]
         public static void SetCorner(ChatCommandContext ctx)
         {
             var userEntity = ctx.Event.SenderUserEntity;
@@ -56,7 +56,7 @@ namespace KindredVignettes.Commands
             ctx.Reply($"Corner set");
         }
 
-        [Command("savebox", description: "Saves the current area to a vignette", adminOnly: true)]
+        [Command("savebox", "sb", description: "Saves the current area to a vignette", adminOnly: true)]
         public static void SaveVignetteBox(ChatCommandContext ctx, string vignetteName)
         {
             if (!cornerPos.ContainsKey(ctx.Event.SenderUserEntity))
@@ -74,10 +74,10 @@ namespace KindredVignettes.Commands
             cornerPos.Remove(ctx.Event.SenderUserEntity);
         }
 
-        [Command("load", description: "Loads a vignette", adminOnly: true)]
-        public static void LoadVignette(ChatCommandContext ctx, string vignetteName)
+        [Command("load", "l", description: "Loads a vignette", adminOnly: true)]
+        public static void LoadVignette(ChatCommandContext ctx, string vignetteName, float expandClear=0)
         {
-            if(Core.VignetteService.LoadVignette(vignetteName, ctx.Event.SenderUserEntity, ctx.Event.SenderCharacterEntity))
+            if(Core.VignetteService.LoadVignette(vignetteName, ctx.Event.SenderUserEntity, ctx.Event.SenderCharacterEntity, expandClear))
             {
                 ctx.Reply($"Loaded vignette {vignetteName}");
             }
@@ -87,10 +87,10 @@ namespace KindredVignettes.Commands
             }
         }
 
-        [Command("loadatpos", description: "Loads a vignette where you are standing", adminOnly: true)]
-        public static void LoadVignetteAtPosition(ChatCommandContext ctx, string vignetteName, float heightOffset=0)
+        [Command("loadatpos", "lp", description: "Loads a vignette where you are standing", adminOnly: true)]
+        public static void LoadVignetteAtPosition(ChatCommandContext ctx, string vignetteName, float expandClear=1, float heightOffset=0)
         {
-            if (Core.VignetteService.LoadVignette(vignetteName, ctx.Event.SenderUserEntity, ctx.Event.SenderCharacterEntity,
+            if (Core.VignetteService.LoadVignette(vignetteName, ctx.Event.SenderUserEntity, ctx.Event.SenderCharacterEntity, expandClear,
                 ctx.Event.SenderCharacterEntity.Read<Translation>().Value + new float3(0, heightOffset, 0)))
             {
                 ctx.Reply($"Loaded vignette {vignetteName}");
@@ -101,10 +101,10 @@ namespace KindredVignettes.Commands
             }
         }
 
-        [Command("loadat", description: "Loads a vignette where you specify", adminOnly: true)]
-        public static void LoadVignetteAtPosition(ChatCommandContext ctx, string vignetteName, float x, float y, float z)
+        [Command("loadat", "la", description: "Loads a vignette where you specify", adminOnly: true)]
+        public static void LoadVignetteAtPosition(ChatCommandContext ctx, string vignetteName, float x, float y, float z, float expandClear = 1)
         {
-            if (Core.VignetteService.LoadVignette(vignetteName, ctx.Event.SenderUserEntity, ctx.Event.SenderCharacterEntity,
+            if (Core.VignetteService.LoadVignette(vignetteName, ctx.Event.SenderUserEntity, ctx.Event.SenderCharacterEntity, expandClear,
                 new float3(x, y, z)))
             {
                 ctx.Reply($"Loaded vignette {vignetteName}");
