@@ -1,4 +1,5 @@
 ﻿using KindredVignettes.JsonConverters;
+using KindredVignettes.Patches;
 using ProjectM;
 using ProjectM.CastleBuilding;
 using ProjectM.Physics;
@@ -178,6 +179,10 @@ namespace KindredVignettes.Services
                     }
                 }
             }
+
+            // Disable spawn chain system for one frame
+            InitializeNewSpawnChainSystem_Patch.skipOnce = true;
+            
 
             // First pass create all the entities
             var createdEntities = new Entity[vignette.entities.Length+1];
