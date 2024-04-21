@@ -2,6 +2,7 @@ using BepInEx.Logging;
 using KindredVignettes.ComponentSaver;
 using KindredVignettes.Services;
 using ProjectM;
+using ProjectM.CastleBuilding;
 using ProjectM.Network;
 using ProjectM.Scripting;
 using System.Runtime.CompilerServices;
@@ -15,6 +16,7 @@ internal static class Core
 
 	public static EntityManager EntityManager { get; } = Server.EntityManager;
 	public static CastleBuffsTickSystem CastleBuffsTickSystem { get; } = Server.GetExistingSystem<CastleBuffsTickSystem>();
+	public static CastleTerritoryService CastleTerritory { get; private set; }
     public static PrefabCollectionSystem PrefabCollection { get; } = Server.GetExistingSystem<PrefabCollectionSystem>();
     public static VignetteService VignetteService { get; } = new();
 
@@ -56,8 +58,8 @@ internal static class Core
 
 		_hasInitialized = true;
 
-        ComponentSaver.ComponentSaver.PopulateComponentDiffers();
-
+        ComponentSaver.ComponentSaver.PopulateComponentSavers();
+		CastleTerritory = new();
 
         Log.LogInfo($"{nameof(InitializeAfterLoaded)} completed");
 	}

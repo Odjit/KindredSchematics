@@ -14,23 +14,23 @@ namespace KindredVignettes.ComponentSaver
             public int? SpawnChainElementIndex { get; set; }
         }
 
-        public override object DiffComponents(Entity src, Entity dst, EntityMapper entityMapper)
+        public override object DiffComponents(Entity prefab, Entity entity, EntityMapper entityMapper)
         {
-            var srcData = src.Read<SpawnChainChild>();
-            var dstData = dst.Read<SpawnChainChild>();
+            var prefabData = prefab.Read<SpawnChainChild>();
+            var entityData = entity.Read<SpawnChainChild>();
 
-            var diff = new SpawnChainChild_Save();
+            var saveData = new SpawnChainChild_Save();
             
-            if (srcData.SpawnChain != dstData.SpawnChain)
-                diff.SpawnChain = entityMapper.IndexOf(dstData.SpawnChain);
+            if (prefabData.SpawnChain != entityData.SpawnChain)
+                saveData.SpawnChain = entityMapper.IndexOf(entityData.SpawnChain);
 
-            if (srcData.SpawnChainElementIndex != dstData.SpawnChainElementIndex)
-                diff.SpawnChainElementIndex = dstData.SpawnChainElementIndex;
+            if (prefabData.SpawnChainElementIndex != entityData.SpawnChainElementIndex)
+                saveData.SpawnChainElementIndex = entityData.SpawnChainElementIndex;
 
-            if (diff.Equals(default(SpawnChainChild_Save)))
+            if (saveData.Equals(default(SpawnChainChild_Save)))
                 return null;
 
-            return diff;
+            return saveData;
         }
 
         public override object SaveComponent(Entity entity, EntityMapper entityMapper)

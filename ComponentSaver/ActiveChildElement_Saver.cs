@@ -14,23 +14,23 @@ namespace KindredVignettes.ComponentSaver
             public int? ActiveEntityId { get; set; }
         }
 
-        public override object DiffComponents(Entity src, Entity dst, EntityMapper entityMapper)
+        public override object DiffComponents(Entity prefab, Entity entity, EntityMapper entityMapper)
         {
-            var srcData = src.Read<ActiveChildElement>();
-            var dstData = dst.Read<ActiveChildElement>();
+            var prefabData = prefab.Read<ActiveChildElement>();
+            var entityData = entity.Read<ActiveChildElement>();
 
-            var diff = new ActiveChildElement_Save();
+            var saveData = new ActiveChildElement_Save();
 
-            if ( srcData.ChainElementIndex != dstData.ChainElementIndex)
-                diff.ChainElementIndex = dstData.ChainElementIndex;
+            if ( prefabData.ChainElementIndex != entityData.ChainElementIndex)
+                saveData.ChainElementIndex = entityData.ChainElementIndex;
 
-            if (srcData.ActiveEntity != dstData.ActiveEntity)
-                diff.ActiveEntityId = entityMapper.IndexOf(dstData.ActiveEntity);
+            if (prefabData.ActiveEntity != entityData.ActiveEntity)
+                saveData.ActiveEntityId = entityMapper.IndexOf(entityData.ActiveEntity);
 
-            if (diff.Equals(default(ActiveChildElement_Save)))
+            if (saveData.Equals(default(ActiveChildElement_Save)))
                 return null;
 
-            return diff;
+            return saveData;
         }
 
         public override object SaveComponent(Entity entity, EntityMapper entityMapper)
@@ -40,16 +40,16 @@ namespace KindredVignettes.ComponentSaver
 
         public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
         {
-            var activeChildElement = jsonData.Deserialize<ActiveChildElement_Save>(VignetteService.GetJsonOptions());
+            var saveData = jsonData.Deserialize<ActiveChildElement_Save>(VignetteService.GetJsonOptions());
 
             if (!entity.Has<ActiveChildElement>())
                 entity.Add<ActiveChildElement>();
 
             var data = entity.Read<ActiveChildElement>();
-            if (activeChildElement.ChainElementIndex.HasValue)
-                data.ChainElementIndex = activeChildElement.ChainElementIndex.Value;
-            if (activeChildElement.ActiveEntityId.HasValue)
-                data.ActiveEntity = entitiesBeingLoaded[activeChildElement.ActiveEntityId.Value];
+            if (saveData.ChainElementIndex.HasValue)
+                data.ChainElementIndex = saveData.ChainElementIndex.Value;
+            if (saveData.ActiveEntityId.HasValue)
+                data.ActiveEntity = entitiesBeingLoaded[saveData.ActiveEntityId.Value];
             entity.Write(data);
         }
     }

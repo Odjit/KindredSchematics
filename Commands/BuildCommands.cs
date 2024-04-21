@@ -1,5 +1,4 @@
-﻿using Bloodstone.API;
-using KindredVignettes.Commands.Converter;
+﻿using KindredVignettes.Commands.Converter;
 using ProjectM;
 using ProjectM.Network;
 using ProjectM.Tiles;
@@ -38,7 +37,7 @@ namespace KindredVignettes.Commands
         public static void ToggleBuildingCostsCommand(ChatCommandContext ctx)
         {
             var User = ctx.Event.User;
-            var debugEventsSystem = VWorld.Server.GetExistingSystem<DebugEventsSystem>();
+            var debugEventsSystem = Core.Server.GetExistingSystem<DebugEventsSystem>();
 
             BuildingCostsDebugSetting.Value = !BuildingCostsDebugSetting.Value;
             debugEventsSystem.SetDebugSetting(User.Index, ref BuildingCostsDebugSetting);

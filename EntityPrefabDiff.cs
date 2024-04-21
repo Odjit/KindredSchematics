@@ -64,10 +64,6 @@ namespace KindredVignettes
                                     data = diff
                                 });
                         }
-                        else
-                        {
-                            //Core.Log.LogInfo($"No differ found for {entityComponent}");
-                        }
                         prefabIndex++;
                     }
                     else if (comparison < 0)
@@ -81,17 +77,12 @@ namespace KindredVignettes
                                 data = saver.SaveComponent(entity, entityMapper)
                             });
                         }
-                        else
-                        {
-                            Core.Log.LogInfo($"No adder found for {entityComponent}");
-                        }
                     }
                     else
                     {
                         if (prefabComponent != new ComponentType(Il2CppType.Of<Prefab>()) &&
                             prefabComponent != new ComponentType(Il2CppType.Of<SpawnTag>()))
                         {
-                            Core.Log.LogInfo($"Removing component {prefabComponent}");
                             removals.Add(prefabComponent.TypeIndex);
                         }
                         prefabIndex++;

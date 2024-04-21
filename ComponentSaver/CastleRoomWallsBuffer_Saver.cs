@@ -15,9 +15,9 @@ namespace KindredVignettes.ComponentSaver
             public byte WallDirection { get; set; }
         }
 
-        public override object DiffComponents(Entity src, Entity dst, EntityMapper entityMapper)
+        public override object DiffComponents(Entity prefab, Entity entity, EntityMapper entityMapper)
         {
-            return SaveComponent(dst, entityMapper);
+            return SaveComponent(entity, entityMapper);
         }
 
         public override object SaveComponent(Entity entity, EntityMapper entityMapper)

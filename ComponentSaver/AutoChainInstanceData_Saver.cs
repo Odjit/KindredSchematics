@@ -13,25 +13,25 @@ namespace KindredVignettes.ComponentSaver
             public double? NextTransitionAttempt { get; set; }
         }
 
-        public override object DiffComponents(Entity src, Entity dst, EntityMapper entityMapper)
+        public override object DiffComponents(Entity prefab, Entity entity, EntityMapper entityMapper)
         {
-            var srcData = src.Read<AutoChainInstanceData>();
-            var dstData = dst.Read<AutoChainInstanceData>();
+            var prefabData = prefab.Read<AutoChainInstanceData>();
+            var entityData = entity.Read<AutoChainInstanceData>();
 
-            var diff = new AutoChainInstanceData_Save();
+            var saveData = new AutoChainInstanceData_Save();
 
-            if (srcData.NextTransitionAttempt != dstData.NextTransitionAttempt)
+            if (prefabData.NextTransitionAttempt != entityData.NextTransitionAttempt)
             {
-                var nextTime = dstData.NextTransitionAttempt;
+                var nextTime = entityData.NextTransitionAttempt;
                 if(nextTime > 0)
                     nextTime -= Core.CastleBuffsTickSystem._ServerTime.GetSingleton().Time;
-                diff.NextTransitionAttempt = nextTime;
+                saveData.NextTransitionAttempt = nextTime;
             }
 
-            if (diff.Equals(default(AutoChainInstanceData_Save)))
+            if (saveData.Equals(default(AutoChainInstanceData_Save)))
                 return null;
 
-            return diff;
+            return saveData;
         }
 
         public override object SaveComponent(Entity entity, EntityMapper entityMapper)

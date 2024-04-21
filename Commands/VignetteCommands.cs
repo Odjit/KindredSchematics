@@ -74,6 +74,25 @@ namespace KindredVignettes.Commands
             cornerPos.Remove(ctx.Event.SenderUserEntity);
         }
 
+        [Command("saveterritory", "st", description: "Saves the current/specified territory to a vignette", adminOnly: true)]
+        public static void SaveTerritoryVignette(ChatCommandContext ctx, string vignetteName, int? territoryIndex=null)
+        {
+            if (territoryIndex == null)
+            {
+                var charEntity = ctx.Event.SenderCharacterEntity;
+                var charPos = charEntity.Read<Translation>().Value;
+                territoryIndex = Core.CastleTerritory.GetTerritoryIndex(charPos);
+
+                if (territoryIndex.Value == -1)
+                {
+                    ctx.Reply("Not in a territory");
+                    return;
+                }
+            }
+            Core.VignetteService.SaveVignette(vignetteName, territoryIndex: territoryIndex.Value);
+            ctx.Reply($"Saved territory {territoryIndex} to vignette {vignetteName}");
+        }
+
         [Command("load", "l", description: "Loads a vignette", adminOnly: true)]
         public static void LoadVignette(ChatCommandContext ctx, string vignetteName, float expandClear=0)
         {

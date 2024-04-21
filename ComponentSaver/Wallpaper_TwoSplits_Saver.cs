@@ -60,7 +60,7 @@ namespace KindredVignettes.ComponentSaver
         }
 
 
-        struct Wallpaper_TwoSplits_Diff
+        struct Wallpaper_TwoSplits_saveData
         {
             public WallpaperOrientationData_Save? Data_0 { get; set; }
             public WallpaperOrientationData_Save? Data_180 { get; set; }
@@ -69,35 +69,35 @@ namespace KindredVignettes.ComponentSaver
             public int? OverrideOrientation { get; set; }
         }
 
-        public override object DiffComponents(Entity src, Entity dst, EntityMapper entityMapper)
+        public override object DiffComponents(Entity prefab, Entity entity, EntityMapper entityMapper)
         {
-            var srcData = src.Read<Wallpaper_TwoSplits>();
-            var dstData = dst.Read<Wallpaper_TwoSplits>();
+            var prefabData = prefab.Read<Wallpaper_TwoSplits>();
+            var entityData = entity.Read<Wallpaper_TwoSplits>();
 
-            var diff = new Wallpaper_TwoSplits_Diff();
+            var saveData = new Wallpaper_TwoSplits_saveData();
 
-            var srcData0 = new WallpaperOrientationData_Save(srcData.Data_0);
-            var dstData0 = new WallpaperOrientationData_Save(dstData.Data_0);
-            if (srcData0 != dstData0)
-                diff.Data_0 = dstData0;
+            var prefabData0 = new WallpaperOrientationData_Save(prefabData.Data_0);
+            var entityData0 = new WallpaperOrientationData_Save(entityData.Data_0);
+            if (prefabData0 != entityData0)
+                saveData.Data_0 = entityData0;
 
-            var srcData180 = new WallpaperOrientationData_Save(srcData.Data_180);
-            var dstData180 = new WallpaperOrientationData_Save(dstData.Data_180);
-            if (srcData180 != dstData180)
-                diff.Data_180 = dstData180;
+            var prefabData180 = new WallpaperOrientationData_Save(prefabData.Data_180);
+            var entityData180 = new WallpaperOrientationData_Save(entityData.Data_180);
+            if (prefabData180 != entityData180)
+                saveData.Data_180 = entityData180;
 
-            if (srcData.ActiveStyleOverride != dstData.ActiveStyleOverride)
-                diff.ActiveStyleOverride = dstData.ActiveStyleOverride;
+            if (prefabData.ActiveStyleOverride != entityData.ActiveStyleOverride)
+                saveData.ActiveStyleOverride = entityData.ActiveStyleOverride;
 
-            if (srcData.ActiveVariationOverride != dstData.ActiveVariationOverride)
-                diff.ActiveVariationOverride = dstData.ActiveVariationOverride;
+            if (prefabData.ActiveVariationOverride != entityData.ActiveVariationOverride)
+                saveData.ActiveVariationOverride = entityData.ActiveVariationOverride;
 
-            if (srcData.OverrideOrientation != dstData.OverrideOrientation)
-                diff.OverrideOrientation = (int)dstData.OverrideOrientation;
+            if (prefabData.OverrideOrientation != entityData.OverrideOrientation)
+                saveData.OverrideOrientation = (int)entityData.OverrideOrientation;
 
-            if (diff.Equals(default(Wallpaper_TwoSplits_Diff)))
+            if (saveData.Equals(default(Wallpaper_TwoSplits_saveData)))
                 return null;
-            return diff;
+            return saveData;
         }
 
         public override object SaveComponent(Entity entity, EntityMapper entityMapper)
@@ -107,27 +107,27 @@ namespace KindredVignettes.ComponentSaver
 
         public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingSaved)
         {
-            var wallpaperDiff = jsonData.Deserialize<Wallpaper_TwoSplits_Diff>();
+            var wallpapersaveData = jsonData.Deserialize<Wallpaper_TwoSplits_saveData>();
 
             if (!entity.Has<Wallpaper_TwoSplits>())
                 entity.Add<Wallpaper_TwoSplits>();
 
             var data = entity.Read<Wallpaper_TwoSplits>();
 
-            if (wallpaperDiff.Data_0.HasValue)
-                data.Data_0 = wallpaperDiff.Data_0.Value.ConvertBack();
+            if (wallpapersaveData.Data_0.HasValue)
+                data.Data_0 = wallpapersaveData.Data_0.Value.ConvertBack();
 
-            if (wallpaperDiff.Data_180.HasValue)
-                data.Data_180 = wallpaperDiff.Data_180.Value.ConvertBack();
+            if (wallpapersaveData.Data_180.HasValue)
+                data.Data_180 = wallpapersaveData.Data_180.Value.ConvertBack();
 
-            if (wallpaperDiff.ActiveStyleOverride.HasValue)
-                data.ActiveStyleOverride = wallpaperDiff.ActiveStyleOverride.Value;
+            if (wallpapersaveData.ActiveStyleOverride.HasValue)
+                data.ActiveStyleOverride = wallpapersaveData.ActiveStyleOverride.Value;
 
-            if (wallpaperDiff.ActiveVariationOverride.HasValue)
-                data.ActiveVariationOverride = wallpaperDiff.ActiveVariationOverride.Value;
+            if (wallpapersaveData.ActiveVariationOverride.HasValue)
+                data.ActiveVariationOverride = wallpapersaveData.ActiveVariationOverride.Value;
 
-            if (wallpaperDiff.OverrideOrientation.HasValue)
-                data.OverrideOrientation = (WallpaperOrientation)wallpaperDiff.OverrideOrientation.Value;
+            if (wallpapersaveData.OverrideOrientation.HasValue)
+                data.OverrideOrientation = (WallpaperOrientation)wallpapersaveData.OverrideOrientation.Value;
 
             entity.Write(data);
         }

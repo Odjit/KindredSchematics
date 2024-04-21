@@ -10,7 +10,7 @@ namespace KindredVignettes.ComponentSaver;
 
 
 
-// ComponentDiffer Attribute
+// ComponentsaveDataer Attribute
 [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
 public sealed class ComponentTypeAttribute : Attribute
 {
@@ -27,7 +27,7 @@ abstract class ComponentSaver
     static readonly Dictionary<string, ComponentSaver> componentSaversByName = [];
     static readonly Dictionary<string, Type> componentTypes = [];
 
-    public static void PopulateComponentDiffers()
+    public static void PopulateComponentSavers()
     {
         componentSavers.Clear();
         var types = Assembly.GetAssembly(typeof(ComponentSaver)).GetTypes().Where(t => t.IsSubclassOf(typeof(ComponentSaver)));
@@ -62,7 +62,7 @@ abstract class ComponentSaver
         return null;
     }
 
-    public abstract object DiffComponents(Entity src, Entity dst, EntityMapper entityMapper);
+    public abstract object DiffComponents(Entity prefab, Entity entity, EntityMapper entityMapper);
 
     public abstract object SaveComponent(Entity entity, EntityMapper entityMapper);
     public abstract void ApplyComponentData(Entity entity, JsonElement data, Entity[] entitiesBeingLoaded);
@@ -73,10 +73,10 @@ abstract class ComponentSaver
             return;
         foreach (var addition in additions)
         {
-            var differ = GetComponentSaver(addition.component);
-            if (differ != null)
+            var saveDataer = GetComponentSaver(addition.component);
+            if (saveDataer != null)
             {
-                differ.ApplyComponentData(entity, (JsonElement)addition.data, entitiesBeingLoaded);
+                saveDataer.ApplyComponentData(entity, (JsonElement)addition.data, entitiesBeingLoaded);
             }
         }
     }

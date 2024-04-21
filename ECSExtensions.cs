@@ -1,11 +1,9 @@
-using System;
-using System.Runtime.InteropServices;
-using Bloodstone.API;
 using Il2CppInterop.Runtime;
 using ProjectM;
 using ProjectM.Network;
+using System;
+using System.Runtime.InteropServices;
 using Unity.Entities;
-using UnityEngine.Networking.Types;
 
 namespace KindredVignettes;
 
@@ -67,7 +65,7 @@ public static class ECSExtensions
 
 	public static string LookupName(this PrefabGUID prefabGuid)
 	{
-		var prefabCollectionSystem = VWorld.Server.GetExistingSystem<PrefabCollectionSystem>();
+		var prefabCollectionSystem = Core.Server.GetExistingSystem<PrefabCollectionSystem>();
 		return (prefabCollectionSystem.PrefabGuidToNameDictionary.ContainsKey(prefabGuid)
 			? prefabCollectionSystem.PrefabGuidToNameDictionary[prefabGuid] + " " + prefabGuid : "GUID Not Found").ToString();
 	}

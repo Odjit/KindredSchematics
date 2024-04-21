@@ -1,9 +1,11 @@
-﻿using KindredVignettes.JsonConverters;
+﻿using BepInEx.Unity.IL2CPP.Utils.Collections;
+using KindredVignettes.JsonConverters;
 using KindredVignettes.Patches;
 using ProjectM;
 using ProjectM.CastleBuilding;
 using ProjectM.Physics;
 using ProjectM.Tiles;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -22,7 +24,8 @@ namespace KindredVignettes.Services
 
         struct Vignette
         {
-            public Vector3 location {get; set;}
+            public Vector3? location {get; set;}
+            public int? territoryIndex { get; set; }
             public Aabb boundingBox { get; set; }
             public Aabb[] aabbs { get; set; }
             public EntityData[] entities { get; set; }
@@ -39,6 +42,11 @@ namespace KindredVignettes.Services
         {
             vignetteSvcGameObject = new GameObject("VignetteService");
             vignetteMonoBehaviour = vignetteSvcGameObject.AddComponent<IgnorePhysicsDebugSystem>();
+        }
+
+        public void StartCoroutine(IEnumerator routine)
+        {
+            vignetteMonoBehaviour.StartCoroutine(routine.WrapToIl2Cpp());
         }
 
         public IEnumerable<string> GetVignetteNames()
@@ -62,6 +70,8 @@ namespace KindredVignettes.Services
                 DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault
             };
             options.Converters.Add(new AabbConverter());
+            options.Converters.Add(new AssetGUIDConverter());
+            options.Converters.Add(new CurveReferenceConverter());
             options.Converters.Add(new PrefabGUIDConverter());
             options.Converters.Add(new QuaternionConverter());
             options.Converters.Add(new Vector2Converter());
@@ -69,22 +79,30 @@ namespace KindredVignettes.Services
             return options;
         }
 
-        public void SaveVignette(string name, float3 location, float? radius=null, Vector2? halfSize = null)
+        public void SaveVignette(string name, float3? location=null, float? radius=null, Vector2? halfSize = null, int? territoryIndex = null)
         {
-            var gridLocation = Helper.ConvertPosToGrid(location);
+            
             var vignette = new Vignette
             {
-                location = location,
-                boundingBox = new Aabb { Min = gridLocation, Max = gridLocation },
                 entities = []
             };
 
-            IEnumerable<Entity> entities;
-            if (radius != null) entities = Helper.GetAllEntitiesInRadius<Translation>(location.xz, radius.Value);
-            else if (halfSize != null) entities = Helper.GetAllEntitiesInBox<Translation>(location.xz, halfSize.Value);
+            if (territoryIndex.HasValue)
+                vignette.territoryIndex = territoryIndex;
             else
             {
-                Core.Log.LogError($"Vignette {name} has no radius or halfSize");
+                var gridLocation = Helper.ConvertPosToGrid(location.Value);
+                vignette.boundingBox = new Aabb { Min = gridLocation, Max = gridLocation };
+                vignette.location = location;
+            }
+
+            IEnumerable<Entity> entities;
+            if (radius != null) entities = Helper.GetAllEntitiesInRadius<Translation>(location.Value.xz, radius.Value);
+            else if (halfSize != null) entities = Helper.GetAllEntitiesInBox<Translation>(location.Value.xz, halfSize.Value);
+            else if (territoryIndex != null) entities = Helper.GetAllEntitiesInTerritory<Translation>(territoryIndex.Value);
+            else
+            {
+                Core.Log.LogError($"Vignette {name} has no radius, halfSize, or territory index");
                 return;
             }
 
@@ -93,6 +111,12 @@ namespace KindredVignettes.Services
             var entitiesSaving = entities.Where(entity =>
             {
                 if (entity.Has<CastleHeart>())
+                    return false;
+
+                if (!entity.Has<PrefabGUID>())
+                    return false;
+
+                if (entity.Has<CastleRoof>())
                     return false;
                 
                 var prefabName = entity.Read<PrefabGUID>().LookupName();
@@ -104,7 +128,7 @@ namespace KindredVignettes.Services
             {
                 var entity = entityMapper[i];
                 entityPrefabDiffs.Add(EntityPrefabDiff.DiffFromPrefab(entity, entityMapper));
-                if (Helper.GetAabb(entity, out var aabb))
+                if (territoryIndex==null && Helper.GetAabb(entity, out var aabb))
                 {
                     
                     aabbs.Add(aabb);
@@ -114,7 +138,8 @@ namespace KindredVignettes.Services
             }
 
             vignette.entities = entityPrefabDiffs.ToArray();
-            vignette.aabbs = aabbs.ToArray();
+            if (territoryIndex == null)
+                vignette.aabbs = aabbs.ToArray();
             
             var json = JsonSerializer.Serialize(vignette, GetJsonOptions());
 
@@ -149,41 +174,57 @@ namespace KindredVignettes.Services
                 return false;
             }
 
-            var center = newCenter ?? vignette.location;
-            var translation = newCenter!= null ? center - vignette.location : Vector3.zero;
+            var translation = Vector3.zero;
 
-            // Figure out the translation to keep it on the grid
-            if (!usersPlacingOffGrid.Contains(userEntity))
+            if (vignette.location.HasValue)
             {
-                translation.x = Mathf.Round(translation.x / 5) * 5;
-                translation.y = Mathf.Round(translation.y);
-                translation.z = Mathf.Round(translation.z / 5) * 5;
-            }
+                var center = newCenter ?? vignette.location.Value;
+                translation = newCenter != null ? center - vignette.location.Value : Vector3.zero;
 
-            var gridTranslation = new float3(translation.x * 2, translation.y, translation.z * 2);
-
-            var aabb = vignette.boundingBox;
-            aabb.Min += gridTranslation;
-            aabb.Max += gridTranslation;
-            aabb.Expand(expandClear);
-
-            IEnumerable<Entity> entities;
-            entities = Helper.GetAllEntitiesInTileAabb<TileModel>(aabb).
-                Where(x =>
+                // Figure out the translation to keep it on the grid
+                if (!usersPlacingOffGrid.Contains(userEntity))
                 {
-                    foreach(var aabb in vignette.aabbs)
-                    {
-                        var newAabb = aabb;
-                        newAabb.Min += gridTranslation;
-                        newAabb.Max += gridTranslation;
-                        newAabb.Expand(expandClear);
-                        if (Helper.IsEntityInAabb(x, newAabb))
-                            return true;
-                    }
-                    return false;
-                });
+                    translation.x = Mathf.Round(translation.x / 5) * 5;
+                    translation.y = Mathf.Round(translation.y);
+                    translation.z = Mathf.Round(translation.z / 5) * 5;
+                }
 
-            Helper.DestroyEntitiesForBuilding(entities);
+                var gridTranslation = new float3(translation.x * 2, translation.y, translation.z * 2);
+
+                var aabb = vignette.boundingBox;
+                aabb.Min += gridTranslation;
+                aabb.Max += gridTranslation;
+                aabb.Expand(expandClear);
+
+                var entities = Helper.GetAllEntitiesInTileAabb<TileModel>(aabb).
+                    Where(x =>
+                    {
+                        foreach (var aabb in vignette.aabbs)
+                        {
+                            var newAabb = aabb;
+                            newAabb.Min += gridTranslation;
+                            newAabb.Max += gridTranslation;
+                            newAabb.Expand(expandClear);
+                            if (Helper.IsEntityInAabb(x, newAabb))
+                                return true;
+                        }
+                        return false;
+                    });
+
+                Helper.DestroyEntitiesForBuilding(entities);
+            }
+            else if(vignette.territoryIndex.HasValue)
+            {
+                var entities = Helper.GetAllEntitiesInTerritory<TileModel>(vignette.territoryIndex.Value).
+                    Where(x =>
+                    {
+                        if(x.Has<CastleHeart>())
+                            return false;
+                        return true;
+                    });
+
+                Helper.DestroyEntitiesForBuilding(entities);
+            }
 
             var teamValue = charEntity.Read<Team>().Value;
             var castleHeartEntity = Entity.Null;
@@ -238,6 +279,8 @@ namespace KindredVignettes.Services
         {
             var entity = Core.EntityManager.Instantiate(prefab);
             entity.Write(new Translation { Value = diff.translation + translation });
+            if(entity.Has<LastTranslation>())
+                entity.Write(new LastTranslation { Value = diff.translation + translation });
             entity.Write(new Rotation { Value = diff.rotation });
 
             if (entity.Has<CastleHeartConnection>())

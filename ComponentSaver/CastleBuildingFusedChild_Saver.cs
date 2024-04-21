@@ -13,19 +13,19 @@ namespace KindredVignettes.ComponentSaver
             public int? ParentEntity { get; set; }
         }
 
-        public override object DiffComponents(Entity src, Entity dst, EntityMapper entityMapper)
+        public override object DiffComponents(Entity prefab, Entity entity, EntityMapper entityMapper)
         {
-            var srcData = src.Read<CastleBuildingFusedChild>();
-            var dstData = dst.Read<CastleBuildingFusedChild>();
+            var prefabData = prefab.Read<CastleBuildingFusedChild>();
+            var entityData = entity.Read<CastleBuildingFusedChild>();
 
-            var diff = new CastleBuildingFusedChild_Save();
-            if (srcData.ParentEntity.GetEntityOnServer() != dstData.ParentEntity.GetEntityOnServer())
-                diff.ParentEntity = entityMapper.IndexOf(dstData.ParentEntity.GetEntityOnServer());
+            var saveData = new CastleBuildingFusedChild_Save();
+            if (prefabData.ParentEntity.GetEntityOnServer() != entityData.ParentEntity.GetEntityOnServer())
+                saveData.ParentEntity = entityMapper.IndexOf(entityData.ParentEntity.GetEntityOnServer());
 
-            if (diff.Equals(default(CastleBuildingFusedChild_Save)))
+            if (saveData.Equals(default(CastleBuildingFusedChild_Save)))
                 return null;
 
-            return diff;
+            return saveData;
         }
 
         public override object SaveComponent(Entity entity, EntityMapper entityMapper)
