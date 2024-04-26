@@ -64,7 +64,7 @@ namespace KindredVignettes.Commands
             var charEntity = ctx.Event.SenderCharacterEntity;
             var charPos = charEntity.Read<Translation>().Value;
 
-            Helper.DestroyEntitiesForBuilding(Helper.GetAllEntitiesInRadius<TileModel>(charPos.xz, radius));
+            Helper.DestroyEntitiesForBuilding(Helper.GetAllEntitiesInRadius<Translation>(charPos.xz, radius));
             ctx.Reply($"Cleared tiles in radius {radius}");
         }
 
@@ -100,12 +100,17 @@ namespace KindredVignettes.Commands
         [Command("delete", description: "Delete the tile model closest to the mouse cursor", adminOnly: true)]
         public static void ClearTile(ChatCommandContext ctx)
         {
+            var startTime = Time.realtimeSinceStartup;
             var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
 
-            var closest = Helper.FindClosest<TileModel>(aimPos, "TM_");
+            Core.Log.LogInfo($"{Time.realtimeSinceStartup - startTime} Deleting tile at {aimPos} now finding closest tile model");
+            var closest = Helper.FindClosest<TilePosition>(aimPos, "TM_");
+            Core.Log.LogInfo($"{Time.realtimeSinceStartup - startTime} Found closest tile model {closest}");
             var prefabName = closest.Read<PrefabGUID>().LookupName();
+            Core.Log.LogInfo($"{Time.realtimeSinceStartup - startTime} Deleting tile {prefabName}");
 
             Helper.DestroyEntitiesForBuilding(new Entity[] { closest });
+            Core.Log.LogInfo($"{Time.realtimeSinceStartup - startTime} Deleted tile {prefabName}");
             ctx.Reply($"Deleted tile {prefabName}");
         }
 

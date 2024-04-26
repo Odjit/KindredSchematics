@@ -1,9 +1,6 @@
 ﻿using ProjectM.CastleBuilding;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Unity.Entities;
 using Unity.Mathematics;
 
 namespace KindredVignettes.Services
@@ -15,7 +12,8 @@ namespace KindredVignettes.Services
 
         public CastleTerritoryService()
         {
-            foreach (var castleTerritory in Helper.GetEntitiesByComponentType<CastleTerritory>(true))
+            var entities = Helper.GetEntitiesByComponentType<CastleTerritory>(true);
+            foreach (var castleTerritory in entities)
             {
                 var castleTerritoryIndex = castleTerritory.Read<CastleTerritory>().CastleTerritoryIndex;
                 var ctb = Core.EntityManager.GetBuffer<CastleTerritoryBlocks>(castleTerritory);
@@ -24,6 +22,7 @@ namespace KindredVignettes.Services
                     blockCoordToTerritoryIndex[ctb[i].BlockCoordinate] = castleTerritoryIndex;
                 }
             }
+            entities.Dispose();
         }
 
         public int GetTerritoryIndex(float3 pos)
@@ -32,6 +31,25 @@ namespace KindredVignettes.Services
             if (blockCoordToTerritoryIndex.TryGetValue(blockCoord, out var index))
                 return index;
             return -1;
+        }
+
+        public Entity GetHeartForTerritory(int territoryIndex)
+        {
+            if(territoryIndex == -1)
+                return Entity.Null;
+            var castleHearts = Helper.GetEntitiesByComponentType<CastleHeart>();
+            foreach(var heart in castleHearts)
+            {
+                var heartData = heart.Read<CastleHeart>();
+                var castleTerritoryEntity = heartData.CastleTerritoryEntity;
+                if (castleTerritoryEntity.Equals(Entity.Null))
+                    continue;
+                var heartTerritoryIndex = castleTerritoryEntity.Read<CastleTerritory>().CastleTerritoryIndex;
+                if (heartTerritoryIndex == territoryIndex)
+                    return heart;
+            }
+            castleHearts.Dispose();
+            return Entity.Null;
         }
 
         int2 ConvertPosToBlockCoord(float3 pos)

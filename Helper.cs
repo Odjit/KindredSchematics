@@ -1,5 +1,6 @@
 using Il2CppInterop.Runtime;
 using ProjectM;
+using ProjectM.CastleBuilding;
 using ProjectM.Shared;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -104,6 +105,7 @@ internal static partial class Helper
                 yield return entity;
             }
         }
+        entities.Dispose();
     }
 
     public static IEnumerable<Entity> GetAllEntitiesInRadius<T>(float2 center, float radius)
@@ -118,6 +120,7 @@ internal static partial class Helper
                 yield return entity;
             }
         }
+        entities.Dispose();
     }
 
 	public static IEnumerable<Entity> GetAllEntitiesInBox<T>(float2 center, float2 halfSize)
@@ -132,6 +135,7 @@ internal static partial class Helper
                 yield return entity;
             }
         }
+        entities.Dispose();
     }
 
 	public static float3 ConvertPosToGrid(float3 pos)
@@ -198,6 +202,7 @@ internal static partial class Helper
                 yield return entity;
             }
         }
+        entities.Dispose();
     }
 
     public static void DestroyEntitiesForBuilding(IEnumerable<Entity> entities)
@@ -205,7 +210,7 @@ internal static partial class Helper
 		foreach (var entity in entities)
 		{
             var prefabName = GetPrefabGUID(entity).LookupName();
-            if (!prefabName.StartsWith("TM_") && !prefabName.StartsWith("Chain_")) continue;
+            if (!prefabName.StartsWith("TM_") && !prefabName.StartsWith("Chain_") && !entity.Has<CastleBuildingFusedRoot>()) continue;
 
             if (entity.Has<SpawnChainChild>())
                 entity.Remove<SpawnChainChild>();
@@ -239,6 +244,7 @@ internal static partial class Helper
                 closestEntity = entity;
             }
         }
+        entities.Dispose();
         return closestEntity;
     }
 }

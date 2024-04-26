@@ -16,7 +16,8 @@ internal static class Core
 
 	public static EntityManager EntityManager { get; } = Server.EntityManager;
 	public static CastleBuffsTickSystem CastleBuffsTickSystem { get; } = Server.GetExistingSystem<CastleBuffsTickSystem>();
-	public static CastleTerritoryService CastleTerritory { get; private set; }
+    public static CastleBuildingAttachmentBuffSystem CastleBuildingAttachmentBuffSystem { get; } = Server.GetExistingSystem<CastleBuildingAttachmentBuffSystem>();
+    public static CastleTerritoryService CastleTerritory { get; private set; }
     public static PrefabCollectionSystem PrefabCollection { get; } = Server.GetExistingSystem<PrefabCollectionSystem>();
     public static VignetteService VignetteService { get; } = new();
 

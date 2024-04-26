@@ -73,10 +73,10 @@ abstract class ComponentSaver
             return;
         foreach (var addition in additions)
         {
-            var saveDataer = GetComponentSaver(addition.component);
-            if (saveDataer != null)
+            var componentSaver = GetComponentSaver(addition.component);
+            if (componentSaver != null)
             {
-                saveDataer.ApplyComponentData(entity, (JsonElement)addition.data, entitiesBeingLoaded);
+                componentSaver.ApplyComponentData(entity, (JsonElement)addition.data, entitiesBeingLoaded);
             }
         }
     }

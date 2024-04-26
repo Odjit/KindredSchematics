@@ -18,8 +18,8 @@ namespace KindredVignettes
 
     {
         public PrefabGUID prefab { get; set; }
-        public Vector3 translation { get; set; }
-        public Quaternion rotation { get; set; }
+        public Vector3 pos { get; set; }
+        public Quaternion rot { get; set; }
         public ComponentData[] componentData { get; set; }
         public int[] removals { get; set; }
     }
@@ -31,8 +31,8 @@ namespace KindredVignettes
             var diffData = new EntityData();
             // Compare the two entities and return a list of differences
             diffData.prefab = entity.Read<PrefabGUID>();
-            diffData.translation = entity.Read<Translation>().Value;
-            diffData.rotation = entity.Read<Rotation>().Value;
+            diffData.pos = entity.Read<Translation>().Value;
+            diffData.rot = entity.Read<Rotation>().Value;
 
             var componentData = new List<ComponentData>();
             var removals = new List<int>();

@@ -1,10 +1,11 @@
 ﻿using BepInEx.Unity.IL2CPP.Utils.Collections;
+using KindredCommands.Data;
 using KindredVignettes.JsonConverters;
 using KindredVignettes.Patches;
 using ProjectM;
 using ProjectM.CastleBuilding;
 using ProjectM.Physics;
-using ProjectM.Tiles;
+using ProjectM.Shared;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -30,6 +31,13 @@ namespace KindredVignettes.Services
             public Aabb[] aabbs { get; set; }
             public EntityData[] entities { get; set; }
         }
+
+        struct HeartInfo
+        {
+            public Entity CastleHeart;
+            public Entity TeamReference;
+            public int TeamValue;
+        };
 
         readonly List<Entity> usersClearingEntireArea = [];
         readonly List<Entity> usersPlacingOffGrid = [];
@@ -119,7 +127,13 @@ namespace KindredVignettes.Services
                 if (entity.Has<CastleRoof>())
                     return false;
                 
-                var prefabName = entity.Read<PrefabGUID>().LookupName();
+                var prefabGUID = entity.Read<PrefabGUID>();
+
+                // For some reason this prefab is missing the correct stuff on the server
+                if (prefabGUID == Prefabs.TM_Castle_Wall_Tier02_Stone_EntranceCrown)
+                    return false;
+
+                var prefabName = prefabGUID.LookupName();
                 return prefabName.StartsWith("TM_") || prefabName.StartsWith("Chain_") || prefabName.StartsWith("BP_");
             });
 
@@ -134,6 +148,51 @@ namespace KindredVignettes.Services
                     aabbs.Add(aabb);
                     aabb.Include(vignette.boundingBox);
                     vignette.boundingBox = aabb;
+                }
+
+                if(entity.Has<CastleFloor>())
+                {
+                    var castleFloor = entity.Read<CastleFloor>();
+                    if(castleFloor.NeighbourFloorNorth.Entity != Entity.Null)
+                    {
+                        var neighbour = entityMapper.IndexOf(castleFloor.NeighbourFloorNorth.Entity);
+                    }
+                    if(castleFloor.NeighbourFloorEast.Entity != Entity.Null)
+                    {
+                        var neighbour = entityMapper.IndexOf(castleFloor.NeighbourFloorEast.Entity);
+                    }
+                    if(castleFloor.NeighbourFloorSouth.Entity != Entity.Null)
+                    {
+                        var neighbour = entityMapper.IndexOf(castleFloor.NeighbourFloorSouth.Entity);
+                    }
+                    if(castleFloor.NeighbourFloorWest.Entity != Entity.Null)
+                    {
+                        var neighbour = entityMapper.IndexOf(castleFloor.NeighbourFloorWest.Entity);
+                    }
+                    if(castleFloor.NeighbourFloorUp.Entity != Entity.Null)
+                    {
+                        var neighbour = entityMapper.IndexOf(castleFloor.NeighbourFloorUp.Entity);
+                    }
+                    if(castleFloor.NeighbourFloorDown.Entity != Entity.Null)
+                    {
+                        var neighbour = entityMapper.IndexOf(castleFloor.NeighbourFloorDown.Entity);
+                    }
+                    if(castleFloor.WallNorth != Entity.Null)
+                    {
+                        var neighbour = entityMapper.IndexOf(castleFloor.WallNorth);
+                    }
+                    if(castleFloor.WallEast != Entity.Null)
+                    {
+                        var neighbour = entityMapper.IndexOf(castleFloor.WallEast);
+                    }
+                    if(castleFloor.WallSouth != Entity.Null)
+                    {
+                        var neighbour = entityMapper.IndexOf(castleFloor.WallSouth);
+                    }
+                    if(castleFloor.WallWest != Entity.Null)
+                    {
+                        var neighbour = entityMapper.IndexOf(castleFloor.WallWest);
+                    }
                 }
             }
 
@@ -150,8 +209,13 @@ namespace KindredVignettes.Services
             File.WriteAllText($"{CONFIG_PATH}/{name}.vignette", json);
         }
 
+        public Entity CurUserEntity { get; private set; }
+        public Entity CurCharEntity { get; private set; }
         public bool LoadVignette(string name, Entity userEntity, Entity charEntity, float expandClear, Vector3? newCenter=null)
         {
+            CurUserEntity = userEntity;
+            CurCharEntity = charEntity;
+
             string json;
             try
             {
@@ -175,7 +239,7 @@ namespace KindredVignettes.Services
             }
 
             var translation = Vector3.zero;
-
+            var heartAabbsInLoadArea = new List<Aabb>();
             if (vignette.location.HasValue)
             {
                 var center = newCenter ?? vignette.location.Value;
@@ -196,9 +260,37 @@ namespace KindredVignettes.Services
                 aabb.Max += gridTranslation;
                 aabb.Expand(expandClear);
 
-                var entities = Helper.GetAllEntitiesInTileAabb<TileModel>(aabb).
+                var entities = Helper.GetAllEntitiesInTileAabb<Translation>(aabb).
                     Where(x =>
                     {
+                        if (x.Has<CastleHeart>())
+                        {
+                            var pos = x.Read<Translation>().Value;
+                            var heartAabb = new Aabb
+                            {
+                                Min = new float3(pos.x - 2.5f, pos.y, pos.z - 2.5f),
+                                Max = new float3(pos.x + 2.5f, pos.y + 0.1f, pos.z + 2.5f)
+                            };
+                            heartAabbsInLoadArea.Add(heartAabb);
+                            return false;
+                        }
+
+                        return true;
+                    });
+
+                entities = entities.
+                    Where(x =>
+                    {
+                        if(!x.Has<PrefabGUID>())
+                            return false;
+
+                        // Keep entities protected by the heart
+                        foreach(var heartAabb in heartAabbsInLoadArea)
+                        {
+                            if (Helper.IsEntityInAabb(x, heartAabb))
+                                return false;
+                        }
+
                         foreach (var aabb in vignette.aabbs)
                         {
                             var newAabb = aabb;
@@ -208,19 +300,35 @@ namespace KindredVignettes.Services
                             if (Helper.IsEntityInAabb(x, newAabb))
                                 return true;
                         }
-                        return false;
+
+                        var prefabName = x.Read<PrefabGUID>().LookupName();
+                        return prefabName.StartsWith("TM_") || prefabName.StartsWith("Chain_");
                     });
 
                 Helper.DestroyEntitiesForBuilding(entities);
             }
             else if(vignette.territoryIndex.HasValue)
             {
-                var entities = Helper.GetAllEntitiesInTerritory<TileModel>(vignette.territoryIndex.Value).
+                var entities = Helper.GetAllEntitiesInTerritory<Translation>(vignette.territoryIndex.Value).
                     Where(x =>
                     {
-                        if(x.Has<CastleHeart>())
+                        if (!x.Has<PrefabGUID>())
                             return false;
-                        return true;
+
+                        if (x.Has<CastleHeart>())
+                        {
+                            var pos = x.Read<Translation>().Value;
+                            var heartAabb = new Aabb
+                            {
+                                Min = new float3(pos.x - 2.5f, pos.y, pos.z - 2.5f),
+                                Max = new float3(pos.x + 2.5f, pos.y + 0.1f, pos.z + 2.5f)
+                            };
+                            heartAabbsInLoadArea.Add(heartAabb);
+                            return false;
+                        }
+
+                        var prefabName = x.Read<PrefabGUID>().LookupName();
+                        return prefabName.StartsWith("TM_") || prefabName.StartsWith("Chain_");
                     });
 
                 Helper.DestroyEntitiesForBuilding(entities);
@@ -244,6 +352,16 @@ namespace KindredVignettes.Services
                 }
             }
 
+            var defaultHeartInfo = new HeartInfo
+            {
+                CastleHeart = castleHeartEntity,
+                TeamReference = castleTeamReference,
+                TeamValue = teamValue
+            };
+
+            var territoryToHeartInfo = new Dictionary<int, HeartInfo>();
+            territoryToHeartInfo.Add(-1, defaultHeartInfo);
+
             // Disable spawn chain system for one frame
             InitializeNewSpawnChainSystem_Patch.skipOnce = true;
 
@@ -253,11 +371,49 @@ namespace KindredVignettes.Services
             var time = Core.CastleBuffsTickSystem._ServerTime.GetSingleton();
             for (var i=0; i < vignette.entities.Length; ++i)
             {
-                var diff = vignette.entities[i];
+                var entityData = vignette.entities[i];
 
-                if (Core.PrefabCollection.PrefabLookupMap.TryGetValue(diff.prefab, out var prefab))
+                if (Core.PrefabCollection.PrefabLookupMap.TryGetValue(entityData.prefab, out var prefab))
                 {
-                    Entity entity = SpawnEntity(userEntity, translation, teamValue, castleHeartEntity, castleTeamReference, diff, prefab);
+                    // Figure out what heart to assign this entity to
+                    var territoryIndex = Core.CastleTerritory.GetTerritoryIndex(entityData.pos + translation);
+                    if (!territoryToHeartInfo.TryGetValue(territoryIndex, out var heartInfo))
+                    {
+                        var heartEntity = Core.CastleTerritory.GetHeartForTerritory(territoryIndex);
+                        if (heartEntity.Equals(Entity.Null))
+                        {
+                            heartInfo = defaultHeartInfo;
+                        }
+                        else
+                        {
+                            heartInfo.CastleHeart = heartEntity;
+                            heartInfo.TeamValue = heartEntity.Read<Team>().Value;
+                            heartInfo.TeamReference = Entity.Null;
+                            if (heartEntity.Has<TeamReference>())
+                                heartInfo.TeamReference = heartEntity.Read<TeamReference>().Value;
+                        }
+                        territoryToHeartInfo.Add(territoryIndex, heartInfo);
+                    }
+
+                    Entity entity = SpawnEntity(userEntity, translation, heartInfo, entityData, prefab);
+
+                    if (territoryIndex == -1)
+                    {
+                        if(!entity.Has<Immortal>())
+                            entity.Add<Immortal>();
+                        entity.Write(new Immortal() { IsImmortal = true });
+                    }
+
+                    // Can't have entities overlap a heart so they have to be destroyed
+                    foreach (var heartAabb in heartAabbsInLoadArea)
+                    {
+                        if (Helper.IsEntityInAabb(entity, heartAabb))
+                        {
+                            DestroyUtility.Destroy(Core.EntityManager, entity);
+                            entity = Entity.Null;
+                            break;
+                        }
+                    }
 
                     createdEntities[i + 1] = entity;
                 }
@@ -268,37 +424,53 @@ namespace KindredVignettes.Services
             {
                 var diff = vignette.entities[i];
                 var entity = createdEntities[i+1];
+
+                if (entity.Equals(Entity.Null))
+                    continue;
+
                 ComponentSaver.ComponentSaver.ApplyComponentData(entity, diff.componentData, createdEntities);
                 ComponentSaver.ComponentSaver.ApplyRemovals(entity, diff.removals);
+
+                // See if they have attachment apply buffs
+                if (entity.Has<CastleBuildingAttachmentApplyBuff>())
+                {
+                    var applyBuffs = Core.EntityManager.GetBuffer<CastleBuildingAttachmentApplyBuff>(entity);
+                    foreach (var buffToApply in applyBuffs)
+                    {
+                        if (buffToApply.ApplyOn == CastleBuildingAttachmentBuffApplyOn.This)
+                        {
+                        }
+                    }
+                }
             }
 
             return true;
         }
 
-        private static Entity SpawnEntity(Entity userEntity, Vector3 translation, int teamValue, Entity castleHeartEntity, Entity castleTeamReference, EntityData diff, Entity prefab)
+        private static Entity SpawnEntity(Entity userEntity, Vector3 translation, HeartInfo heartInfo, EntityData diff, Entity prefab)
         {
             var entity = Core.EntityManager.Instantiate(prefab);
-            entity.Write(new Translation { Value = diff.translation + translation });
+            entity.Write(new Translation { Value = diff.pos + translation });
             if(entity.Has<LastTranslation>())
-                entity.Write(new LastTranslation { Value = diff.translation + translation });
-            entity.Write(new Rotation { Value = diff.rotation });
+                entity.Write(new LastTranslation { Value = diff.pos + translation });
+            entity.Write(new Rotation { Value = diff.rot });
 
             if (entity.Has<CastleHeartConnection>())
             {
-                entity.Write(new CastleHeartConnection { CastleHeartEntity = castleHeartEntity });
+                entity.Write(new CastleHeartConnection { CastleHeartEntity = heartInfo.CastleHeart });
 
                 if (entity.Has<Team>())
                 {
-                    entity.Write(new Team { Value = teamValue, FactionIndex = -1 });
+                    entity.Write(new Team { Value = heartInfo.TeamValue, FactionIndex = -1 });
 
                     entity.Add<UserOwner>();
                     entity.Write(new UserOwner() { Owner = userEntity });
                 }
 
-                if (entity.Has<TeamReference>() && !castleTeamReference.Equals(Entity.Null))
+                if (entity.Has<TeamReference>() && !heartInfo.TeamReference.Equals(Entity.Null))
                 {
                     var t = new TeamReference();
-                    t.Value._Value = castleTeamReference;
+                    t.Value._Value = heartInfo.TeamReference;
                     entity.Write(t);
                 }
             }

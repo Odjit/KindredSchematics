@@ -1,17 +1,10 @@
 ﻿using HarmonyLib;
-using KindredCommands;
-using KindredCommands.Data;
 using KindredVignettes;
 using ProjectM;
-using ProjectM.CastleBuilding.Placement;
-using ProjectM.Network;
 using System.Linq;
-using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Physics;
 using Unity.Transforms;
-using static ProjectM.PlaceTileModelSystem;
 
 public static class PlaceTileModelSystem_Patch
 {
