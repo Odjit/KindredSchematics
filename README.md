@@ -31,14 +31,6 @@ Feel free to reach out to me on discord (odjit) if you have any questions or nee
 
 ## Commands
 
-### Misc Commands
-- `.floorup (NumberofFloors)`
-  - Teleports you up a floor or specified number of floors.
-  - Shortcut: `.fu (NumberofFloors)`
-- `.floordown (NumberofFloors)`
-  - Teleports you down a floor or specified number of floors.
-  - Shortcut: `.fd (NumberofFloors)`
-
 ### Build Commands
 - `.build free` 
   - turns on debug mode free building. DO NOT USE THIS ON A LIVE SERVER. There is a config file to disable this command for your live server.
@@ -91,6 +83,14 @@ Feel free to reach out to me on discord (odjit) if you have any questions or nee
   - Shortcut: `.v la (vignetteName) (x) (y) (z) (expandclear=1)`
 - `.vignette toggleplacegrid`
   - on = will attempt to paste in any vignette along grid lines or off grid will allow for offgrid (and thus, misaligned) placement.
+
+### Misc Commands
+- `.floorup (NumberofFloors)`
+  - Teleports you up a floor or specified number of floors.
+  - Shortcut: `.fu (NumberofFloors)`
+- `.floordown (NumberofFloors)`
+  - Teleports you down a floor or specified number of floors.
+  - Shortcut: `.fd (NumberofFloors)`
 
 	
 
