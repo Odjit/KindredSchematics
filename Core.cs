@@ -20,8 +20,9 @@ internal static class Core
     public static CastleTerritoryService CastleTerritory { get; private set; }
     public static PrefabCollectionSystem PrefabCollection { get; } = Server.GetExistingSystem<PrefabCollectionSystem>();
     public static VignetteService VignetteService { get; } = new();
+	public static ConfigSettingsService ConfigSettings { get; } = new();
 
-	static NetworkIdSystem networkIdSystem;
+    static NetworkIdSystem networkIdSystem;
 
     public const int MAX_REPLY_LENGTH = 509;
 

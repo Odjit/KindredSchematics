@@ -1,7 +1,10 @@
 ﻿using ProjectM;
 using ProjectM.CastleBuilding;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using Unity.Entities;
+using Unity.Mathematics;
 using Unity.Transforms;
 using VampireCommandFramework;
 
@@ -9,80 +12,18 @@ namespace KindredVignettes.Commands
 {
     internal class MiscCommands
     {
-        [Command("flyheight", description: "Sets the fly height for the user", adminOnly: true)]
-        public static void SetFlyHeight(ChatCommandContext ctx, float height = 30)
-        {
-            var charEntity = ctx.Event.SenderCharacterEntity;
-            var canFly = charEntity.Read<CanFly>();
-            canFly.FlyingHeight.Value = height;
-            charEntity.Write(canFly);
-            ctx.Reply($"Set fly height to {height}");
-        }
-
-        [Command("flyobstacleheight", description: "Set the height to fly above any obstacles", adminOnly: true)]
-        public static void SetFlyObstacleHeight(ChatCommandContext ctx, float height = 7)
-        {
-            var charEntity = ctx.Event.SenderCharacterEntity;
-            var canFly = charEntity.Read<CanFly>();
-            canFly.HeightAboveObstacle.Value = height;
-            charEntity.Write(canFly);
-            ctx.Reply($"Set fly obstacle height to {height}");
-        }
-
-        [Command("forcechain", description: "Set the chain transition time for nearby chains to now", adminOnly: true)]
-        public static void ChainTransition(ChatCommandContext ctx, float range=10)
-        {
-            var charEntity = ctx.Event.SenderCharacterEntity;
-            var time = Core.CastleBuffsTickSystem._ServerTime.GetSingleton().Time;
-            foreach(var chainEntity in Helper.GetAllEntitiesInRadius<AutoChainInstanceData>(charEntity.Read<Translation>().Value.xz, range))
-            {
-                chainEntity.Write(new AutoChainInstanceData() { NextTransitionAttempt=time });
-            }
-        }
-
         [Command("floorup", "fu", description: "Move up a floor", adminOnly: true)]
         public static void FloorUp(ChatCommandContext ctx, int numFloors = 1)
         {
             var charEntity = ctx.Event.SenderCharacterEntity;
             var charPos = charEntity.Read<Translation>().Value;
-            var gridPos = Helper.ConvertPosToGrid(charPos);
 
+            GetFloors(charPos, out var floors, out var floorIndex);
 
-            var floors = Helper.GetAllEntitiesInRadius<CastleFloor>(charPos.xz, 5).
-                Where(f =>
-                {
-                    if (!f.Has<TileBounds>())
-                        return false;
-                    var tb = f.Read<TileBounds>().Value;
-                    return tb.Min.x <= gridPos.x && tb.Max.x >= gridPos.x && tb.Min.y <= gridPos.z && tb.Max.y >= gridPos.z;
-                }).ToArray();
-
-            Array.Sort(floors, (a, b) =>
-            {
-                var aPos = a.Read<Translation>().Value;
-                var bPos = b.Read<Translation>().Value;
-                return Math.Sign(aPos.y - bPos.y);
-            });
-
-            // Determine what floor we are on
-            var floorIndex = -1;
-            for (int i = 0; i < floors.Length; i++)
-            {
-                var floorPos = floors[i].Read<Translation>().Value;
-                if (floorPos.y <= charPos.y)
-                {
-                    floorIndex = i;
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            floorIndex = Math.Min(floors.Length - 1, floorIndex + numFloors);
+            floorIndex = Math.Min(floors.Count - 1, floorIndex + numFloors);
             var newCharPos = charPos;
             if (floorIndex >= 0)
-                newCharPos.y = floors[floorIndex].Read<Translation>().Value.y;
+                newCharPos.y = floors[floorIndex].y;
             else
                 newCharPos.y = 0;
             charEntity.Write(new Translation() { Value = newCharPos });
@@ -96,31 +37,59 @@ namespace KindredVignettes.Commands
         {
             var charEntity = ctx.Event.SenderCharacterEntity;
             var charPos = charEntity.Read<Translation>().Value;
+
+            GetFloors(charPos, out var floors, out var floorIndex);
+
+            floorIndex = Math.Min(floors.Count - 1, floorIndex - numFloors);
+            var newCharPos = charPos;
+            if (floorIndex >= 0)
+                newCharPos.y = floors[floorIndex].y;
+            else
+                newCharPos.y = 0;
+            charEntity.Write(new Translation() { Value = newCharPos });
+            charEntity.Write(new LastTranslation() { Value = newCharPos });
+
+            ctx.Reply($"Moved down {numFloors} floors to {(floorIndex < 0 ? "ground" : $"floor {floorIndex + 1}")}");
+        }
+
+        static void GetFloors(float3 charPos, out List<(float y, Entity entity, Entity fusedChild)> floors, out int floorIndex)
+        {
             var gridPos = Helper.ConvertPosToGrid(charPos);
-
-
-            var floors = Helper.GetAllEntitiesInRadius<CastleFloor>(charPos.xz, 5).
+            floors = Helper.GetAllEntitiesInRadius<CastleFloor>(charPos.xz, 5).
                 Where(f =>
                 {
                     if (!f.Has<TileBounds>())
                         return false;
                     var tb = f.Read<TileBounds>().Value;
                     return tb.Min.x <= gridPos.x && tb.Max.x >= gridPos.x && tb.Min.y <= gridPos.z && tb.Max.y >= gridPos.z;
-                }).ToArray();
-
-            Array.Sort(floors, (a, b) =>
+                }).Select(entity =>
+                {
+                    var y = entity.Read<Translation>().Value.y;
+                    var fusedChild = entity.Has<CastleBuildingFusedChild>() ? entity.Read<CastleBuildingFusedChild>().ParentEntity.GetEntityOnServer() : Entity.Null;
+                    return (y, entity, fusedChild);
+                }).ToList();
+            floors.Sort((a, b) =>
             {
-                var aPos = a.Read<Translation>().Value;
-                var bPos = b.Read<Translation>().Value;
-                return Math.Sign(aPos.y - bPos.y);
+                var t = a.y;
+                return a.y.CompareTo(b.y);
             });
 
-            // Determine what floor we are on
-            var floorIndex = -1;
-            for (int i = 0; i < floors.Length; i++)
+            // Eliminate floors at the same height or with same fused child in reverse order
+            for (int i = floors.Count - 1; i > 0; i--)
             {
-                var floorPos = floors[i].Read<Translation>().Value;
-                if (floorPos.y <= charPos.y)
+                if (floors[i].y == floors[i - 1].y ||
+                    (!floors[i].fusedChild.Equals(Entity.Null) && floors[i].fusedChild.Equals(floors[i - 1].fusedChild)))
+                {
+                    floors.RemoveAt(i);
+                }
+            }
+
+            // Determine what floor we are on
+            floorIndex = -1;
+            for (int i = 0; i < floors.Count; i++)
+            {
+                var floorPos = floors[i].y;
+                if (floorPos <= charPos.y)
                 {
                     floorIndex = i;
                 }
@@ -129,26 +98,6 @@ namespace KindredVignettes.Commands
                     break;
                 }
             }
-
-            // Log out the floors with their index
-            Core.Log.LogInfo($"Player is at {charPos.y} on floor {floorIndex}");
-            for (int i = 0; i < floors.Length; i++)
-            {
-                var floor = floors[i];
-                var floorPos = floor.Read<Translation>().Value;
-                Core.Log.LogInfo($"Floor {i} at {floorPos.y}");
-            }
-
-            floorIndex = Math.Min(floors.Length - 1, floorIndex - numFloors);
-            var newCharPos = charPos;
-            if (floorIndex >= 0)
-                newCharPos.y = floors[floorIndex].Read<Translation>().Value.y;
-            else
-                newCharPos.y = 0;
-            charEntity.Write(new Translation() { Value = newCharPos });
-            charEntity.Write(new LastTranslation() { Value = newCharPos });
-
-            ctx.Reply($"Moved down {numFloors} floors to {(floorIndex < 0 ? "ground" : $"floor {floorIndex + 1}")}");
         }
     }
 }

@@ -134,19 +134,6 @@ namespace KindredVignettes.Commands
             }
         }
 
-        [Command("toggleclearall", description: "Toggles clearing the entire area within radius/2d rectangle instead of just what overlaps", adminOnly: true)]
-        public static void ToggleClearAll(ChatCommandContext ctx)
-        {
-            if (Core.VignetteService.ToggleClearingEntireArea(ctx.Event.SenderUserEntity))
-            {
-                ctx.Reply("Clearing entire area");
-            }
-            else
-            {
-                ctx.Reply("Cleared only overlaps");
-            }
-        }
-
         [Command("toggleplacegrid", description: "Toggles placing vignettes on the grid", adminOnly: true)]
         public static void TogglePlacingOffGrid(ChatCommandContext ctx)
         {

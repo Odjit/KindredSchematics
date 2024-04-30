@@ -115,7 +115,7 @@ internal static partial class Helper
 		{
             if (!entity.Has<Translation>()) continue;
             var pos = entity.Read<Translation>().Value;
-            if (Vector2.Distance(center, pos.xz) <= radius)
+            if (math.distance(center, pos.xz) <= radius)
 			{
                 yield return entity;
             }
@@ -209,6 +209,8 @@ internal static partial class Helper
 	{
 		foreach (var entity in entities)
 		{
+            if (entity.Has<CastleHeart>()) continue;
+
             var prefabName = GetPrefabGUID(entity).LookupName();
             if (!prefabName.StartsWith("TM_") && !prefabName.StartsWith("Chain_") && !entity.Has<CastleBuildingFusedRoot>()) continue;
 

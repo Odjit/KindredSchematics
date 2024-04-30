@@ -1,8 +1,11 @@
-﻿using KindredVignettes.Commands.Converter;
+﻿using Il2CppSystem.Text;
+using KindredVignettes.Commands.Converter;
 using ProjectM;
 using ProjectM.Network;
 using ProjectM.Tiles;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
@@ -36,6 +39,11 @@ namespace KindredVignettes.Commands
         [Command("free", description: "Makes building costs free for everyone and removes placement restrictions", adminOnly: true)]
         public static void ToggleBuildingCostsCommand(ChatCommandContext ctx)
         {
+            if (Core.ConfigSettings.FreeBuildDisabled)
+            {
+                ctx.Reply("Free building is disabled in the config and has to be manually edited to be reenabled");
+                return;
+            }
             var User = ctx.Event.User;
             var debugEventsSystem = Core.Server.GetExistingSystem<DebugEventsSystem>();
 
@@ -56,6 +64,13 @@ namespace KindredVignettes.Commands
             {
                 ctx.Reply("Free building disabled");
             }
+        }
+
+        [Command("disablefreebuild", description: "Disables free building command", adminOnly: true)]
+        public static void DisableFreeBuild(ChatCommandContext ctx)
+        {
+            Core.ConfigSettings.FreeBuildDisabled = true;
+            ctx.Reply("Free building command disabled");
         }
 
         [Command("clearradius", description: "Clears all tile models in a radius", adminOnly: true)]
@@ -130,7 +145,7 @@ namespace KindredVignettes.Commands
             entity.Write(new Translation { Value = spawnPos });
             entity.Write(new Rotation { Value = rot });
 
-            if(entity.Has<TilePosition>())
+            if (entity.Has<TilePosition>())
             {
                 var tilePos = entity.Read<TilePosition>();
                 // Get rotation around Y axis
@@ -144,6 +159,31 @@ namespace KindredVignettes.Commands
 
                 entity.Write(new Rotation { Value = quaternion.RotateY(math.radians(90 * (int)tilePos.TileRotation)) });
             }
+        }
+
+        [Command("immortal", description: "Makes the tile closest to mouse cursor immortal", adminOnly: true)]
+        public static void ImmortalTile(ChatCommandContext ctx)
+        {
+            var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
+
+            var closest = Helper.FindClosest<TilePosition>(aimPos, "TM_");
+            if (!closest.Has<Immortal>())
+                closest.Add<Immortal>();
+            closest.Write(new Immortal { IsImmortal = true });
+
+            ctx.Reply($"Made tile {closest.Read<PrefabGUID>().LookupName()} immortal");
+        }
+
+        [Command("mortal", description: "Makes the tile closest to mouse cursor mortal", adminOnly: true)]
+        public static void MortalTile(ChatCommandContext ctx)
+        {
+            var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
+
+            var closest = Helper.FindClosest<TilePosition>(aimPos, "TM_");
+            if (!closest.Has<Immortal>())
+                closest.Add<Immortal>();
+            closest.Write(new Immortal { IsImmortal = false });
+            ctx.Reply($"Made tile {closest.Read<PrefabGUID>().LookupName()} mortal");
         }
 
         [Command("rotate", description: "Rotates the tile closest to mouse cursor by 90 degrees", adminOnly: true)]
@@ -164,5 +204,52 @@ namespace KindredVignettes.Commands
 
             ctx.Reply($"Rotated tile {closest.Read<PrefabGUID>().LookupName()} to rotation {tilePos.TileRotation}");
         }
+
+        [Command("search", "s", adminOnly: true)]
+        public static void SearchTile(ChatCommandContext ctx, string search, int page = 1)
+        {
+            List<(string Name, PrefabGUID Prefab)> searchResults = [];
+            try
+            {
+                foreach (var kvp in Data.Tile.LowerCaseNameToPrefab)
+                {
+                    if (kvp.Key.Contains(search, StringComparison.OrdinalIgnoreCase))
+                    {
+                        searchResults.Add((kvp.Key, kvp.Value));
+                    }
+                }
+
+                if (!searchResults.Any())
+                {
+                    ctx.Reply("Could not find any matching prefabs.");
+                }
+
+                searchResults = searchResults.OrderBy(kvp => kvp.Name).ToList();
+
+                var sb = new StringBuilder();
+                var totalCount = searchResults.Count;
+                var pageSize = 7;
+                var pageLabel = totalCount > pageSize ? $" (Page {page}/{System.Math.Ceiling(totalCount / (float)pageSize)})" : "";
+
+                if (totalCount > pageSize)
+                {
+                    searchResults = searchResults.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+                }
+
+                sb.AppendLine($"Found {totalCount} matches {pageLabel}:");
+                foreach (var (Name, Prefab) in searchResults)
+                {
+                    sb.AppendLine(
+                        $"({Prefab.GuidHash}) {Name.Replace(search, $"<b>{search}</b>", StringComparison.OrdinalIgnoreCase)}");
+                }
+
+                ctx.Reply(sb.ToString());
+            }
+            catch (Exception e)
+            {
+                Core.LogException(e);
+            }
+        }
     }
-}
+    }
+
