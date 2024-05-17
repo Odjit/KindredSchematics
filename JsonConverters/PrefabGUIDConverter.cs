@@ -1,4 +1,5 @@
 ﻿using ProjectM;
+using Stunlock.Core;
 using System;
 using System.Text.Json;
 
@@ -19,7 +20,8 @@ namespace KindredVignettes.JsonConverters
             var prefabName = reader.GetString();
 
             if (!Core.PrefabCollection.NameToPrefabGuidDictionary.TryGetValue(prefabName, out var prefabGUID))
-                throw new JsonException($"Invalid PrefabGUID name {prefabName}");
+                return new PrefabGUID(0);
+                //throw new JsonException($"Invalid PrefabGUID name {prefabName}");
             return prefabGUID;
         }
 

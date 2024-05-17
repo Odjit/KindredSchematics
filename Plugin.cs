@@ -8,8 +8,6 @@ namespace KindredVignettes;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 [BepInDependency("gg.deca.VampireCommandFramework")]
-[BepInDependency("gg.deca.Bloodstone")]
-[Bloodstone.API.Reloadable]
 public class Plugin : BasePlugin
 {
     static Harmony _harmony;

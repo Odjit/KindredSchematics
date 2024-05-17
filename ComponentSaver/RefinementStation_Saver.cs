@@ -1,5 +1,6 @@
 ﻿using KindredVignettes.Services;
 using ProjectM;
+using Stunlock.Core;
 using System.Collections;
 using System.Text.Json;
 using Unity.Entities;
@@ -21,7 +22,6 @@ namespace KindredVignettes.ComponentSaver
             public int? InactiveSequenceGuid { get; set; }
             public int? ActiveSequenceState { get; set; }
             public int? InactiveSequenceState { get; set; }
-            public bool? Active { get; set; }
             public bool? IsWorking { get; set; }
         }
 
@@ -32,7 +32,7 @@ namespace KindredVignettes.ComponentSaver
 
             var saveData = new Refinementstation_Save();
             if (prefabData.RefiningStartTime != entityData.RefiningStartTime && saveData.RefiningStartTime >= 0)
-                saveData.RefiningStartTime -= Core.CastleBuffsTickSystem._ServerTime.GetSingleton().Time;
+                saveData.RefiningStartTime -= Core.ServerTime;
             if (!entityData.InputInventoryEntity.Equals(Entity.Null))
                 saveData.InputInventory = new InventoryBuffer_Saver().SaveComponent(entityData.InputInventoryEntity.GetEntityOnServer(), entityMapper);
             if (!entityData.OutputInventoryEntity.Equals(Entity.Null))
@@ -51,8 +51,6 @@ namespace KindredVignettes.ComponentSaver
                 saveData.ActiveSequenceState = entityMapper.IndexOf(entityData.ActiveSequenceState.Id);
             if (!prefabData.InactiveSequenceState.Equals(entityData.InactiveSequenceState))
                 saveData.InactiveSequenceState = entityMapper.IndexOf(entityData.InactiveSequenceState.Id);
-            if (prefabData.Active != entityData.Active)
-                saveData.Active = entityData.Active;
             if (prefabData.IsWorking != entityData.IsWorking)
                 saveData.IsWorking = entityData.IsWorking;
 
@@ -69,7 +67,7 @@ namespace KindredVignettes.ComponentSaver
 
             saveData.RefiningStartTime = data.RefiningStartTime;
             if (saveData.RefiningStartTime >= 0)
-                saveData.RefiningStartTime -= Core.CastleBuffsTickSystem._ServerTime.GetSingleton().Time;
+                saveData.RefiningStartTime -= Core.ServerTime;
             if (!data.InputInventoryEntity.Equals(Entity.Null))
                 saveData.InputInventory = new InventoryBuffer_Saver().SaveComponent(data.InputInventoryEntity.GetEntityOnServer(), entityMapper);
             if (!data.OutputInventoryEntity.Equals(Entity.Null))
@@ -81,7 +79,6 @@ namespace KindredVignettes.ComponentSaver
             saveData.InactiveSequenceGuid = data.InactiveSequenceGuid.GuidHash;
             saveData.ActiveSequenceState = entityMapper.IndexOf(data.ActiveSequenceState.Id);
             saveData.InactiveSequenceState = entityMapper.IndexOf(data.InactiveSequenceState.Id);
-            saveData.Active = data.Active;
             saveData.IsWorking = data.IsWorking;
 
             return saveData;
@@ -97,7 +94,7 @@ namespace KindredVignettes.ComponentSaver
             var data = entity.Read<Refinementstation>();
 
             if (saveData.RefiningStartTime.HasValue)
-                data.RefiningStartTime = saveData.RefiningStartTime.Value + Core.CastleBuffsTickSystem._ServerTime.GetSingleton().Time;
+                data.RefiningStartTime = saveData.RefiningStartTime.Value + Core.ServerTime;
             if (saveData.CurrentRecipeGuid.HasValue)
                 data.CurrentRecipeGuid = saveData.CurrentRecipeGuid.Value;
             if (saveData.Status.HasValue)
@@ -112,8 +109,6 @@ namespace KindredVignettes.ComponentSaver
                 data.ActiveSequenceState = new SequenceState() { Id = entitiesBeingLoaded[saveData.ActiveSequenceState.Value] };
             if (saveData.InactiveSequenceState.HasValue)
                 data.InactiveSequenceState = new SequenceState() { Id = entitiesBeingLoaded[saveData.InactiveSequenceState.Value] };
-            if (saveData.Active.HasValue)
-                data.Active = saveData.Active.Value;
             if (saveData.IsWorking.HasValue)
                 data.IsWorking = saveData.IsWorking.Value;
 

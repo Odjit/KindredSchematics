@@ -1,6 +1,8 @@
 ﻿using KindredVignettes.Services;
 using ProjectM;
+using Stunlock.Core;
 using System.Text.Json;
+using Unity.Collections;
 using Unity.Entities;
 
 namespace KindredVignettes.ComponentSaver
@@ -28,7 +30,7 @@ namespace KindredVignettes.ComponentSaver
             var saveData = new BloodConsumeSource_Save();
             if (prefabData.BloodQuality != entityData.BloodQuality)
                 saveData.BloodQuality = entityData.BloodQuality;
-            if (prefabData.UnitBloodType != entityData.UnitBloodType)
+            if (prefabData.UnitBloodType.Value != entityData.UnitBloodType.Value)
                 saveData.UnitBloodType = entityData.UnitBloodType;
             if (!prefabData.OverrideBloodCurve.Equals(entityData.OverrideBloodCurve))
                 saveData.OverrideBloodCurve = entityData.OverrideBloodCurve;
@@ -75,7 +77,7 @@ namespace KindredVignettes.ComponentSaver
             if (saveData.BloodQuality.HasValue)
                 data.BloodQuality = saveData.BloodQuality.Value;
             if (saveData.UnitBloodType.HasValue)
-                data.UnitBloodType = saveData.UnitBloodType.Value;
+                data.UnitBloodType._Value = saveData.UnitBloodType.Value;
             if (saveData.OverrideBloodCurve.HasValue)
                 data.OverrideBloodCurve = saveData.OverrideBloodCurve.Value;
             if (saveData.ForceBadBloodQuality.HasValue)

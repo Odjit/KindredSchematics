@@ -1,4 +1,5 @@
 using ProjectM;
+using Stunlock.Core;
 
 #pragma warning disable IDE0090 // Use 'new(...)'
 

@@ -2,6 +2,7 @@ using Il2CppInterop.Runtime;
 using ProjectM;
 using ProjectM.CastleBuilding;
 using ProjectM.Shared;
+using Stunlock.Core;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
@@ -15,7 +16,7 @@ namespace KindredVignettes;
 // This is an anti-pattern, move stuff away from Helper not into it
 internal static partial class Helper
 {
-	public static AdminAuthSystem adminAuthSystem = Core.Server.GetExistingSystem<AdminAuthSystem>();
+	public static AdminAuthSystem adminAuthSystem = Core.Server.GetExistingSystemManaged<AdminAuthSystem>();
 
 	public static PrefabGUID GetPrefabGUID(Entity entity)
 	{
@@ -27,7 +28,7 @@ internal static partial class Helper
 		}
 		catch
 		{
-			guid.GuidHash = 0;
+            guid = new PrefabGUID(0);
 		}
 		return guid;
 	}
@@ -37,7 +38,7 @@ internal static partial class Helper
 	{
 		try
 		{
-			var gameData = Core.Server.GetExistingSystem<GameDataSystem>();
+			var gameData = Core.Server.GetExistingSystemManaged<GameDataSystem>();
 			var itemSettings = AddItemSettings.Create(Core.EntityManager, gameData.ItemHashLookupMap);
 			var inventoryResponse = InventoryUtilitiesServer.TryAddItem(itemSettings, recipient, guid, amount);
 
@@ -212,13 +213,10 @@ internal static partial class Helper
             if (entity.Has<CastleHeart>()) continue;
 
             var prefabName = GetPrefabGUID(entity).LookupName();
-            if (!prefabName.StartsWith("TM_") && !prefabName.StartsWith("Chain_") && !entity.Has<CastleBuildingFusedRoot>()) continue;
-
-            if (entity.Has<SpawnChainChild>())
-                entity.Remove<SpawnChainChild>();
-
-            if (entity.Has<DropTableBuffer>())
-                entity.Remove<DropTableBuffer>();
+            if (!prefabName.StartsWith("TM_") && !prefabName.StartsWith("Chain_") && !entity.Has<CastleBuildingFusedRoot>())
+            {
+                continue;
+            }
 
             DestroyUtility.Destroy(Core.EntityManager, entity);
         }

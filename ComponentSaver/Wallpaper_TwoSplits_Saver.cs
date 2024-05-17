@@ -4,7 +4,7 @@ using Unity.Entities;
 
 namespace KindredVignettes.ComponentSaver
 {
-    [ComponentType(typeof(Wallpaper_TwoSplits))]
+    /*[ComponentType(typeof(Wallpaper_TwoSplits))]
     internal class Wallpaper_TwoSplits_Saver : ComponentSaver
     {
         struct Indices
@@ -131,5 +131,5 @@ namespace KindredVignettes.ComponentSaver
 
             entity.Write(data);
         }
-    }
+    }*/
 }

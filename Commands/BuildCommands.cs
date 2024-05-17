@@ -3,6 +3,7 @@ using KindredVignettes.Commands.Converter;
 using ProjectM;
 using ProjectM.Network;
 using ProjectM.Tiles;
+using Stunlock.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,7 +37,7 @@ namespace KindredVignettes.Commands
             Value = false
         };
 
-        [Command("free", description: "Makes building costs free for everyone and removes placement restrictions", adminOnly: true)]
+        [Command("free", description: "Makes building costs free for everyone", adminOnly: true)]
         public static void ToggleBuildingCostsCommand(ChatCommandContext ctx)
         {
             if (Core.ConfigSettings.FreeBuildDisabled)
@@ -45,16 +46,10 @@ namespace KindredVignettes.Commands
                 return;
             }
             var User = ctx.Event.User;
-            var debugEventsSystem = Core.Server.GetExistingSystem<DebugEventsSystem>();
+            var debugEventsSystem = Core.Server.GetExistingSystemManaged<DebugEventsSystem>();
 
             BuildingCostsDebugSetting.Value = !BuildingCostsDebugSetting.Value;
             debugEventsSystem.SetDebugSetting(User.Index, ref BuildingCostsDebugSetting);
-
-            BuildingPlacementRestrictionsDisabledSetting.Value = !BuildingPlacementRestrictionsDisabledSetting.Value;
-            debugEventsSystem.SetDebugSetting(User.Index, ref BuildingPlacementRestrictionsDisabledSetting);
-
-            CastleLimitsDisabledSetting.Value = !CastleLimitsDisabledSetting.Value;
-            debugEventsSystem.SetDebugSetting(User.Index, ref CastleLimitsDisabledSetting);
 
             if (BuildingCostsDebugSetting.Value)
             {
@@ -63,6 +58,33 @@ namespace KindredVignettes.Commands
             else
             {
                 ctx.Reply("Free building disabled");
+            }
+        }
+
+        [Command("restrictions", description: "Toggles building placement restrictions", adminOnly: true)]
+        public static void ToggleBuildingPlacementRestrictions(ChatCommandContext ctx)
+        {
+            if (Core.ConfigSettings.FreeBuildDisabled)
+            {
+                ctx.Reply("Free building is disabled in the config and has to be manually edited to be reenabled");
+                return;
+            }
+            var User = ctx.Event.User;
+            var debugEventsSystem = Core.Server.GetExistingSystemManaged<DebugEventsSystem>();
+
+            BuildingPlacementRestrictionsDisabledSetting.Value = !BuildingPlacementRestrictionsDisabledSetting.Value;
+            debugEventsSystem.SetDebugSetting(User.Index, ref BuildingPlacementRestrictionsDisabledSetting);
+
+            CastleLimitsDisabledSetting.Value = !CastleLimitsDisabledSetting.Value;
+            debugEventsSystem.SetDebugSetting(User.Index, ref CastleLimitsDisabledSetting);
+
+            if (BuildingPlacementRestrictionsDisabledSetting.Value)
+            {
+                ctx.Reply("Building placement restrictions disabled");
+            }
+            else
+            {
+                ctx.Reply("Building placement restrictions enabled");
             }
         }
 
@@ -132,7 +154,7 @@ namespace KindredVignettes.Commands
         [Command("spawn", description: "Spawns a tile at the player's location", adminOnly: true)]
         public static void SpawnTile(ChatCommandContext ctx, FoundTileModel tile)
         {
-            if (!Core.PrefabCollection.PrefabLookupMap.TryGetValue(tile.Value, out var prefab))
+            if (!Core.PrefabCollection._PrefabLookupMap.TryGetValue(tile.Value, out var prefab))
             {
                 ctx.Reply("Tile not found");
                 return;

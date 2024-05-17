@@ -96,41 +96,56 @@ namespace KindredVignettes.Commands
         [Command("load", "l", description: "Loads a vignette", adminOnly: true)]
         public static void LoadVignette(ChatCommandContext ctx, string vignetteName, float expandClear=0)
         {
-            if(Core.VignetteService.LoadVignette(vignetteName, ctx.Event.SenderUserEntity, ctx.Event.SenderCharacterEntity, expandClear))
+            var failReason = Core.VignetteService.LoadVignette(vignetteName, ctx.Event.SenderUserEntity, ctx.Event.SenderCharacterEntity, expandClear);
+            if (failReason == null)
             {
                 ctx.Reply($"Loaded vignette {vignetteName}");
             }
-            else
+            else if (failReason == "")
             {
                 ctx.Reply($"Failed to load vignette {vignetteName}");
+            }
+            else
+            {
+                ctx.Reply($"Failed to load vignette {vignetteName}: {failReason}");
             }
         }
 
         [Command("loadatpos", "lp", description: "Loads a vignette where you are standing", adminOnly: true)]
         public static void LoadVignetteAtPosition(ChatCommandContext ctx, string vignetteName, float expandClear=1, float heightOffset=0)
         {
-            if (Core.VignetteService.LoadVignette(vignetteName, ctx.Event.SenderUserEntity, ctx.Event.SenderCharacterEntity, expandClear,
-                ctx.Event.SenderCharacterEntity.Read<Translation>().Value + new float3(0, heightOffset, 0)))
+            var failReason = Core.VignetteService.LoadVignette(vignetteName, ctx.Event.SenderUserEntity, ctx.Event.SenderCharacterEntity, expandClear,
+                ctx.Event.SenderCharacterEntity.Read<Translation>().Value + new float3(0, heightOffset, 0));
+            if (failReason == null)
             {
                 ctx.Reply($"Loaded vignette {vignetteName}");
             }
-            else
+            else if (failReason == "")
             {
                 ctx.Reply($"Failed to load vignette {vignetteName}");
+            }
+            else
+            {
+                ctx.Reply($"Failed to load vignette {vignetteName}: {failReason}");
             }
         }
 
         [Command("loadat", "la", description: "Loads a vignette where you specify", adminOnly: true)]
         public static void LoadVignetteAtPosition(ChatCommandContext ctx, string vignetteName, float x, float y, float z, float expandClear = 1)
         {
-            if (Core.VignetteService.LoadVignette(vignetteName, ctx.Event.SenderUserEntity, ctx.Event.SenderCharacterEntity, expandClear,
-                new float3(x, y, z)))
+            var failReason = Core.VignetteService.LoadVignette(vignetteName, ctx.Event.SenderUserEntity, ctx.Event.SenderCharacterEntity, expandClear,
+                new float3(x, y, z));
+            if (failReason == null)
             {
                 ctx.Reply($"Loaded vignette {vignetteName}");
             }
-            else
+            else if (failReason == "")
             {
                 ctx.Reply($"Failed to load vignette {vignetteName}");
+            }
+            else
+            {
+                ctx.Reply($"Failed to load vignette {vignetteName}: {failReason}");
             }
         }
 

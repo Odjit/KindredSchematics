@@ -1,6 +1,7 @@
 using Il2CppInterop.Runtime;
 using ProjectM;
 using ProjectM.Network;
+using Stunlock.Core;
 using System;
 using System.Runtime.InteropServices;
 using Unity.Entities;
@@ -65,7 +66,7 @@ public static class ECSExtensions
 
 	public static string LookupName(this PrefabGUID prefabGuid)
 	{
-		var prefabCollectionSystem = Core.Server.GetExistingSystem<PrefabCollectionSystem>();
+		var prefabCollectionSystem = Core.Server.GetExistingSystemManaged<PrefabCollectionSystem>();
 		return (prefabCollectionSystem.PrefabGuidToNameDictionary.ContainsKey(prefabGuid)
 			? prefabCollectionSystem.PrefabGuidToNameDictionary[prefabGuid] + " " + prefabGuid : "GUID Not Found").ToString();
 	}
@@ -81,12 +82,5 @@ public static class ECSExtensions
 		var ct = new ComponentType(Il2CppType.Of<T>());
 		Core.EntityManager.RemoveComponent(entity, ct);
 	}
-
-
-	public static Entity GetEntity(this NetworkId networkID)
-	{
-		if (!networkID.IsValid) return Entity.Null;
-        return networkID.GetNetworkedEntity(Core.NetworkIdSystem.GetNetworkIdMapAndComplete()).GetEntityOnServer();
-    }
 }
 //#pragma warning restore CS8500

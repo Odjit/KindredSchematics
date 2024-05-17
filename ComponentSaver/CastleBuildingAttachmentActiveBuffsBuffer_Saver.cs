@@ -1,6 +1,7 @@
 ﻿using KindredVignettes.Services;
 using ProjectM;
 using ProjectM.CastleBuilding;
+using Stunlock.Core;
 using System.Text.Json;
 using Unity.Entities;
 
@@ -43,6 +44,10 @@ namespace KindredVignettes.ComponentSaver
             else
                 buffer = Core.EntityManager.AddBuffer<CastleBuildingAttachmentActiveBuffsBuffer>(entity);
             buffer.Clear();
+
+
+            if (!entity.Has<CastleBuildingAttachmentApplyBuff>())
+                Core.EntityManager.AddBuffer<CastleBuildingAttachmentApplyBuff>(entity);
 
             var applyBuffBuffer = Core.EntityManager.GetBuffer<CastleBuildingAttachmentApplyBuff>(entity);
 

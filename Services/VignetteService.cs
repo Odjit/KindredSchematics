@@ -6,6 +6,7 @@ using ProjectM;
 using ProjectM.CastleBuilding;
 using ProjectM.Physics;
 using ProjectM.Shared;
+using Stunlock.Core;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -25,6 +26,7 @@ namespace KindredVignettes.Services
 
         struct Vignette
         {
+            public string version { get; set; }
             public Vector3? location {get; set;}
             public int? territoryIndex { get; set; }
             public Aabb boundingBox { get; set; }
@@ -92,6 +94,7 @@ namespace KindredVignettes.Services
             
             var vignette = new Vignette
             {
+                version = "1.0",
                 entities = []
             };
 
@@ -211,7 +214,7 @@ namespace KindredVignettes.Services
 
         public Entity CurUserEntity { get; private set; }
         public Entity CurCharEntity { get; private set; }
-        public bool LoadVignette(string name, Entity userEntity, Entity charEntity, float expandClear, Vector3? newCenter=null)
+        public string LoadVignette(string name, Entity userEntity, Entity charEntity, float expandClear, Vector3? newCenter=null)
         {
             CurUserEntity = userEntity;
             CurCharEntity = charEntity;
@@ -223,8 +226,7 @@ namespace KindredVignettes.Services
             }
             catch (FileNotFoundException)
             {
-                Core.Log.LogError($"Vignette {name} not found");
-                return false;
+                return $"Vignette not found";
             }
 
             Vignette vignette;
@@ -235,7 +237,12 @@ namespace KindredVignettes.Services
             catch (JsonException e)
             {
                 Core.Log.LogError($"Error loading vignette {name}: {e.Message}");
-                return false;
+                return "Error in file";
+            }
+
+            if (vignette.version != "1.0")
+            {
+                return $"Has an unsupported version '{vignette.version}' loading old versions is coming soon";
             }
 
             var translation = Vector3.zero;
@@ -368,12 +375,15 @@ namespace KindredVignettes.Services
             // First pass create all the entities
             var createdEntities = new Entity[vignette.entities.Length+1];
             createdEntities[0] = Entity.Null;
-            var time = Core.CastleBuffsTickSystem._ServerTime.GetSingleton();
+            var time = Core.ServerTime;
             for (var i=0; i < vignette.entities.Length; ++i)
             {
                 var entityData = vignette.entities[i];
 
-                if (Core.PrefabCollection.PrefabLookupMap.TryGetValue(entityData.prefab, out var prefab))
+                if (entityData.prefab.GuidHash == 0)
+                    continue;
+
+                if (Core.PrefabCollection._PrefabLookupMap.TryGetValue(entityData.prefab, out var prefab))
                 {
                     // Figure out what heart to assign this entity to
                     var territoryIndex = Core.CastleTerritory.GetTerritoryIndex(entityData.pos + translation);
@@ -444,15 +454,19 @@ namespace KindredVignettes.Services
                 }
             }
 
-            return true;
+            return null;
         }
 
         private static Entity SpawnEntity(Entity userEntity, Vector3 translation, HeartInfo heartInfo, EntityData diff, Entity prefab)
         {
             var entity = Core.EntityManager.Instantiate(prefab);
+            if(!entity.Has<Translation>())
+                entity.Add<Translation>();
             entity.Write(new Translation { Value = diff.pos + translation });
             if(entity.Has<LastTranslation>())
                 entity.Write(new LastTranslation { Value = diff.pos + translation });
+            if (!entity.Has<Rotation>())
+                entity.Add<Rotation>();
             entity.Write(new Rotation { Value = diff.rot });
 
             if (entity.Has<CastleHeartConnection>())

@@ -1,4 +1,5 @@
 ﻿using ProjectM;
+using Stunlock.Core;
 using System.Linq;
 using System.Text;
 using VampireCommandFramework;

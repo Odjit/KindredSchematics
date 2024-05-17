@@ -15,32 +15,22 @@ internal static class Core
 	public static World Server { get; } = GetWorld("Server") ?? throw new System.Exception("There is no Server world (yet). Did you install a server mod on the client?");
 
 	public static EntityManager EntityManager { get; } = Server.EntityManager;
-	public static CastleBuffsTickSystem CastleBuffsTickSystem { get; } = Server.GetExistingSystem<CastleBuffsTickSystem>();
-    public static CastleBuildingAttachmentBuffSystem CastleBuildingAttachmentBuffSystem { get; } = Server.GetExistingSystem<CastleBuildingAttachmentBuffSystem>();
+    public static double ServerTime => ServerGameManager.ServerTime;
+    public static ServerGameManager ServerGameManager => ServerScriptMapper.GetServerGameManager();
+    public static CastleBuildingAttachmentBuffSystem CastleBuildingAttachmentBuffSystem { get; } = Server.GetExistingSystemManaged<CastleBuildingAttachmentBuffSystem>();
     public static CastleTerritoryService CastleTerritory { get; private set; }
-    public static PrefabCollectionSystem PrefabCollection { get; } = Server.GetExistingSystem<PrefabCollectionSystem>();
+    public static PrefabCollectionSystem PrefabCollection { get; } = Server.GetExistingSystemManaged<PrefabCollectionSystem>();
     public static VignetteService VignetteService { get; } = new();
 	public static ConfigSettingsService ConfigSettings { get; } = new();
 
-    static NetworkIdSystem networkIdSystem;
-
     public const int MAX_REPLY_LENGTH = 509;
-
-    public static NetworkIdSystem NetworkIdSystem { get
-		{
-			if (networkIdSystem == null)
-			{
-                networkIdSystem = Server.GetExistingSystem<NetworkIdSystem>();
-            }
-			return networkIdSystem;
-		}}
 
 	static ServerScriptMapper serverScriptMapper;
 	public static ServerScriptMapper ServerScriptMapper { get
 		{
 			if (serverScriptMapper == null)
 			{
-                serverScriptMapper = Server.GetExistingSystem<ServerScriptMapper>();
+                serverScriptMapper = Server.GetExistingSystemManaged<ServerScriptMapper>();
             }
 			return serverScriptMapper;
 		}

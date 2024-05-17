@@ -24,7 +24,7 @@ namespace KindredVignettes.ComponentSaver
             {
                 var nextTime = entityData.NextTransitionAttempt;
                 if(nextTime > 0)
-                    nextTime -= Core.CastleBuffsTickSystem._ServerTime.GetSingleton().Time;
+                    nextTime -= Core.ServerTime;
                 saveData.NextTransitionAttempt = nextTime;
             }
 
@@ -51,7 +51,7 @@ namespace KindredVignettes.ComponentSaver
             {
                 var nextTime = AutoChainInstanceData.NextTransitionAttempt.Value;
                 if (nextTime > 0)
-                    nextTime += Core.CastleBuffsTickSystem._ServerTime.GetSingleton().Time;
+                    nextTime += Core.ServerTime;
                 data.NextTransitionAttempt = nextTime;
             }
             entity.Write(data);

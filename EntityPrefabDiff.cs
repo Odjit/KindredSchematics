@@ -1,5 +1,6 @@
 ﻿using Il2CppInterop.Runtime;
 using ProjectM;
+using Stunlock.Core;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Entities;
@@ -36,7 +37,7 @@ namespace KindredVignettes
 
             var componentData = new List<ComponentData>();
             var removals = new List<int>();
-            if (Core.PrefabCollection.PrefabLookupMap.TryGetValue(diffData.prefab, out var prefabEntity))
+            if (Core.PrefabCollection._PrefabLookupMap.TryGetValue(diffData.prefab, out var prefabEntity))
             {
                 var entityComponents = Core.EntityManager.GetComponentTypes(entity).ToArray().ToList();
                 var prefabComponents = Core.EntityManager.GetComponentTypes(prefabEntity).ToArray().ToList();

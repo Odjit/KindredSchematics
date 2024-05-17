@@ -75,7 +75,7 @@ namespace KindredVignettes.ComponentSaver
                 var data = entity.Read<Health>();
 
                 if (saveData.MaxHealth.HasValue)
-                    data.MaxHealth.Value = saveData.MaxHealth.Value;
+                    data.MaxHealth._Value = saveData.MaxHealth.Value;
                 if (saveData.TimeOfDeath.HasValue)
                     data.TimeOfDeath = saveData.TimeOfDeath.Value;
                 if (saveData.Value.HasValue)
