@@ -54,7 +54,7 @@ namespace KindredVignettes.Commands
 
         static void GetFloors(float3 charPos, out List<(float y, Entity entity, Entity fusedChild)> floors, out int floorIndex)
         {
-            var gridPos = Helper.ConvertPosToGrid(charPos);
+            var gridPos = Helper.ConvertPosToTileGrid(charPos);
             floors = Helper.GetAllEntitiesInRadius<CastleFloor>(charPos.xz, 5).
                 Where(f =>
                 {

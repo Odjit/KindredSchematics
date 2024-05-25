@@ -30,7 +30,10 @@ namespace KindredVignettes.ComponentSaver
             {
                 saveData[i].ParentEntityId = entityMapper.IndexOf(buffer[i].ParentEntity);
                 saveData[i].ChildEntityId = entityMapper.IndexOf(buffer[i].ChildEntity);
-                saveData[i].Buff = buffer[i].BuffEntity.Read<PrefabGUID>();
+                if (buffer[i].BuffEntity != Entity.Null && buffer[i].BuffEntity.Has<PrefabGUID>())
+                    saveData[i].Buff = buffer[i].BuffEntity.Read<PrefabGUID>();
+                else
+                    saveData[i].Buff = PrefabGUID.Empty;
             }
 
             return saveData;

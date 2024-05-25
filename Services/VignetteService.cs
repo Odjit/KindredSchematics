@@ -82,6 +82,7 @@ namespace KindredVignettes.Services
             options.Converters.Add(new AabbConverter());
             options.Converters.Add(new AssetGUIDConverter());
             options.Converters.Add(new CurveReferenceConverter());
+            options.Converters.Add(new int2Converter());
             options.Converters.Add(new PrefabGUIDConverter());
             options.Converters.Add(new QuaternionConverter());
             options.Converters.Add(new Vector2Converter());
@@ -102,7 +103,7 @@ namespace KindredVignettes.Services
                 vignette.territoryIndex = territoryIndex;
             else
             {
-                var gridLocation = Helper.ConvertPosToGrid(location.Value);
+                var gridLocation = Helper.ConvertPosToTileGrid(location.Value);
                 vignette.boundingBox = new Aabb { Min = gridLocation, Max = gridLocation };
                 vignette.location = location;
             }
@@ -366,8 +367,10 @@ namespace KindredVignettes.Services
                 TeamValue = teamValue
             };
 
-            var territoryToHeartInfo = new Dictionary<int, HeartInfo>();
-            territoryToHeartInfo.Add(-1, defaultHeartInfo);
+            var territoryToHeartInfo = new Dictionary<int, HeartInfo>
+            {
+                { -1, defaultHeartInfo }
+            };
 
             // Disable spawn chain system for one frame
             InitializeNewSpawnChainSystem_Patch.skipOnce = true;
@@ -385,27 +388,47 @@ namespace KindredVignettes.Services
 
                 if (Core.PrefabCollection._PrefabLookupMap.TryGetValue(entityData.prefab, out var prefab))
                 {
-                    // Figure out what heart to assign this entity to
-                    var territoryIndex = Core.CastleTerritory.GetTerritoryIndex(entityData.pos + translation);
-                    if (!territoryToHeartInfo.TryGetValue(territoryIndex, out var heartInfo))
-                    {
-                        var heartEntity = Core.CastleTerritory.GetHeartForTerritory(territoryIndex);
-                        if (heartEntity.Equals(Entity.Null))
-                        {
-                            heartInfo = defaultHeartInfo;
-                        }
-                        else
-                        {
-                            heartInfo.CastleHeart = heartEntity;
-                            heartInfo.TeamValue = heartEntity.Read<Team>().Value;
-                            heartInfo.TeamReference = Entity.Null;
-                            if (heartEntity.Has<TeamReference>())
-                                heartInfo.TeamReference = heartEntity.Read<TeamReference>().Value;
-                        }
-                        territoryToHeartInfo.Add(territoryIndex, heartInfo);
-                    }
+                    Entity entity = SpawnEntity(userEntity, translation, entityData, prefab);
 
-                    Entity entity = SpawnEntity(userEntity, translation, heartInfo, entityData, prefab);
+                    var territoryIndex = Helper.GetEntityTerritoryIndex(entity);
+                    if (entity.Has<CastleHeartConnection>())
+                    {
+                        var heartInfo = defaultHeartInfo;
+                        if (!territoryToHeartInfo.TryGetValue(territoryIndex, out heartInfo))
+                        {
+                            var heartEntity = Core.CastleTerritory.GetHeartForTerritory(territoryIndex);
+                            if (heartEntity.Equals(Entity.Null))
+                            {
+                                heartInfo = defaultHeartInfo;
+                            }
+                            else
+                            {
+                                heartInfo.CastleHeart = heartEntity;
+                                heartInfo.TeamValue = heartEntity.Read<Team>().Value;
+                                heartInfo.TeamReference = Entity.Null;
+                                if (heartEntity.Has<TeamReference>())
+                                    heartInfo.TeamReference = heartEntity.Read<TeamReference>().Value;
+                            }
+                            territoryToHeartInfo.Add(territoryIndex, heartInfo);
+                        }
+
+                        entity.Write(new CastleHeartConnection { CastleHeartEntity = heartInfo.CastleHeart });
+
+                        if (entity.Has<Team>())
+                        {
+                            entity.Write(new Team { Value = heartInfo.TeamValue, FactionIndex = -1 });
+
+                            entity.Add<UserOwner>();
+                            entity.Write(new UserOwner() { Owner = userEntity });
+                        }
+
+                        if (entity.Has<TeamReference>() && !heartInfo.TeamReference.Equals(Entity.Null))
+                        {
+                            var t = new TeamReference();
+                            t.Value._Value = heartInfo.TeamReference;
+                            entity.Write(t);
+                        }
+                    }
 
                     if (territoryIndex == -1)
                     {
@@ -457,36 +480,37 @@ namespace KindredVignettes.Services
             return null;
         }
 
-        private static Entity SpawnEntity(Entity userEntity, Vector3 translation, HeartInfo heartInfo, EntityData diff, Entity prefab)
+        private static Entity SpawnEntity(Entity userEntity, Vector3 translation, EntityData diff, Entity prefab)
         {
             var entity = Core.EntityManager.Instantiate(prefab);
-            if(!entity.Has<Translation>())
-                entity.Add<Translation>();
-            entity.Write(new Translation { Value = diff.pos + translation });
-            if(entity.Has<LastTranslation>())
-                entity.Write(new LastTranslation { Value = diff.pos + translation });
-            if (!entity.Has<Rotation>())
-                entity.Add<Rotation>();
-            entity.Write(new Rotation { Value = diff.rot });
-
-            if (entity.Has<CastleHeartConnection>())
+            if (diff.pos.HasValue)
             {
-                entity.Write(new CastleHeartConnection { CastleHeartEntity = heartInfo.CastleHeart });
+                if (!entity.Has<Translation>())
+                    entity.Add<Translation>();
+                entity.Write(new Translation { Value = diff.pos.Value + translation });
+                if (entity.Has<LastTranslation>())
+                    entity.Write(new LastTranslation { Value = diff.pos.Value + translation });
+            }
+            if (diff.rot.HasValue)
+            {
+                if (!entity.Has<Rotation>())
+                    entity.Add<Rotation>();
+                entity.Write(new Rotation { Value = diff.rot.Value });
+            }
 
-                if (entity.Has<Team>())
-                {
-                    entity.Write(new Team { Value = heartInfo.TeamValue, FactionIndex = -1 });
+            int2 offset = new (Mathf.FloorToInt(translation.x * 2), Mathf.FloorToInt(translation.z * 2));
+            if (diff.tilePos.HasValue)
+            {
+                if (!entity.Has<TilePosition>())
+                    entity.Add<TilePosition>();
+                entity.Write(new TilePosition { Tile = diff.tilePos.Value + offset });
+            }
 
-                    entity.Add<UserOwner>();
-                    entity.Write(new UserOwner() { Owner = userEntity });
-                }
-
-                if (entity.Has<TeamReference>() && !heartInfo.TeamReference.Equals(Entity.Null))
-                {
-                    var t = new TeamReference();
-                    t.Value._Value = heartInfo.TeamReference;
-                    entity.Write(t);
-                }
+            if (diff.tileBoundsMin.HasValue && diff.tileBoundsMax.HasValue)
+            {
+                if (!entity.Has<TileBounds>())
+                    entity.Add<TileBounds>();
+                entity.Write(new TileBounds { Value = new (){ Min = diff.tileBoundsMin.Value + offset, Max = diff.tileBoundsMax.Value + offset } });
             }
 
             return entity;

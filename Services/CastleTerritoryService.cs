@@ -25,6 +25,14 @@ namespace KindredVignettes.Services
             entities.Dispose();
         }
 
+        public int GetTerritoryIndexFromTileCoord(int2 tilePos)
+        {
+            var blockCoord = ConvertTileGridToBlockCoord(tilePos);
+            if (blockCoordToTerritoryIndex.TryGetValue(blockCoord, out var index))
+                return index;
+            return -1;
+        }
+
         public int GetTerritoryIndex(float3 pos)
         {
             var blockCoord = ConvertPosToBlockCoord(pos);
@@ -54,8 +62,13 @@ namespace KindredVignettes.Services
 
         int2 ConvertPosToBlockCoord(float3 pos)
         {
-            var gridPos = Helper.ConvertPosToGrid(pos);
+            var gridPos = Helper.ConvertPosToTileGrid(pos);
             return new int2((int)math.floor(gridPos.x / BLOCK_SIZE), (int)math.floor(gridPos.z / BLOCK_SIZE));
+        }
+
+        int2 ConvertTileGridToBlockCoord(int2 tileCoord)
+        {
+            return new int2((int)math.floor(tileCoord.x / BLOCK_SIZE), (int)math.floor(tileCoord.y / BLOCK_SIZE));
         }
     }
 }

@@ -93,15 +93,50 @@ internal static partial class Helper
 		return entities;
 	}
 
+    public static int GetEntityTerritoryIndex(Entity entity)
+    {
+        if (entity.Has<TilePosition>())
+        {
+            var pos = entity.Read<TilePosition>().Tile;
+            var territoryIndex = Core.CastleTerritory.GetTerritoryIndexFromTileCoord(pos);
+            if (territoryIndex != -1)
+            {
+                return territoryIndex;
+            }
+        }
+
+        if (entity.Has<TileBounds>())
+        {
+            var bounds = entity.Read<TileBounds>().Value;
+            for(var x=bounds.Min.x; x<=bounds.Max.x; x++)
+            {
+                for(var y=bounds.Min.y; y<=bounds.Max.y; y++)
+                {
+                    var territoryIndex = Core.CastleTerritory.GetTerritoryIndexFromTileCoord(new int2(x, y));
+                    if (territoryIndex != -1)
+                    {
+                        return territoryIndex;
+                    }
+                }
+            }
+        }
+
+        if (entity.Has<Translation>())
+        {
+            var pos = entity.Read<Translation>().Value;
+            return Core.CastleTerritory.GetTerritoryIndex(pos);
+        }
+
+        return -1;
+    }   
+
 
     public static IEnumerable<Entity> GetAllEntitiesInTerritory<T>(int territoryIndex)
     {
         var entities = GetEntitiesByComponentType<T>(includeSpawn: true, includeDisabled: true);
         foreach (var entity in entities)
         {
-            if (!entity.Has<Translation>()) continue;
-            var pos = entity.Read<Translation>().Value;
-            if (Core.CastleTerritory.GetTerritoryIndex(pos) == territoryIndex)
+            if (GetEntityTerritoryIndex(entity) == territoryIndex)
             {
                 yield return entity;
             }
@@ -139,7 +174,7 @@ internal static partial class Helper
         entities.Dispose();
     }
 
-	public static float3 ConvertPosToGrid(float3 pos)
+	public static float3 ConvertPosToTileGrid(float3 pos)
 	{
 		return new float3(Mathf.FloorToInt(pos.x * 2) + 6400, pos.y, Mathf.FloorToInt(pos.z * 2) + 6400);
 	}
@@ -190,7 +225,7 @@ internal static partial class Helper
 	{
 		if (!entity.Has<Translation>()) return false;
 		var pos = entity.Read<Translation>().Value;
-		return aabb.Contains(ConvertPosToGrid(pos)) || GetAabb(entity, out var otherAabb) && aabb.Overlaps(otherAabb);
+		return aabb.Contains(ConvertPosToTileGrid(pos)) || GetAabb(entity, out var otherAabb) && aabb.Overlaps(otherAabb);
     }
 
     public static IEnumerable<Entity> GetAllEntitiesInTileAabb<T>(Aabb aabb)
@@ -218,9 +253,22 @@ internal static partial class Helper
                 continue;
             }
 
-            DestroyUtility.Destroy(Core.EntityManager, entity);
+            DestroyEntityAndCastleAttachments(entity);
         }
 	}
+
+    public static void DestroyEntityAndCastleAttachments(Entity entity)
+    {
+        if(entity.Has<CastleBuildingAttachToParentsBuffer>())
+        {
+            var castleAttachments = Core.EntityManager.GetBufferReadOnly<CastleBuildingAttachToParentsBuffer>(entity);
+            foreach (var attachment in castleAttachments)
+            {
+                DestroyEntityAndCastleAttachments(attachment.ParentEntity.GetEntityOnServer());
+            }
+        }
+        DestroyUtility.Destroy(Core.EntityManager, entity);
+    }
 
 	public static Entity FindClosest<T>(Vector3 pos, string startsWith = null, float maxDistance = -1)
 	{

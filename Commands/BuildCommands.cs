@@ -37,7 +37,7 @@ namespace KindredVignettes.Commands
             Value = false
         };
 
-        [Command("free", description: "Makes building costs free for everyone", adminOnly: true)]
+        [Command("free", "f", description: "Makes building costs free for everyone", adminOnly: true)]
         public static void ToggleBuildingCostsCommand(ChatCommandContext ctx)
         {
             if (Core.ConfigSettings.FreeBuildDisabled)
@@ -61,7 +61,7 @@ namespace KindredVignettes.Commands
             }
         }
 
-        [Command("restrictions", description: "Toggles building placement restrictions", adminOnly: true)]
+        [Command("restrictions", "r", description: "Toggles building placement restrictions", adminOnly: true)]
         public static void ToggleBuildingPlacementRestrictions(ChatCommandContext ctx)
         {
             if (Core.ConfigSettings.FreeBuildDisabled)
@@ -95,7 +95,7 @@ namespace KindredVignettes.Commands
             ctx.Reply("Free building command disabled");
         }
 
-        [Command("clearradius", description: "Clears all tile models in a radius", adminOnly: true)]
+        [Command("clearradius", "cr", description: "Clears all tile models in a radius", adminOnly: true)]
         public static void ClearRadius(ChatCommandContext ctx, float radius)
         {
             var charEntity = ctx.Event.SenderCharacterEntity;
@@ -106,7 +106,7 @@ namespace KindredVignettes.Commands
         }
 
         static readonly Dictionary<Entity, float2> cornerPos = [];
-        [Command("setcorner", description: "Sets a corner for clearing", adminOnly: true)]
+        [Command("setcorner", "sc", description: "Sets a corner for clearing", adminOnly: true)]
         public static void SetCorner(ChatCommandContext ctx)
         {
             var charEntity = ctx.Event.SenderCharacterEntity;
@@ -115,7 +115,7 @@ namespace KindredVignettes.Commands
             ctx.Reply($"Set corner");
         }
 
-        [Command("clearbox", description: "Clears all tile models in a box", adminOnly: true)]
+        [Command("clearbox", "cb", description: "Clears all tile models in a box", adminOnly: true)]
         public static void ClearBox(ChatCommandContext ctx)
         {
             if (!cornerPos.ContainsKey(ctx.Event.SenderUserEntity))
@@ -134,8 +134,15 @@ namespace KindredVignettes.Commands
             cornerPos.Remove(ctx.Event.SenderUserEntity);
         }
 
+        [Command("clearterritory", "ct", description: "Clears all tile models in a territory", adminOnly: true)]
+        public static void ClearTerritory(ChatCommandContext ctx, int territoryIndex)
+        {
+            Helper.DestroyEntitiesForBuilding(Helper.GetAllEntitiesInTerritory<TileModel>(territoryIndex));
+            ctx.Reply($"Cleared tiles in territory {territoryIndex}");
+        }
+
         [Command("delete", description: "Delete the tile model closest to the mouse cursor", adminOnly: true)]
-        public static void ClearTile(ChatCommandContext ctx)
+        public static void DeleteTile(ChatCommandContext ctx)
         {
             var startTime = Time.realtimeSinceStartup;
             var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;

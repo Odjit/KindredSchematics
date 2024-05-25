@@ -4,6 +4,7 @@ using Stunlock.Core;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -19,8 +20,11 @@ namespace KindredVignettes
 
     {
         public PrefabGUID prefab { get; set; }
-        public Vector3 pos { get; set; }
-        public Quaternion rot { get; set; }
+        public Vector3? pos { get; set; }
+        public Quaternion? rot { get; set; }
+        public int2? tilePos { get; set; }
+        public int2? tileBoundsMin { get; set; }
+        public int2? tileBoundsMax { get; set; }
         public ComponentData[] componentData { get; set; }
         public int[] removals { get; set; }
     }
@@ -32,8 +36,18 @@ namespace KindredVignettes
             var diffData = new EntityData();
             // Compare the two entities and return a list of differences
             diffData.prefab = entity.Read<PrefabGUID>();
-            diffData.pos = entity.Read<Translation>().Value;
-            diffData.rot = entity.Read<Rotation>().Value;
+            if(entity.Has<Translation>())
+                diffData.pos = entity.Read<Translation>().Value;
+            if(entity.Has<Rotation>())
+                diffData.rot = entity.Read<Rotation>().Value;
+            if(entity.Has<TilePosition>())
+                diffData.tilePos = entity.Read<TilePosition>().Tile;
+            if(entity.Has<TileBounds>())
+            {
+                var bounds = entity.Read<TileBounds>();
+                diffData.tileBoundsMin = bounds.Value.Min;
+                diffData.tileBoundsMax = bounds.Value.Max;
+            }
 
             var componentData = new List<ComponentData>();
             var removals = new List<int>();
