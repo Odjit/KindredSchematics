@@ -391,43 +391,46 @@ namespace KindredVignettes.Services
                     Entity entity = SpawnEntity(userEntity, translation, entityData, prefab);
 
                     var territoryIndex = Helper.GetEntityTerritoryIndex(entity);
+
+
+                    var heartInfo = defaultHeartInfo;
+                    if (!territoryToHeartInfo.TryGetValue(territoryIndex, out heartInfo))
+                    {
+
+                        var heartEntity = Core.CastleTerritory.GetHeartForTerritory(territoryIndex);
+                        if (heartEntity.Equals(Entity.Null))
+                        {
+                            heartInfo = defaultHeartInfo;
+                        }
+                        else
+                        {
+                            heartInfo.CastleHeart = heartEntity;
+                            heartInfo.TeamValue = heartEntity.Read<Team>().Value;
+                            heartInfo.TeamReference = Entity.Null;
+                            if (heartEntity.Has<TeamReference>())
+                                heartInfo.TeamReference = heartEntity.Read<TeamReference>().Value;
+                        }
+                        territoryToHeartInfo.Add(territoryIndex, heartInfo);
+                    }
+
                     if (entity.Has<CastleHeartConnection>())
                     {
-                        var heartInfo = defaultHeartInfo;
-                        if (!territoryToHeartInfo.TryGetValue(territoryIndex, out heartInfo))
-                        {
-                            var heartEntity = Core.CastleTerritory.GetHeartForTerritory(territoryIndex);
-                            if (heartEntity.Equals(Entity.Null))
-                            {
-                                heartInfo = defaultHeartInfo;
-                            }
-                            else
-                            {
-                                heartInfo.CastleHeart = heartEntity;
-                                heartInfo.TeamValue = heartEntity.Read<Team>().Value;
-                                heartInfo.TeamReference = Entity.Null;
-                                if (heartEntity.Has<TeamReference>())
-                                    heartInfo.TeamReference = heartEntity.Read<TeamReference>().Value;
-                            }
-                            territoryToHeartInfo.Add(territoryIndex, heartInfo);
-                        }
-
                         entity.Write(new CastleHeartConnection { CastleHeartEntity = heartInfo.CastleHeart });
+                    }
 
-                        if (entity.Has<Team>())
-                        {
-                            entity.Write(new Team { Value = heartInfo.TeamValue, FactionIndex = -1 });
+                    if (entity.Has<Team>())
+                    {
+                        entity.Write(new Team { Value = heartInfo.TeamValue, FactionIndex = -1 });
 
-                            entity.Add<UserOwner>();
-                            entity.Write(new UserOwner() { Owner = userEntity });
-                        }
+                        entity.Add<UserOwner>();
+                        entity.Write(new UserOwner() { Owner = userEntity });
+                    }
 
-                        if (entity.Has<TeamReference>() && !heartInfo.TeamReference.Equals(Entity.Null))
-                        {
-                            var t = new TeamReference();
-                            t.Value._Value = heartInfo.TeamReference;
-                            entity.Write(t);
-                        }
+                    if (entity.Has<TeamReference>() && !heartInfo.TeamReference.Equals(Entity.Null))
+                    {
+                        var t = new TeamReference();
+                        t.Value._Value = heartInfo.TeamReference;
+                        entity.Write(t);
                     }
 
                     if (territoryIndex == -1)

@@ -53,7 +53,7 @@ namespace KindredVignettes.Commands
 
             if (BuildingCostsDebugSetting.Value)
             {
-                ctx.Reply("Free building enabled globally -- Do not place hearts with this enabled, they will crash the server");
+                ctx.Reply("Free building enabled globally");
             }
             else
             {
@@ -80,7 +80,7 @@ namespace KindredVignettes.Commands
 
             if (BuildingPlacementRestrictionsDisabledSetting.Value)
             {
-                ctx.Reply("Building placement restrictions disabled");
+                ctx.Reply("Building placement restrictions disabled. <color=red>Don't place hearts or the server will crash</color>");
             }
             else
             {

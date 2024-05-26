@@ -1,4 +1,5 @@
 using Il2CppInterop.Runtime;
+using KindredCommands.Data;
 using ProjectM;
 using ProjectM.CastleBuilding;
 using ProjectM.Shared;
@@ -257,16 +258,50 @@ internal static partial class Helper
         }
 	}
 
-    public static void DestroyEntityAndCastleAttachments(Entity entity)
+    public static void DestroyEntityAndCastleAttachments(Entity entity, HashSet<Entity> alreadyVisited=null)
     {
-        if(entity.Has<CastleBuildingAttachToParentsBuffer>())
+        if (alreadyVisited == null)
+        {
+            alreadyVisited = new HashSet<Entity>();
+        }
+        if (alreadyVisited.Contains(entity)) return;
+        alreadyVisited.Add(entity);
+
+        if(Core.EntityManager.HasBuffer<CastleBuildingAttachToParentsBuffer>(entity))
         {
             var castleAttachments = Core.EntityManager.GetBufferReadOnly<CastleBuildingAttachToParentsBuffer>(entity);
             foreach (var attachment in castleAttachments)
             {
-                DestroyEntityAndCastleAttachments(attachment.ParentEntity.GetEntityOnServer());
+                DestroyEntityAndCastleAttachments(attachment.ParentEntity.GetEntityOnServer(), alreadyVisited);
             }
         }
+
+        // Windows are attached opposite as you would expect, so we need to handle them specially
+        if(entity.Has<PrefabGUID>() && entity.Read<PrefabGUID>() == Prefabs.TM_Castle_Wall_Tier02_Stone_Window)
+        {
+            if(Core.EntityManager.HasBuffer<CastleBuildingAttachedChildrenBuffer>(entity))
+            {
+                var castleAttachments = Core.EntityManager.GetBufferReadOnly<CastleBuildingAttachedChildrenBuffer>(entity);
+                foreach (var attachment in castleAttachments)
+                {
+                    var attachmentEntity = attachment.ChildEntity.GetEntityOnServer();
+                    if(attachmentEntity.Has<EntityCategory>())
+                    {
+                        // See if this matches with a window
+                        var ec = attachmentEntity.Read<EntityCategory>();
+                        if (ec.MainCategory == MainEntityCategory.Structure &&
+                            ec.UnitCategory == UnitCategory.Human &&
+                            ec.StructureCategory == StructureCategory.BasicStructure &&
+                            ec.MaterialCategory == MaterialCategory.None &&
+                            ec.ResourceLevel == 0)
+                        {
+                            DestroyEntityAndCastleAttachments(attachmentEntity, alreadyVisited);
+                        }
+                    }
+                }
+            }
+        }
+
         DestroyUtility.Destroy(Core.EntityManager, entity);
     }
 
