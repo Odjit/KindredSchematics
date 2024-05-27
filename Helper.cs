@@ -128,6 +128,12 @@ internal static partial class Helper
             return Core.CastleTerritory.GetTerritoryIndex(pos);
         }
 
+        if (entity.Has<LocalToWorld>()) 
+        {
+            var pos = entity.Read<LocalToWorld>().Position;
+            return Core.CastleTerritory.GetTerritoryIndex(pos);
+        }
+
         return -1;
     }   
 

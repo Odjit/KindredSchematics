@@ -27,6 +27,8 @@ namespace KindredVignettes
         public int2? tileBoundsMax { get; set; }
         public ComponentData[] componentData { get; set; }
         public int[] removals { get; set; }
+
+        public bool? notCastleTeam { get; set; } // Using a negative so by default it's not included in the diff
     }
 
     internal class EntityPrefabDiff
@@ -47,6 +49,15 @@ namespace KindredVignettes
                 var bounds = entity.Read<TileBounds>();
                 diffData.tileBoundsMin = bounds.Value.Min;
                 diffData.tileBoundsMax = bounds.Value.Max;
+            }
+
+            if(entity.Has<TeamReference>())
+            {
+                var teamReference = entity.Read<TeamReference>().Value;
+                if(teamReference.Value != Entity.Null)
+                {
+                    diffData.notCastleTeam = !teamReference.Value.Has<CastleTeamData>();
+                }
             }
 
             var componentData = new List<ComponentData>();

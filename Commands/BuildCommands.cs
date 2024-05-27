@@ -1,12 +1,16 @@
-﻿using Il2CppSystem.Text;
+﻿using Il2CppInterop.Runtime;
+using Il2CppSystem.Text;
 using KindredVignettes.Commands.Converter;
 using ProjectM;
+using ProjectM.CastleBuilding;
 using ProjectM.Network;
 using ProjectM.Tiles;
 using Stunlock.Core;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
@@ -37,6 +41,19 @@ namespace KindredVignettes.Commands
             Value = false
         };
 
+        public static SetDebugSettingEvent FloorPlacementRestrictionsSetting = new SetDebugSettingEvent()
+        {
+            SettingType = DebugSettingType.FloorPlacementRestrictionsDisabled,
+            Value = false
+        };
+
+        public static SetDebugSettingEvent FreeBuildingPlacementSetting = new SetDebugSettingEvent()
+        {
+            SettingType = DebugSettingType.FreeBuildingPlacementEnabled,
+            Value = false
+        };
+
+
         [Command("free", "f", description: "Makes building costs free for everyone", adminOnly: true)]
         public static void ToggleBuildingCostsCommand(ChatCommandContext ctx)
         {
@@ -51,6 +68,9 @@ namespace KindredVignettes.Commands
             BuildingCostsDebugSetting.Value = !BuildingCostsDebugSetting.Value;
             debugEventsSystem.SetDebugSetting(User.Index, ref BuildingCostsDebugSetting);
 
+            FloorPlacementRestrictionsSetting.Value = !FloorPlacementRestrictionsSetting.Value;
+            debugEventsSystem.SetDebugSetting(User.Index, ref FloorPlacementRestrictionsSetting);
+
             if (BuildingCostsDebugSetting.Value)
             {
                 ctx.Reply("Free building enabled globally");
@@ -61,7 +81,7 @@ namespace KindredVignettes.Commands
             }
         }
 
-        [Command("restrictions", "r", description: "Toggles building placement restrictions", adminOnly: true)]
+        [Command("restrictions", "r", description: "Toggles building placement restrictions. Also disables all respawns.", adminOnly: true)]
         public static void ToggleBuildingPlacementRestrictions(ChatCommandContext ctx)
         {
             if (Core.ConfigSettings.FreeBuildDisabled)
@@ -73,6 +93,10 @@ namespace KindredVignettes.Commands
             var debugEventsSystem = Core.Server.GetExistingSystemManaged<DebugEventsSystem>();
 
             BuildingPlacementRestrictionsDisabledSetting.Value = !BuildingPlacementRestrictionsDisabledSetting.Value;
+            if (BuildingPlacementRestrictionsDisabledSetting.Value)
+            {
+                Core.StartCoroutine(KeepFromRespawning());
+            }
             debugEventsSystem.SetDebugSetting(User.Index, ref BuildingPlacementRestrictionsDisabledSetting);
 
             CastleLimitsDisabledSetting.Value = !CastleLimitsDisabledSetting.Value;
@@ -80,11 +104,61 @@ namespace KindredVignettes.Commands
 
             if (BuildingPlacementRestrictionsDisabledSetting.Value)
             {
-                ctx.Reply("Building placement restrictions disabled. <color=red>Don't place hearts or the server will crash</color>");
+                ServerChatUtils.SendSystemMessageToAllClients(Core.EntityManager, "Building placement restrictions disabled. Respawns are also disabled <color=red>Don't place hearts or the server will crash</color>");
             }
             else
             {
                 ctx.Reply("Building placement restrictions enabled");
+            }
+        }
+
+        static IEnumerator KeepFromRespawning()
+        {
+            EntityQueryDesc autoChainQueryDesc = new()
+            {
+                All = new ComponentType[] { new(Il2CppType.Of<AutoChainInstanceData>(), ComponentType.AccessMode.ReadWrite) }
+            };
+            var autoChainQuery = Core.EntityManager.CreateEntityQuery(autoChainQueryDesc);
+
+            EntityQueryDesc spawnRegionQueryDesc = new()
+            {
+                All = new ComponentType[] { new(Il2CppType.Of<SpawnRegion>(), ComponentType.AccessMode.ReadWrite) }
+            };
+            var spawnRegionQuery = Core.EntityManager.CreateEntityQuery(spawnRegionQueryDesc);
+
+            while (BuildingPlacementRestrictionsDisabledSetting.Value)
+            {
+                var serverTime = Core.ServerTime;
+                var entities = autoChainQuery.ToEntityArray(Allocator.Temp);
+                foreach(var entity in entities)
+                {
+                    var data = entity.Read<AutoChainInstanceData>();
+                    if(data.NextTransitionAttempt < serverTime + 5)
+                        entity.Write(new AutoChainInstanceData() {  NextTransitionAttempt = Core.ServerTime+10});
+                }
+                entities.Dispose();
+
+                entities = spawnRegionQuery.ToEntityArray(Allocator.Temp);
+                foreach (var entity in entities)
+                {
+                    var data = entity.Read<SpawnRegion>();
+                    if (data.LastRespawnAttempt < serverTime + 5)
+                        entity.Write(new SpawnRegion() { LastRespawnAttempt = Core.ServerTime + 10 });
+
+                    if (!Core.EntityManager.HasBuffer<SpawnRegionSpawnSlotEntry>(entity)) continue;
+
+                    var buffer = Core.EntityManager.GetBuffer<SpawnRegionSpawnSlotEntry>(entity);
+                    for (int i = 0; i < buffer.Length; i++)
+                    {
+                        var entry = buffer[i];
+                        if (entry.BlockRespawnUntil < serverTime + 5)
+                        {
+                            entry.BlockRespawnUntil = serverTime + 10;
+                            buffer[i] = entry;
+                        }
+                    }
+                }
+                yield return null;
             }
         }
 

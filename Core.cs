@@ -1,12 +1,14 @@
 using BepInEx.Logging;
-using KindredVignettes.ComponentSaver;
+using BepInEx.Unity.IL2CPP.Utils.Collections;
 using KindredVignettes.Services;
 using ProjectM;
 using ProjectM.CastleBuilding;
-using ProjectM.Network;
+using ProjectM.Physics;
 using ProjectM.Scripting;
+using System.Collections;
 using System.Runtime.CompilerServices;
 using Unity.Entities;
+using UnityEngine;
 
 namespace KindredVignettes;
 
@@ -38,7 +40,9 @@ internal static class Core
 
     public static ManualLogSource Log { get; } = Plugin.PluginLog;
 
-	public static void LogException(System.Exception e, [CallerMemberName] string caller = null)
+    static MonoBehaviour monoBehaviour;
+
+    public static void LogException(System.Exception e, [CallerMemberName] string caller = null)
 	{
 		Core.Log.LogError($"Failure in {caller}\nMessage: {e.Message} Inner:{e.InnerException?.Message}\n\nStack: {e.StackTrace}\nInner Stack: {e.InnerException?.StackTrace}");
 	}
@@ -68,5 +72,27 @@ internal static class Core
 		}
 
 		return null;
-	}
+    }
+
+    public static Coroutine StartCoroutine(IEnumerator routine)
+    {
+        if (monoBehaviour == null)
+        {
+            var go = new GameObject("KindredVignettes");
+            monoBehaviour = go.AddComponent<IgnorePhysicsDebugSystem>();
+            Object.DontDestroyOnLoad(go);
+        }
+
+        return monoBehaviour.StartCoroutine(routine.WrapToIl2Cpp());
+    }
+
+    public static void StopCoroutine(Coroutine coroutine)
+    {
+        if (monoBehaviour == null)
+        {
+            return;
+        }
+
+        monoBehaviour.StopCoroutine(coroutine);
+    }
 }

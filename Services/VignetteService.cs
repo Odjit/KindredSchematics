@@ -418,19 +418,22 @@ namespace KindredVignettes.Services
                         entity.Write(new CastleHeartConnection { CastleHeartEntity = heartInfo.CastleHeart });
                     }
 
-                    if (entity.Has<Team>())
+                    if (!entityData.notCastleTeam.HasValue || !entityData.notCastleTeam.Value)
                     {
-                        entity.Write(new Team { Value = heartInfo.TeamValue, FactionIndex = -1 });
+                        if (entity.Has<Team>())
+                        {
+                            entity.Write(new Team { Value = heartInfo.TeamValue, FactionIndex = -1 });
 
-                        entity.Add<UserOwner>();
-                        entity.Write(new UserOwner() { Owner = userEntity });
-                    }
+                            entity.Add<UserOwner>();
+                            entity.Write(new UserOwner() { Owner = userEntity });
+                        }
 
-                    if (entity.Has<TeamReference>() && !heartInfo.TeamReference.Equals(Entity.Null))
-                    {
-                        var t = new TeamReference();
-                        t.Value._Value = heartInfo.TeamReference;
-                        entity.Write(t);
+                        if (entity.Has<TeamReference>() && !heartInfo.TeamReference.Equals(Entity.Null))
+                        {
+                            var t = new TeamReference();
+                            t.Value._Value = heartInfo.TeamReference;
+                            entity.Write(t);
+                        }
                     }
 
                     if (territoryIndex == -1)
