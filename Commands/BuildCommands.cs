@@ -256,9 +256,12 @@ namespace KindredVignettes.Commands
                 tilePos.TileRotation = (TileRotation)(Mathf.Floor((360 - math.degrees(euler.y) - 45) / 90) % 4);
                 entity.Write(tilePos);
 
-                var stc = entity.Read<StaticTransformCompatible>();
-                stc.NonStaticTransform_Rotation = tilePos.TileRotation;
-                entity.Write(stc);
+                if(entity.Has<StaticTransformCompatible>())
+                {
+                    var stc = entity.Read<StaticTransformCompatible>();
+                    stc.NonStaticTransform_Rotation = tilePos.TileRotation;
+                    entity.Write(stc);
+                }
 
                 entity.Write(new Rotation { Value = quaternion.RotateY(math.radians(90 * (int)tilePos.TileRotation)) });
             }

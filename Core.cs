@@ -1,5 +1,6 @@
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP.Utils.Collections;
+using KindredVignettes.Data;
 using KindredVignettes.Services;
 using ProjectM;
 using ProjectM.CastleBuilding;
@@ -56,6 +57,8 @@ internal static class Core
 
         ComponentSaver.ComponentSaver.PopulateComponentSavers();
 		CastleTerritory = new();
+
+        Tile.Populate();
 
         Log.LogInfo($"{nameof(InitializeAfterLoaded)} completed");
 	}
