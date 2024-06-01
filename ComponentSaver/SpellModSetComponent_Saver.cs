@@ -6,7 +6,6 @@ using Unity.Entities;
 
 namespace KindredVignettes.ComponentSaver;
 
-
 [ComponentType(typeof(SpellModSetComponent))]
 class SpellModSetComponent_Saver : ComponentSaver
 {

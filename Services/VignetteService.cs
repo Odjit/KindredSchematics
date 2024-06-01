@@ -6,6 +6,7 @@ using ProjectM;
 using ProjectM.CastleBuilding;
 using ProjectM.Physics;
 using ProjectM.Shared;
+using ProjectM.Tiles;
 using Stunlock.Core;
 using System.Collections;
 using System.Collections.Generic;
@@ -436,7 +437,7 @@ namespace KindredVignettes.Services
                         }
                     }
 
-                    if (territoryIndex == -1)
+                    if (territoryIndex == -1 && entity.Has<TileModel>())
                     {
                         if(!entity.Has<Immortal>())
                             entity.Add<Immortal>();

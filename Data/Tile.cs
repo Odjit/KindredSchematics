@@ -10,6 +10,11 @@ internal static class Tile
         foreach (var (prefabGuid, name) in Core.PrefabCollection.PrefabGuidToNameDictionary)
         {
             if (!name.StartsWith("TM_")) continue;
+
+            // Verify the prefab actually exists
+            if (!Core.PrefabCollection._PrefabGuidToEntityMap.TryGetValue(prefabGuid, out var _))
+                continue;
+
             Named[name] = prefabGuid;
             NameFromPrefab[prefabGuid.GuidHash] = name;
             LowerCaseNameToPrefab[name.ToLower()] = prefabGuid;
