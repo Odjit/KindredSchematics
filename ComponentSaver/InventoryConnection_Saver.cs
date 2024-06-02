@@ -1,12 +1,6 @@
 ﻿using KindredVignettes.Services;
 using ProjectM;
-using ProjectM.Shared;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Unity.Entities;
 
 namespace KindredVignettes.ComponentSaver;
@@ -26,7 +20,7 @@ class InventoryConnection_Saver : ComponentSaver
 
         var saveData = new InventoryConnectionSave();
         if (prefabData.InventoryOwner != entityData.InventoryOwner)
-            saveData.InventoryOwner = entityMapper.AddEntity(entityData.InventoryOwner);
+            saveData.InventoryOwner = entityMapper.IndexOf(entityData.InventoryOwner);
 
         if (saveData.Equals(default(InventoryConnectionSave)))
             return null;
@@ -40,7 +34,7 @@ class InventoryConnection_Saver : ComponentSaver
 
         var saveData = new InventoryConnectionSave();
 
-        saveData.InventoryOwner = entityMapper.AddEntity(data.InventoryOwner);
+        saveData.InventoryOwner = entityMapper.IndexOf(data.InventoryOwner);
 
         return saveData;
     }
@@ -59,5 +53,13 @@ class InventoryConnection_Saver : ComponentSaver
         {
             InventoryOwner = entitiesBeingLoaded[saveData.InventoryOwner.Value]
         });
+    }
+
+    public override int[] GetDependencies(JsonElement data)
+    {
+        var saveData = data.Deserialize<InventoryConnectionSave>(VignetteService.GetJsonOptions());
+        if (!saveData.InventoryOwner.HasValue)
+            return [];
+        return [saveData.InventoryOwner.Value];
     }
 }

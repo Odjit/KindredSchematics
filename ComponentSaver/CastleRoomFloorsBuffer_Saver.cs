@@ -38,5 +38,11 @@ namespace KindredVignettes.ComponentSaver
             foreach(var i in floorEntities)
                 floors.Add(new CastleRoomFloorsBuffer { FloorEntity = entitiesBeingLoaded[i] });
         }
+
+        public override int[] GetDependencies(JsonElement data)
+        {
+            var saveData = data.Deserialize<int[]>(VignetteService.GetJsonOptions());
+            return saveData;
+        }
     }
 }

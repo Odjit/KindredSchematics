@@ -132,5 +132,15 @@ namespace KindredVignettes.ComponentSaver
 
             entity.Write(data);
         }
+
+        public override int[] GetDependencies(JsonElement data)
+        {
+            var saveData = data.Deserialize<ServantCoffinstation_Save>(VignetteService.GetJsonOptions());
+
+            if (saveData.ConnectedServant.HasValue)
+                return [saveData.ConnectedServant.Value];
+
+            return [];
+        }
     }
 }

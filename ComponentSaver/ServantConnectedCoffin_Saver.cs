@@ -40,5 +40,12 @@ namespace KindredVignettes.ComponentSaver
                 CoffinEntity = entitiesBeingLoaded[saveData.CoffinEntity.Value]
             });
         }
+
+        public override int[] GetDependencies(JsonElement data)
+        {
+            var saveData = data.Deserialize<ServantConnectedCoffin_Save>(VignetteService.GetJsonOptions());
+
+            return [saveData.CoffinEntity.Value];
+        }
     }
 }

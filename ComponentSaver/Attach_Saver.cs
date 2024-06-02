@@ -19,7 +19,7 @@ class Attach_Saver : ComponentSaver
 
         var saveData = new Attach_Save();
         if (prefabData.Parent != entityData.Parent)
-            saveData.Parent = entityMapper.AddEntity(entityData.Parent);
+            saveData.Parent = entityMapper.IndexOf(entityData.Parent);
 
         if (saveData.Equals(default(Attach_Save)))
             return null;
@@ -33,7 +33,7 @@ class Attach_Saver : ComponentSaver
 
         var saveData = new Attach_Save()
         {
-            Parent = entityMapper.AddEntity(data.Parent)
+            Parent = entityMapper.IndexOf(data.Parent)
         };
 
         return saveData;
@@ -48,7 +48,14 @@ class Attach_Saver : ComponentSaver
 
         if (!entity.Has<Attach>())
             entity.Add<Attach>();
-        
+
         entity.Write(new Attach(entitiesBeingLoaded[saveData.Parent.Value]));
+    }
+
+    public override int[] GetDependencies(JsonElement data)
+    {
+        var saveData = data.Deserialize<Attach_Save>(VignetteService.GetJsonOptions());
+
+        return [saveData.Parent.Value];
     }
 }

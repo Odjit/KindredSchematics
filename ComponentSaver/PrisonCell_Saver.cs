@@ -77,5 +77,13 @@ namespace KindredVignettes.ComponentSaver
 
             entity.Write(data);
         }
+
+        public override int[] GetDependencies(JsonElement data)
+        {
+            var saveData = data.Deserialize<PrisonCell_Save>(VignetteService.GetJsonOptions());
+            if (!saveData.ImprisonedEntity.HasValue)
+                return [];
+            return [ saveData.ImprisonedEntity.Value ];
+        }
     }
 }

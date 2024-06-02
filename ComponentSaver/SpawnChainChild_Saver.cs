@@ -60,5 +60,15 @@ namespace KindredVignettes.ComponentSaver
 
             entity.Write(data);
         }
+
+        public override int[] GetDependencies(JsonElement data)
+        {
+            var spawnChainChildSave = data.Deserialize<SpawnChainChild_Save>(VignetteService.GetJsonOptions());
+
+            if (!spawnChainChildSave.SpawnChain.HasValue)
+                return [];
+
+            return [spawnChainChildSave.SpawnChain.Value];
+        }
     }
 }

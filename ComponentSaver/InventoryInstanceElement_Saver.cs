@@ -1,6 +1,7 @@
 ﻿using KindredVignettes.Services;
 using ProjectM;
 using Stunlock.Core;
+using System.Linq;
 using System.Text.Json;
 using Unity.Entities;
 using static ProjectM.InventoryInstanceElement;
@@ -39,7 +40,7 @@ namespace KindredVignettes.ComponentSaver
                     Slots = instance.Slots,
                     MaxSlots = instance.MaxSlots,
                     ExternalInventoryEntityPrefabGuid = instance.ExternalInventoryEntityPrefabGuid,
-                    ExternalInventoryEntity = entityMapper.AddEntity(instance.ExternalInventoryEntity.GetEntityOnServer()),
+                    ExternalInventoryEntity = entityMapper.IndexOf(instance.ExternalInventoryEntity.GetEntityOnServer()),
                     RestrictedType = instance.RestrictedType,
                     RestrictedCategory = instance.RestrictedCategory,
                 };
@@ -72,6 +73,12 @@ namespace KindredVignettes.ComponentSaver
                     RestrictedCategory = inventory.RestrictedCategory,
                 });
             }
+        }
+
+        public override int[] GetDependencies(JsonElement data)
+        {
+            var saveData = data.Deserialize<InventoryInstanceElementSave[]>(VignetteService.GetJsonOptions());
+            return saveData.Select(x => x.ExternalInventoryEntity).ToArray();
         }
     }
 }

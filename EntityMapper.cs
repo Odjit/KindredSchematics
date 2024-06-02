@@ -39,7 +39,7 @@ namespace KindredVignettes
             if (!entityIndexLookup.TryGetValue(entity, out var index))
             {
                 index = entities.Count;
-                entityIndexLookup[entity] = entities.Count;
+                entityIndexLookup[entity] = index;
                 entities.Add(entity);
             }
             return index;

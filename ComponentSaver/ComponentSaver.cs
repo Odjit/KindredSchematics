@@ -67,6 +67,11 @@ abstract class ComponentSaver
     public abstract object SaveComponent(Entity entity, EntityMapper entityMapper);
     public abstract void ApplyComponentData(Entity entity, JsonElement data, Entity[] entitiesBeingLoaded);
 
+    public virtual int[] GetDependencies(JsonElement data)
+    {
+        return [];
+    }
+
     public static void ApplyComponentData(Entity entity, ComponentData[] additions, Entity[] entitiesBeingLoaded)
     {
         if(additions == null)
@@ -92,5 +97,25 @@ abstract class ComponentSaver
             if(Core.EntityManager.HasComponent(entity, ct))
                 Core.EntityManager.RemoveComponent(entity, ct);
         }
+    }
+
+    public static int[] GetDependencies(ComponentData[] additions)
+    {
+        if (additions == null)
+            return [];
+
+        var dependencies = new List<int>();
+        foreach (var addition in additions)
+        {
+            var componentSaver = GetComponentSaver(addition.component);
+            if (componentSaver != null)
+            {
+                var componentDependencies = componentSaver.GetDependencies((JsonElement)addition.data);
+                if (componentDependencies.Any(x => x==0))
+                    Core.Log.LogError($"Component {addition.component} has a dependency on 0");
+                dependencies.AddRange(componentDependencies.Where(x => x!=0));
+            }
+        }
+        return dependencies.ToArray();
     }
 }

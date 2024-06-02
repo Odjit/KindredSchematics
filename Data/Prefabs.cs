@@ -1,7 +1,7 @@
 using Stunlock.Core;
 
 
-namespace KindredCommands.Data;
+namespace KindredVignettes.Data;
 public static class Prefabs
 {
     public static readonly PrefabGUID ImprisonedBuff = new(1603329680);

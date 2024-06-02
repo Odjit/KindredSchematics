@@ -1,4 +1,4 @@
-﻿using KindredCommands.Data;
+﻿using KindredVignettes.Data;
 using KindredVignettes.Services;
 using ProjectM;
 using ProjectM.Network;
@@ -56,6 +56,12 @@ namespace KindredVignettes.ComponentSaver
             // Add the ImprisonedBuff to the entity
             var des = Core.Server.GetExistingSystemManaged<DebugEventsSystem>();
             des.ApplyBuff(new FromCharacter { User = Entity.Null, Character = entity }, new ApplyBuffDebugEvent { BuffPrefabGUID = Prefabs.ImprisonedBuff });
+        }
+
+        public override int[] GetDependencies(JsonElement data)
+        {
+            var saveData = data.Deserialize<Imprisoned_Save>(VignetteService.GetJsonOptions());
+            return [saveData.PrisonCellEntity.Value];
         }
     }
 }

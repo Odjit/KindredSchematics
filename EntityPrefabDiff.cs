@@ -17,8 +17,8 @@ namespace KindredVignettes
     }
 
     public struct EntityData
-
     {
+        public int id { get; set; }
         public PrefabGUID prefab { get; set; }
         public Vector3? pos { get; set; }
         public Quaternion? rot { get; set; }
@@ -97,11 +97,15 @@ namespace KindredVignettes
                         var saver = ComponentSaver.ComponentSaver.GetComponentSaver(entityComponent.TypeIndex);
                         if (saver != null)
                         {
-                            componentData.Add(new ComponentData
+                            var data = saver.SaveComponent(entity, entityMapper);
+                            if (data != null)
                             {
-                                component = entityComponent.GetManagedType().Name,
-                                data = saver.SaveComponent(entity, entityMapper)
-                            });
+                                componentData.Add(new ComponentData
+                                {
+                                    component = entityComponent.GetManagedType().Name,
+                                    data = data
+                                });
+                            }
                         }
                     }
                     else

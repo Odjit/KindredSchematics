@@ -1,7 +1,9 @@
 ﻿using KindredVignettes.Services;
 using ProjectM.CastleBuilding;
+using System.Linq;
 using System.Text.Json;
 using Unity.Entities;
+using UnityEngine.UIElements;
 
 namespace KindredVignettes.ComponentSaver
 {
@@ -36,7 +38,27 @@ namespace KindredVignettes.ComponentSaver
 
             var parentEntities = data.Deserialize<int[]>(VignetteService.GetJsonOptions());
             foreach (var i in parentEntities)
-                parents.Add(new CastleBuildingAttachToParentsBuffer { ParentEntity = entitiesBeingLoaded[i] });
+            {
+                var parentEntity = entitiesBeingLoaded[i];
+                parents.Add(new CastleBuildingAttachToParentsBuffer { ParentEntity = parentEntity });
+
+                if(parentEntity.Equals(Entity.Null))
+                {
+                    Core.Log.LogInfo($"We have a null entity for {i}");
+                    continue;
+                }
+
+                if (!parentEntity.Has<CastleBuildingAttachedChildrenBuffer>())
+                    parentEntity.Add<CastleBuildingAttachedChildrenBuffer>();
+                var childrenBuffer = Core.EntityManager.GetBuffer<CastleBuildingAttachedChildrenBuffer>(parentEntity);
+                childrenBuffer.Add(new CastleBuildingAttachedChildrenBuffer { ChildEntity = entity });
+            }
+        }
+
+        public override int[] GetDependencies(JsonElement data)
+        {
+            var saveData = data.Deserialize<int[]>(VignetteService.GetJsonOptions());
+            return saveData;
         }
     }
 }

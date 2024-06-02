@@ -52,5 +52,13 @@ namespace KindredVignettes.ComponentSaver
                 data.ActiveEntity = entitiesBeingLoaded[saveData.ActiveEntityId.Value];
             entity.Write(data);
         }
+
+        public override int[] GetDependencies(JsonElement data)
+        {
+            var saveData = data.Deserialize<ActiveChildElement_Save>(VignetteService.GetJsonOptions());
+            if (saveData.ActiveEntityId.HasValue)
+                return [saveData.ActiveEntityId.Value];
+            return new int[0];
+        }
     }
 }

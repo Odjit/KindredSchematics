@@ -17,27 +17,18 @@ namespace KindredVignettes.ComponentSaver
         public override object SaveComponent(Entity entity, EntityMapper entityMapper)
         {
             var children = Core.EntityManager.GetBuffer<CastleBuildingAttachedChildrenBuffer>(entity);
-            var childEntities = new int[children.Length];
             for (int i = 0; i < children.Length; i++)
             {
-                childEntities[i] = entityMapper.IndexOf(children[i].ChildEntity.GetEntityOnServer());
+                // Just adding the child entity to the entity mapper without a dependency
+                entityMapper.AddEntity(children[i].ChildEntity.GetEntityOnServer());
             }
 
-            return childEntities;
+            return null;
         }
 
         public override void ApplyComponentData(Entity entity, JsonElement data, Entity[] entitiesBeingLoaded)
         {
-            DynamicBuffer<CastleBuildingAttachedChildrenBuffer> children;
-            if (entity.Has<CastleBuildingAttachedChildrenBuffer>())
-                children = Core.EntityManager.GetBuffer<CastleBuildingAttachedChildrenBuffer>(entity);
-            else
-                children = Core.EntityManager.AddBuffer<CastleBuildingAttachedChildrenBuffer>(entity);
-            children.Clear();
-
-            var childEntities = data.Deserialize<int[]>(VignetteService.GetJsonOptions());
-            foreach (var i in childEntities)
-                children.Add(new CastleBuildingAttachedChildrenBuffer { ChildEntity = entitiesBeingLoaded[i] });
+            throw new System.NotImplementedException();
         }
     }
 }

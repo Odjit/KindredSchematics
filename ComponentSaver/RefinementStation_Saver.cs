@@ -2,6 +2,7 @@
 using ProjectM;
 using Stunlock.Core;
 using System.Collections;
+using System.Collections.Generic;
 using System.Text.Json;
 using Unity.Entities;
 
@@ -136,6 +137,24 @@ namespace KindredVignettes.ComponentSaver
                 }
                 yield return null;
             }
+        }
+
+        public override int[] GetDependencies(JsonElement data)
+        {
+            var saveData = data.Deserialize<Refinementstation_Save>(VignetteService.GetJsonOptions());
+            var dependencies = new List<int>();
+
+            if (saveData.InputInventory != null)
+                dependencies.AddRange(new InventoryBuffer_Saver().GetDependencies((JsonElement)saveData.InputInventory));
+            if (saveData.OutputInventory != null)
+                dependencies.AddRange(new InventoryBuffer_Saver().GetDependencies((JsonElement)saveData.OutputInventory));
+
+            if (saveData.ActiveSequenceState.HasValue)
+                dependencies.Add(saveData.ActiveSequenceState.Value);
+            if (saveData.InactiveSequenceState.HasValue)
+                dependencies.Add(saveData.InactiveSequenceState.Value);
+
+            return dependencies.ToArray();
         }
     }
 }

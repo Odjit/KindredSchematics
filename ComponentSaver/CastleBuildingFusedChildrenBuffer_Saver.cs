@@ -1,7 +1,9 @@
 ﻿using KindredVignettes.Services;
 using ProjectM.CastleBuilding;
+using System.Linq;
 using System.Text.Json;
 using Unity.Entities;
+using UnityEngine.UIElements;
 
 namespace KindredVignettes.ComponentSaver
 {
@@ -39,6 +41,12 @@ namespace KindredVignettes.ComponentSaver
                 fusedChildrenBuffer.Add(new CastleBuildingFusedChildrenBuffer {
                     ChildEntity = entitiesBeingLoaded[child]
                 });
+        }
+
+        public override int[] GetDependencies(JsonElement data)
+        {
+            var saveData = data.Deserialize<int[]>(VignetteService.GetJsonOptions());
+            return saveData;
         }
     }
 }

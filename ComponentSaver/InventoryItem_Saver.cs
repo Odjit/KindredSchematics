@@ -20,7 +20,7 @@ class InventoryItem_Saver : ComponentSaver
 
         var saveData = new InventoryItem_Save();
         if (prefabData.ContainerEntity != entityData.ContainerEntity)
-            saveData.ContainerEntity = entityMapper.AddEntity(entityData.ContainerEntity);
+            saveData.ContainerEntity = entityMapper.IndexOf(entityData.ContainerEntity);
 
         if (saveData.Equals(default(InventoryItem_Save)))
             return null;
@@ -34,7 +34,7 @@ class InventoryItem_Saver : ComponentSaver
 
         var saveData = new InventoryItem_Save()
         {
-            ContainerEntity = entityMapper.AddEntity(data.ContainerEntity)
+            ContainerEntity = entityMapper.IndexOf(data.ContainerEntity)
         };
 
         return saveData;
@@ -54,5 +54,15 @@ class InventoryItem_Saver : ComponentSaver
         {
             ContainerEntity = entitiesBeingLoaded[saveData.ContainerEntity.Value]
         });
+    }
+
+    public override int[] GetDependencies(JsonElement data)
+    {
+        var saveData = data.Deserialize<InventoryItem_Save>(VignetteService.GetJsonOptions());
+
+        if (!saveData.ContainerEntity.HasValue)
+            return [];
+
+        return [saveData.ContainerEntity.Value];
     }
 }
