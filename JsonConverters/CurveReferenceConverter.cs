@@ -41,8 +41,6 @@ namespace KindredVignettes.JsonConverters
                 reader.Read();
             }
 
-            var prefabName = reader.GetString();
-
             return curveRef;
         }
 
