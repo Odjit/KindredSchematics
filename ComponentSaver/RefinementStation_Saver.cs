@@ -3,6 +3,7 @@ using ProjectM;
 using Stunlock.Core;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using Unity.Entities;
 
@@ -154,7 +155,7 @@ namespace KindredVignettes.ComponentSaver
             if (saveData.InactiveSequenceState.HasValue)
                 dependencies.Add(saveData.InactiveSequenceState.Value);
 
-            return dependencies.ToArray();
+            return dependencies.Where(x => x != 0).ToArray();
         }
     }
 }

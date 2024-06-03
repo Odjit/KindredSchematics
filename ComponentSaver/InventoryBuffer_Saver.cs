@@ -81,7 +81,7 @@ namespace KindredVignettes.ComponentSaver
         public override int[] GetDependencies(JsonElement data)
         {
             var saveData = data.Deserialize<InventoryBuffer_Save[]>(VignetteService.GetJsonOptions());
-            return saveData.Select(x => x.ItemEntity).ToArray();
+            return saveData.Select(x => x.ItemEntity).Where(x => x != 0).ToArray();
         }
     }
 }
