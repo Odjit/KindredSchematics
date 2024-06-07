@@ -95,7 +95,7 @@ namespace KindredVignettes.Commands
             BuildingPlacementRestrictionsDisabledSetting.Value = !BuildingPlacementRestrictionsDisabledSetting.Value;
             if (BuildingPlacementRestrictionsDisabledSetting.Value)
             {
-                Core.StartCoroutine(KeepFromRespawning());
+                Core.RespawnPrevention.PreventRespawns();
             }
             debugEventsSystem.SetDebugSetting(User.Index, ref BuildingPlacementRestrictionsDisabledSetting);
 
@@ -109,56 +109,7 @@ namespace KindredVignettes.Commands
             else
             {
                 ctx.Reply("Building placement restrictions enabled");
-            }
-        }
-
-        static IEnumerator KeepFromRespawning()
-        {
-            EntityQueryDesc autoChainQueryDesc = new()
-            {
-                All = new ComponentType[] { new(Il2CppType.Of<AutoChainInstanceData>(), ComponentType.AccessMode.ReadWrite) }
-            };
-            var autoChainQuery = Core.EntityManager.CreateEntityQuery(autoChainQueryDesc);
-
-            EntityQueryDesc spawnRegionQueryDesc = new()
-            {
-                All = new ComponentType[] { new(Il2CppType.Of<SpawnRegion>(), ComponentType.AccessMode.ReadWrite) }
-            };
-            var spawnRegionQuery = Core.EntityManager.CreateEntityQuery(spawnRegionQueryDesc);
-
-            while (BuildingPlacementRestrictionsDisabledSetting.Value)
-            {
-                var serverTime = Core.ServerTime;
-                var entities = autoChainQuery.ToEntityArray(Allocator.Temp);
-                foreach(var entity in entities)
-                {
-                    var data = entity.Read<AutoChainInstanceData>();
-                    if(data.NextTransitionAttempt < serverTime + 5)
-                        entity.Write(new AutoChainInstanceData() {  NextTransitionAttempt = Core.ServerTime+10});
-                }
-                entities.Dispose();
-
-                entities = spawnRegionQuery.ToEntityArray(Allocator.Temp);
-                foreach (var entity in entities)
-                {
-                    var data = entity.Read<SpawnRegion>();
-                    if (data.LastRespawnAttempt < serverTime + 5)
-                        entity.Write(new SpawnRegion() { LastRespawnAttempt = Core.ServerTime + 10 });
-
-                    if (!Core.EntityManager.HasBuffer<SpawnRegionSpawnSlotEntry>(entity)) continue;
-
-                    var buffer = Core.EntityManager.GetBuffer<SpawnRegionSpawnSlotEntry>(entity);
-                    for (int i = 0; i < buffer.Length; i++)
-                    {
-                        var entry = buffer[i];
-                        if (entry.BlockRespawnUntil < serverTime + 5)
-                        {
-                            entry.BlockRespawnUntil = serverTime + 10;
-                            buffer[i] = entry;
-                        }
-                    }
-                }
-                yield return null;
+                Core.RespawnPrevention.AllowRespawns();
             }
         }
 

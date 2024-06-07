@@ -23,6 +23,8 @@ internal static class Core
     public static CastleBuildingAttachmentBuffSystem CastleBuildingAttachmentBuffSystem { get; } = Server.GetExistingSystemManaged<CastleBuildingAttachmentBuffSystem>();
     public static CastleTerritoryService CastleTerritory { get; private set; }
     public static PrefabCollectionSystem PrefabCollection { get; } = Server.GetExistingSystemManaged<PrefabCollectionSystem>();
+
+    public static RespawnPreventionService RespawnPrevention { get; } = new();
     public static VignetteService VignetteService { get; } = new();
 	public static ConfigSettingsService ConfigSettings { get; } = new();
 

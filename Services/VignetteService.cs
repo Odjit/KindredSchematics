@@ -50,11 +50,23 @@ namespace KindredVignettes.Services
         GameObject vignetteSvcGameObject;
         IgnorePhysicsDebugSystem vignetteMonoBehaviour;
 
+        HashSet<PrefabGUID> prefabsAllowedToDestroy = [];
+
 
         public VignetteService()
         {
             vignetteSvcGameObject = new GameObject("VignetteService");
             vignetteMonoBehaviour = vignetteSvcGameObject.AddComponent<IgnorePhysicsDebugSystem>();
+
+            foreach(var (prefabGUID, prefabName) in Core.PrefabCollection._PrefabGuidToNameDictionary)
+            {
+                if(prefabName.StartsWith("TM_") || prefabName.StartsWith("Chain_") || 
+                   (Core.PrefabCollection._PrefabGuidToEntityMap.TryGetValue(prefabGUID, out var prefab) &&
+                    prefab.Has<CastleBuildingFusedRoot>()))
+                {
+                    prefabsAllowedToDestroy.Add(prefabGUID);
+                }
+            }
         }
 
         public void StartCoroutine(IEnumerator routine)
@@ -95,7 +107,9 @@ namespace KindredVignettes.Services
 
         public void SaveVignette(string name, float3? location = null, float? radius = null, Vector2? halfSize = null, int? territoryIndex = null)
         {
-
+            var startTime = Time.realtimeSinceStartup;
+            float GetElapseTime() => Time.realtimeSinceStartup - startTime;
+            Core.Log.LogInfo($"{GetElapseTime()} Starting to save {name}");
             var vignette = new Vignette
             {
                 version = "1.0",
@@ -121,6 +135,8 @@ namespace KindredVignettes.Services
                 return;
             }
 
+            Core.Log.LogInfo($"{GetElapseTime()} Gathered entities for {name}");
+
             var entityPrefabDiffs = new List<EntityData>();
             var aabbs = new List<Aabb>();
             var entitiesSaving = entities.Where(entity =>
@@ -145,6 +161,7 @@ namespace KindredVignettes.Services
             });
 
             var entityMapper = new EntityMapper(entitiesSaving);
+            Core.Log.LogInfo($"{GetElapseTime()} Gathered and Filtered entities for {name} and now saving");
             for (var i = 1; i < entityMapper.Count; ++i)
             {
                 var entity = entityMapper[i];
@@ -205,17 +222,25 @@ namespace KindredVignettes.Services
                 }
             }
 
+            Core.Log.LogInfo($"{GetElapseTime()} Saved and now Starting to merge aabbs");
+            var startNumAabbs = aabbs.Count;
+            AabbHelper.MergeAabbsTogether(aabbs);
+            Core.Log.LogInfo($"{GetElapseTime()} Reduced by {startNumAabbs - aabbs.Count} aabbs from {startNumAabbs} to {aabbs.Count}");
+
             vignette.entities = entityPrefabDiffs.ToArray();
             if (territoryIndex == null)
                 vignette.aabbs = aabbs.ToArray();
 
+            Core.Log.LogInfo($"{GetElapseTime()} Serializing {vignette.entities.Length} entities for {name}");
             var json = JsonSerializer.Serialize(vignette, GetJsonOptions());
 
+            Core.Log.LogInfo($"{GetElapseTime()} Writing {name}.vignette");
             if (!Directory.Exists(CONFIG_PATH))
             {
                 Directory.CreateDirectory(CONFIG_PATH);
             }
             File.WriteAllText($"{CONFIG_PATH}/{name}.vignette", json);
+            Core.Log.LogInfo($"{GetElapseTime()} Finished writing {name}.vignette");
         }
 
         public Entity CurUserEntity { get; private set; }
@@ -251,8 +276,31 @@ namespace KindredVignettes.Services
                 return $"Has an unsupported version '{vignette.version}' loading old versions is coming soon";
             }
 
+            Core.StartCoroutine(FinishLoadingVignette(userEntity, charEntity, expandClear, newCenter, vignette));
+
+            return null;
+        }
+
+        private IEnumerator FinishLoadingVignette(Entity userEntity, Entity charEntity, float expandClear, Vector3? newCenter, Vignette vignette)
+        {
+            const float MESSAGE_FREQUENCY = 2.5f;
+            var startTime = Time.realtimeSinceStartup;
+            float GetElapseTime() => Time.realtimeSinceStartup - startTime;
+            var lastYieldTime = Time.realtimeSinceStartup;
+            var timeSinceLastMessage = Time.realtimeSinceStartup;
+
+            void MessageUser(string message, bool always=false)
+            {
+                if (always || Time.realtimeSinceStartup - timeSinceLastMessage > MESSAGE_FREQUENCY)
+                {
+                    ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, userEntity.Read<User>(), message);
+                    timeSinceLastMessage = Time.realtimeSinceStartup;
+                }
+            }
+
             var translation = Vector3.zero;
             var heartAabbsInLoadArea = new List<Aabb>();
+            List<Entity> entitiesToDestroy = [];
             if (vignette.location.HasValue)
             {
                 var center = newCenter ?? vignette.location.Value;
@@ -273,8 +321,8 @@ namespace KindredVignettes.Services
                 aabb.Max += gridTranslation;
                 aabb.Expand(expandClear);
 
-                Core.Log.LogInfo($"{Time.realtimeSinceStartup:f4} Getting entities in {aabb}");
-                var entities = Helper.GetAllEntitiesInTileAabb<Translation>(aabb).
+                Core.Log.LogInfo($"{GetElapseTime():f4} Getting entities in {aabb}");
+                var entitiesToCheck = Helper.GetAllEntitiesInTileAabb<Translation>(aabb).
                     Where(x =>
                     {
                         if (x.Has<CastleHeart>())
@@ -290,11 +338,12 @@ namespace KindredVignettes.Services
                         }
 
                         return true;
-                    });
+                    }).ToArray();
 
-                Core.Log.LogInfo($"{Time.realtimeSinceStartup:f4} Checking {entities.Count()} entities to see if they need to be cleared");
+                Core.Log.LogInfo($"{GetElapseTime():f4} Checking {entitiesToCheck.Length} entities to see if they need to be cleared");
+                MessageUser($"Checking {entitiesToCheck.Length} entities to see if they need to be cleared");
                 var aabbArray = new Aabb[vignette.aabbs.Length];
-                for(var i=0; i< vignette.aabbs.Length; i++)
+                for (var i = 0; i < vignette.aabbs.Length; i++)
                 {
                     var newAabb = vignette.aabbs[i];
                     newAabb.Min += gridTranslation;
@@ -303,35 +352,42 @@ namespace KindredVignettes.Services
                     aabbArray[i] = newAabb;
                 }
 
-                entities = entities.
-                    Where(x =>
+                for(var i=0; i < entitiesToCheck.Length; i++)
+                {
+                    var entity = entitiesToCheck[i];
+                    if (Time.realtimeSinceStartup - lastYieldTime > 0.05f)
                     {
-                        if (!x.Has<PrefabGUID>())
-                            return false;
+                        MessageUser($"Have checked {i}/{entitiesToCheck.Length} for deletion so far with {entitiesToDestroy.Count} marked to be deleted");
+                        lastYieldTime = Time.realtimeSinceStartup;
+                        yield return null;
+                    }
 
-                        // Keep entities protected by the heart
-                        foreach (var heartAabb in heartAabbsInLoadArea)
+                    if (!entity.Has<PrefabGUID>())
+                        continue;
+
+                    if (!prefabsAllowedToDestroy.Contains(entity.Read<PrefabGUID>()))
+                        continue;
+
+                    // Keep entities protected by the heart
+                    foreach (var heartAabb in heartAabbsInLoadArea)
+                    {
+                        if (Helper.IsEntityInAabb(entity, heartAabb))
+                            continue;
+                    }
+
+                    foreach (var aabbToTest in aabbArray)
+                    {
+                        if (Helper.IsEntityInAabb(entity, aabbToTest))
                         {
-                            if (Helper.IsEntityInAabb(x, heartAabb))
-                                return false;
+                            entitiesToDestroy.Add(entity);
+                            break;
                         }
-
-                        foreach (var aabb in aabbArray)
-                        {
-                            if (Helper.IsEntityInAabb(x, aabb))
-                                return true;
-                        }
-
-                        var prefabName = x.Read<PrefabGUID>().LookupName();
-                        return prefabName.StartsWith("TM_") || prefabName.StartsWith("Chain_");
-                    });
-
-                Core.Log.LogInfo($"{Time.realtimeSinceStartup:f4} Clearing {entities.Count()} entities");
-                Helper.DestroyEntitiesForBuilding(entities);
+                    }
+                }
             }
             else if (vignette.territoryIndex.HasValue)
             {
-                var entities = Helper.GetAllEntitiesInTerritory<Translation>(vignette.territoryIndex.Value).
+                entitiesToDestroy.AddRange(Helper.GetAllEntitiesInTerritory<Translation>(vignette.territoryIndex.Value).
                     Where(x =>
                     {
                         if (!x.Has<PrefabGUID>())
@@ -350,21 +406,31 @@ namespace KindredVignettes.Services
                         }
 
                         var prefabName = x.Read<PrefabGUID>().LookupName();
-                        return prefabName.StartsWith("TM_") || prefabName.StartsWith("Chain_");
-                    });
-
-                Helper.DestroyEntitiesForBuilding(entities);
+                        return prefabName.StartsWith("TM_") || prefabName.StartsWith("Chain_") || x.Has<CastleBuildingFusedRoot>();
+                    }));
             }
 
-            Core.StartCoroutine(
-            FinishLoadingVignette(userEntity, charEntity, vignette, translation, heartAabbsInLoadArea)
-                );
+            Core.Log.LogInfo($"{GetElapseTime():f4} Filter {entitiesToDestroy.Count()} entities for clearing");
+            MessageUser($"Now deleting {entitiesToDestroy.Count()} entities before loading in the vignette", true);
+            yield return null;
+            Core.RespawnPrevention.PreventRespawns();
+            var entitiesDestroyingThisFrame = 0;
+            foreach(var entity in entitiesToDestroy)
+            {
+                Helper.DestroyEntityAndCastleAttachments(entity);
+                entitiesDestroyingThisFrame++;
 
-            return null;
-        }
+                if (entitiesDestroyingThisFrame > 200)
+                {
+                    entitiesDestroyingThisFrame = 0;
+                    yield return null;
+                    lastYieldTime = Time.realtimeSinceStartup;
+                }
+            }
 
-        IEnumerator FinishLoadingVignette(Entity userEntity, Entity charEntity, Vignette vignette, Vector3 translation, List<Aabb> heartAabbsInLoadArea)
-        {
+            MessageUser("Starting to load in the vignette", true);
+            yield return null;
+
             var teamValue = charEntity.Read<Team>().Value;
             var castleHeartEntity = Entity.Null;
             var castleTeamReference = Entity.Null;
@@ -398,11 +464,11 @@ namespace KindredVignettes.Services
             // Disable spawn chain system for one frame
             InitializeNewSpawnChainSystem_Patch.skipOnce = true;
 
-            // First pass create all the entities
+            // First pass create all the entitiesToDestroy
             var createdEntities = new Entity[vignette.entities.Length + 1];
             createdEntities[0] = Entity.Null;
 
-            Core.Log.LogInfo($"{Time.realtimeSinceStartup:f4} Figuring out dependency groups");
+            Core.Log.LogInfo($"{GetElapseTime():f4} Figuring out dependency groups");
             var dependentGroups = new Dictionary<int, List<int>>();
             // Initialize dependent groups with a list of everyone
             for (var i = 0; i < vignette.entities.Length; ++i)
@@ -445,11 +511,10 @@ namespace KindredVignettes.Services
                     }
                 }
             }
-            Core.Log.LogInfo($"{Time.realtimeSinceStartup:f4} Finished figuring out {dependentGroups.Count} dependency groups from {vignette.entities.Length} entities");
+            Core.Log.LogInfo($"{GetElapseTime():f4} Finished figuring out {dependentGroups.Count} dependency groups from {vignette.entities.Length} entitiesToDestroy");
 
             var entitiesLoaded = new HashSet<int>();
             var entitiesLoadedThisFrame = new List<int>();
-            var lastYieldTime = Time.realtimeSinceStartup;
             do
             {
                 var time = Core.ServerTime;
@@ -471,7 +536,7 @@ namespace KindredVignettes.Services
 
                 if (entityGroupToLoad.Count == 0)
                 {
-                    Core.Log.LogError($"{Time.realtimeSinceStartup:f4} Failed to find entity group to load so loading the remaining now");
+                    Core.Log.LogError($"{GetElapseTime():f4} Failed to find entity group to load so loading the remaining now");
                     yield return null;
                     for (var i = 0; i < vignette.entities.Length; ++i)
                         if (!entitiesLoaded.Contains(i))
@@ -576,16 +641,17 @@ namespace KindredVignettes.Services
 
                 if (Time.realtimeSinceStartup - lastYieldTime > 0.05f)
                 {
-                    Core.Log.LogInfo($"{Time.realtimeSinceStartup:f4} Loaded {entitiesLoadedThisFrame.Count} entities for {100 * (float)entitiesLoaded.Count / (float)vignette.entities.Length:F1}% completed");
-                    ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, userEntity.Read<User>(), $"Loaded {entitiesLoadedThisFrame.Count} entities for {100 * (float)entitiesLoaded.Count / (float)vignette.entities.Length:F1}% completed");
+                    Core.Log.LogInfo($"{GetElapseTime():f4} Loaded {entitiesLoadedThisFrame.Count} entities this frame for {100 * (float)entitiesLoaded.Count / (float)vignette.entities.Length:F1}% complete");
+                    MessageUser($"Loading {100 * (float)entitiesLoaded.Count / (float)vignette.entities.Length:F1}% complete");
                     entitiesLoadedThisFrame.Clear();
                     yield return null;
                     lastYieldTime = Time.realtimeSinceStartup;
                 }
             } while (entitiesLoaded.Count < vignette.entities.Length);
 
-            Core.Log.LogInfo($"{Time.realtimeSinceStartup:f4} Finished Loading Vignette");
+            Core.Log.LogInfo($"{GetElapseTime():f4} Finished Loading Vignette");
             ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, userEntity.Read<User>(), $"Finished Loading Vignette");
+            Core.RespawnPrevention.AllowRespawns();
         }
 
         private static Entity SpawnEntity(Entity userEntity, Vector3 translation, EntityData diff, Entity prefab)

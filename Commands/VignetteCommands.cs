@@ -99,7 +99,7 @@ namespace KindredVignettes.Commands
             var failReason = Core.VignetteService.LoadVignette(vignetteName, ctx.Event.SenderUserEntity, ctx.Event.SenderCharacterEntity, expandClear);
             if (failReason == null)
             {
-                ctx.Reply($"Loaded vignette {vignetteName}");
+                ctx.Reply($"Loading vignette {vignetteName}");
             }
             else if (failReason == "")
             {
@@ -118,7 +118,7 @@ namespace KindredVignettes.Commands
                 ctx.Event.SenderCharacterEntity.Read<Translation>().Value + new float3(0, heightOffset, 0));
             if (failReason == null)
             {
-                ctx.Reply($"Loaded vignette {vignetteName}");
+                ctx.Reply($"Loading vignette {vignetteName}");
             }
             else if (failReason == "")
             {
@@ -137,7 +137,7 @@ namespace KindredVignettes.Commands
                 new float3(x, y, z));
             if (failReason == null)
             {
-                ctx.Reply($"Loaded vignette {vignetteName}");
+                ctx.Reply($"Loading vignette {vignetteName}");
             }
             else if (failReason == "")
             {
