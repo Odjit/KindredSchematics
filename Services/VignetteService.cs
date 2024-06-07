@@ -289,13 +289,15 @@ namespace KindredVignettes.Services
             var lastYieldTime = Time.realtimeSinceStartup;
             var timeSinceLastMessage = Time.realtimeSinceStartup;
 
-            void MessageUser(string message, bool always=false)
+            bool MessageUser(string message, bool always=false)
             {
                 if (always || Time.realtimeSinceStartup - timeSinceLastMessage > MESSAGE_FREQUENCY)
                 {
                     ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, userEntity.Read<User>(), message);
                     timeSinceLastMessage = Time.realtimeSinceStartup;
+                    return true;
                 }
+                return false;
             }
 
             var translation = Vector3.zero;
@@ -357,7 +359,8 @@ namespace KindredVignettes.Services
                     var entity = entitiesToCheck[i];
                     if (Time.realtimeSinceStartup - lastYieldTime > 0.05f)
                     {
-                        MessageUser($"Have checked {i}/{entitiesToCheck.Length} for deletion so far with {entitiesToDestroy.Count} marked to be deleted");
+                        if(MessageUser($"Checked {i}/{entitiesToCheck.Length} for deletion so far with {entitiesToDestroy.Count} marked to be deleted"))
+                            Core.Log.LogInfo($"{GetElapseTime():f4} Checked {i}/{entitiesToCheck.Length} for deletion so far with {entitiesToDestroy.Count} marked to be deleted");
                         lastYieldTime = Time.realtimeSinceStartup;
                         yield return null;
                     }
@@ -412,15 +415,15 @@ namespace KindredVignettes.Services
 
             Core.Log.LogInfo($"{GetElapseTime():f4} Filter {entitiesToDestroy.Count()} entities for clearing");
             MessageUser($"Now deleting {entitiesToDestroy.Count()} entities before loading in the vignette", true);
-            yield return null;
             Core.RespawnPrevention.PreventRespawns();
+            yield return null;
             var entitiesDestroyingThisFrame = 0;
             foreach(var entity in entitiesToDestroy)
             {
                 Helper.DestroyEntityAndCastleAttachments(entity);
                 entitiesDestroyingThisFrame++;
 
-                if (entitiesDestroyingThisFrame > 200)
+                if (entitiesDestroyingThisFrame > 50)
                 {
                     entitiesDestroyingThisFrame = 0;
                     yield return null;
@@ -536,7 +539,7 @@ namespace KindredVignettes.Services
 
                 if (entityGroupToLoad.Count == 0)
                 {
-                    Core.Log.LogError($"{GetElapseTime():f4} Failed to find entity group to load so loading the remaining now");
+                    Core.Log.LogInfo($"{GetElapseTime():f4} Failed to find entity group to load so loading the remaining now");
                     yield return null;
                     for (var i = 0; i < vignette.entities.Length; ++i)
                         if (!entitiesLoaded.Contains(i))
