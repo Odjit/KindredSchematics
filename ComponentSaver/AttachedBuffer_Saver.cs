@@ -1,4 +1,5 @@
-﻿using ProjectM;
+﻿using KindredVignettes.Data;
+using ProjectM;
 using System.Text.Json;
 using Unity.Entities;
 
@@ -22,21 +23,8 @@ internal class AttachedBuffer_Saver : ComponentSaver
             if (prefabGuid.IsEmpty())
                 continue;
 
-            if (entity.Has<AttachMapIconsToEntity>())
-            {
-                var mapIcons = Core.EntityManager.GetBufferReadOnly<AttachMapIconsToEntity>(entity);
-                var foundMapIcon = false;
-                foreach (var mapIcon in mapIcons)
-                {
-                    if (mapIcon.Prefab == prefabGuid)
-                    {
-                        foundMapIcon = true;
-                        break;
-                    }
-                }
-                if (foundMapIcon)
-                    continue;
-            }
+            if (prefabGuid != Prefabs.External_Inventory)
+                continue;
 
             entityMapper.IndexOf(data[i].Entity);
         }
