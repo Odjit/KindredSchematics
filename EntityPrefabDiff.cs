@@ -18,7 +18,6 @@ namespace KindredVignettes
 
     public struct EntityData
     {
-        public int id { get; set; }
         public PrefabGUID prefab { get; set; }
         public Vector3? pos { get; set; }
         public Quaternion? rot { get; set; }

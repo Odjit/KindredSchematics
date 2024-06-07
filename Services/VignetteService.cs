@@ -166,7 +166,6 @@ namespace KindredVignettes.Services
             {
                 var entity = entityMapper[i];
                 var data = EntityPrefabDiff.DiffFromPrefab(entity, entityMapper);
-                data.id = i;
                 entityPrefabDiffs.Add(data);
                 if (territoryIndex == null && Helper.GetAabb(entity, out var aabb))
                 {
@@ -621,6 +620,13 @@ namespace KindredVignettes.Services
                                 entity = Entity.Null;
                                 break;
                             }
+                        }
+
+                        if (entity.Has<BlueprintData>())
+                        {
+                            var blueprintData = entity.Read<BlueprintData>();
+                            blueprintData.Entity = entity;
+                            entity.Write(blueprintData);
                         }
 
                         createdEntities[i + 1] = entity;
