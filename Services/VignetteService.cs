@@ -514,7 +514,7 @@ namespace KindredVignettes.Services
             Core.Log.LogInfo($"{GetElapseTime():f4} Finished figuring out {dependentGroups.Count} dependency groups from {vignette.entities.Length} entitiesToDestroy");
 
             var entitiesLoaded = new HashSet<int>();
-            var entitiesLoadedThisFrame = new List<int>();
+            var entitiesLoadedThisFrame = 0;
             do
             {
                 var time = Core.ServerTime;
@@ -546,7 +546,7 @@ namespace KindredVignettes.Services
                 foreach(var i in entityGroupToLoad)
                 {
                     entitiesLoaded.Add(i);
-                    entitiesLoadedThisFrame.Add(i);
+                    entitiesLoadedThisFrame++;
 
                     var entityData = vignette.entities[i];
 
@@ -624,10 +624,8 @@ namespace KindredVignettes.Services
                     }
                 }
 
-                var groupDependencies = dependencies[entityGroupToLoad[0]];
-
                 // Second pass modify all their components
-                foreach (var i in entitiesLoadedThisFrame)
+                foreach (var i in entityGroupToLoad)
                 {
                     var diff = vignette.entities[i];
                     var entity = createdEntities[i + 1];
@@ -641,10 +639,10 @@ namespace KindredVignettes.Services
 
                 if (Time.realtimeSinceStartup - lastYieldTime > 0.05f)
                 {
-                    Core.Log.LogInfo($"{GetElapseTime():f4} Loaded {entitiesLoadedThisFrame.Count} entities this frame for {100 * (float)entitiesLoaded.Count / (float)vignette.entities.Length:F1}% complete");
+                    Core.Log.LogInfo($"{GetElapseTime():f4} Loaded {entitiesLoadedThisFrame} entities this frame for {100 * (float)entitiesLoaded.Count / (float)vignette.entities.Length:F1}% complete");
                     MessageUser($"Loading {100 * (float)entitiesLoaded.Count / (float)vignette.entities.Length:F1}% complete");
-                    entitiesLoadedThisFrame.Clear();
                     yield return null;
+                    entitiesLoadedThisFrame = 0;
                     lastYieldTime = Time.realtimeSinceStartup;
                 }
             } while (entitiesLoaded.Count < vignette.entities.Length);
