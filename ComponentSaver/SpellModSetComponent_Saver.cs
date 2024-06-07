@@ -47,7 +47,6 @@ class SpellModSetComponent_Saver : ComponentSaver
 
 struct SpellModSet_Save
 {
-    public int? SyncId { get; set; }
     public SpellMod_Save? Mod0 { get; set; }
     public SpellMod_Save? Mod1 { get; set; }
     public SpellMod_Save? Mod2 { get; set; }
@@ -60,7 +59,6 @@ struct SpellModSet_Save
 
     public SpellModSet_Save(SpellModSet prefab, SpellModSet entity)
     {
-        SyncId = entity.SyncId != prefab.SyncId ? entity.SyncId : null;
         Mod0 = !entity.Mod0.Equals(prefab.Mod0) ? new SpellMod_Save(prefab.Mod0, entity.Mod0) : null;
         Mod1 = !entity.Mod1.Equals(prefab.Mod1) ? new SpellMod_Save(prefab.Mod1, entity.Mod1) : null;
         Mod2 = !entity.Mod2.Equals(prefab.Mod2) ? new SpellMod_Save(prefab.Mod2, entity.Mod2) : null;
@@ -76,7 +74,6 @@ struct SpellModSet_Save
     {
         return new SpellModSet()
         {
-            SyncId = SyncId.HasValue ? SyncId.Value : prefab.SyncId,
             Mod0 = Mod0.HasValue ? Mod0.Value.GetSpellMod(prefab.Mod0) : prefab.Mod0,
             Mod1 = Mod1.HasValue ? Mod1.Value.GetSpellMod(prefab.Mod1) : prefab.Mod1,
             Mod2 = Mod2.HasValue ? Mod2.Value.GetSpellMod(prefab.Mod2) : prefab.Mod2,
