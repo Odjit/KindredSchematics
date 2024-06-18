@@ -1,11 +1,11 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM.CastleBuilding;
 using Stunlock.Core;
 using System.Linq;
 using System.Text.Json;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver;
+namespace KindredSchematics.ComponentSaver;
 
 [ComponentType(typeof(CastleBuildingAttachmentActiveBuffsBuffer))]
 internal class CastleBuildingAttachmentActiveBuffsBuffer_Saver : ComponentSaver
@@ -54,7 +54,7 @@ internal class CastleBuildingAttachmentActiveBuffsBuffer_Saver : ComponentSaver
 
         var applyBuffBuffer = Core.EntityManager.GetBuffer<CastleBuildingAttachmentApplyBuff>(entity);
 
-        var saveData = data.Deserialize<SaveData[]>(VignetteService.GetJsonOptions());
+        var saveData = data.Deserialize<SaveData[]>(SchematicService.GetJsonOptions());
         foreach (var entry in saveData)
         {
             CastleBuildingAttachmentApplyBuff applyBuff = default(CastleBuildingAttachmentApplyBuff);
@@ -83,7 +83,7 @@ internal class CastleBuildingAttachmentActiveBuffsBuffer_Saver : ComponentSaver
 
     public override int[] GetDependencies(JsonElement data)
     {
-        var saveData = data.Deserialize<SaveData[]>(VignetteService.GetJsonOptions());
+        var saveData = data.Deserialize<SaveData[]>(SchematicService.GetJsonOptions());
         return saveData.Select(x => x.ParentEntityId).Concat(saveData.Select(x => x.ChildEntityId)).Distinct().ToArray();
     }
 }

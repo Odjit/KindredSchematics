@@ -1,10 +1,10 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM.Shared;
 using Stunlock.Core;
 using System.Text.Json;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver;
+namespace KindredSchematics.ComponentSaver;
 
 [ComponentType(typeof(Durability))]
 internal class Durability_Saver : ComponentSaver
@@ -103,7 +103,7 @@ internal class Durability_Saver : ComponentSaver
 
     public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
     {
-        var saveData = jsonData.Deserialize<Durability_Save>(VignetteService.GetJsonOptions());
+        var saveData = jsonData.Deserialize<Durability_Save>(SchematicService.GetJsonOptions());
 
         if (!entity.Has<Durability>())
             entity.Add<Durability>();

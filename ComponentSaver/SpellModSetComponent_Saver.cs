@@ -1,10 +1,10 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM.Shared;
 using Stunlock.Core;
 using System.Text.Json;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver;
+namespace KindredSchematics.ComponentSaver;
 
 [ComponentType(typeof(SpellModSetComponent))]
 class SpellModSetComponent_Saver : ComponentSaver
@@ -31,7 +31,7 @@ class SpellModSetComponent_Saver : ComponentSaver
 
     public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
     {
-        var saveData = jsonData.Deserialize<SpellModSet_Save>(VignetteService.GetJsonOptions());
+        var saveData = jsonData.Deserialize<SpellModSet_Save>(SchematicService.GetJsonOptions());
 
         if (!entity.Has<SpellModSetComponent>())
             entity.Add<SpellModSetComponent>();

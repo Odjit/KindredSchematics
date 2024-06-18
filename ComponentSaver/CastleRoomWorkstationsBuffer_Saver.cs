@@ -1,10 +1,10 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM.CastleBuilding;
 using System.Linq;
 using System.Text.Json;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver
+namespace KindredSchematics.ComponentSaver
 {
     [ComponentType(typeof(CastleRoomWorkstationsBuffer))]
     internal class CastleRoomWorkstationsBuffer_Saver : ComponentSaver
@@ -35,14 +35,14 @@ namespace KindredVignettes.ComponentSaver
                 workstationBuffer = Core.EntityManager.AddBuffer<CastleRoomWorkstationsBuffer>(entity);
             workstationBuffer.Clear();
 
-            var workstationEntities = data.Deserialize<int[]>(VignetteService.GetJsonOptions());
+            var workstationEntities = data.Deserialize<int[]>(SchematicService.GetJsonOptions());
             foreach(var i in workstationEntities)
                 workstationBuffer.Add(new CastleRoomWorkstationsBuffer { WorkstationEntity = entitiesBeingLoaded[i] });
         }
 
         public override int[] GetDependencies(JsonElement data)
         {
-            var saveData = data.Deserialize<int[]>(VignetteService.GetJsonOptions());
+            var saveData = data.Deserialize<int[]>(SchematicService.GetJsonOptions());
             return saveData;
         }
     }

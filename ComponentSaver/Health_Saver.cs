@@ -1,11 +1,11 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM;
 using System.Collections;
 using System.Text.Json;
 using Unity.Entities;
 using UnityEngine;
 
-namespace KindredVignettes.ComponentSaver
+namespace KindredSchematics.ComponentSaver
 {
     [ComponentType(typeof(Health))]
     internal class Health_Saver : ComponentSaver
@@ -61,12 +61,12 @@ namespace KindredVignettes.ComponentSaver
 
         public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
         {
-            var saveData = jsonData.Deserialize<Health_Save>(VignetteService.GetJsonOptions());
+            var saveData = jsonData.Deserialize<Health_Save>(SchematicService.GetJsonOptions());
 
             if (!entity.Has<Health>())
                 entity.Add<Health>();
 
-            Core.VignetteService.StartCoroutine(DelayLoad());
+            Core.SchematicService.StartCoroutine(DelayLoad());
 
             IEnumerator DelayLoad()
             {

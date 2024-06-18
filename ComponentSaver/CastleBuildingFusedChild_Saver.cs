@@ -1,11 +1,11 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM.CastleBuilding;
 using System.Linq;
 using System.Text.Json;
 using Unity.Entities;
 using UnityEngine.UIElements;
 
-namespace KindredVignettes.ComponentSaver
+namespace KindredSchematics.ComponentSaver
 {
     [ComponentType(typeof(CastleBuildingFusedChild))]
     internal class CastleBuildingFusedChild_Saver : ComponentSaver
@@ -37,7 +37,7 @@ namespace KindredVignettes.ComponentSaver
 
         public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
         {
-            var saveData = jsonData.Deserialize<CastleBuildingFusedChild_Save>(VignetteService.GetJsonOptions());
+            var saveData = jsonData.Deserialize<CastleBuildingFusedChild_Save>(SchematicService.GetJsonOptions());
             
             if(!entity.Has<CastleBuildingFusedChild>())
                 entity.Add<CastleBuildingFusedChild>();
@@ -52,7 +52,7 @@ namespace KindredVignettes.ComponentSaver
 
         public override int[] GetDependencies(JsonElement data)
         {
-            var saveData = data.Deserialize<CastleBuildingFusedChild_Save>(VignetteService.GetJsonOptions());
+            var saveData = data.Deserialize<CastleBuildingFusedChild_Save>(SchematicService.GetJsonOptions());
             if (saveData.ParentEntity.HasValue)
                 return [saveData.ParentEntity.Value];
             return [];

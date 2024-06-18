@@ -1,4 +1,4 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM;
 using Stunlock.Core;
 using System.Collections;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text.Json;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver
+namespace KindredSchematics.ComponentSaver
 {
     [ComponentType(typeof(Refinementstation))]
     internal class Refinementstation_Saver : ComponentSaver
@@ -88,7 +88,7 @@ namespace KindredVignettes.ComponentSaver
 
         public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
         {
-            var saveData = jsonData.Deserialize<Refinementstation_Save>(VignetteService.GetJsonOptions());
+            var saveData = jsonData.Deserialize<Refinementstation_Save>(SchematicService.GetJsonOptions());
 
             if (!entity.Has<Refinementstation>())
                 entity.Add<Refinementstation>();
@@ -114,7 +114,7 @@ namespace KindredVignettes.ComponentSaver
             if (saveData.IsWorking.HasValue)
                 data.IsWorking = saveData.IsWorking.Value;
 
-            Core.VignetteService.StartCoroutine(DelayAddInventory(entity, saveData, entitiesBeingLoaded));
+            Core.SchematicService.StartCoroutine(DelayAddInventory(entity, saveData, entitiesBeingLoaded));
 
             entity.Write(data);
         }
@@ -142,7 +142,7 @@ namespace KindredVignettes.ComponentSaver
 
         public override int[] GetDependencies(JsonElement data)
         {
-            var saveData = data.Deserialize<Refinementstation_Save>(VignetteService.GetJsonOptions());
+            var saveData = data.Deserialize<Refinementstation_Save>(SchematicService.GetJsonOptions());
             var dependencies = new List<int>();
 
             if (saveData.InputInventory != null)

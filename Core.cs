@@ -1,7 +1,7 @@
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP.Utils.Collections;
-using KindredVignettes.Data;
-using KindredVignettes.Services;
+using KindredSchematics.Data;
+using KindredSchematics.Services;
 using ProjectM;
 using ProjectM.CastleBuilding;
 using ProjectM.Physics;
@@ -11,7 +11,7 @@ using System.Runtime.CompilerServices;
 using Unity.Entities;
 using UnityEngine;
 
-namespace KindredVignettes;
+namespace KindredSchematics;
 
 internal static class Core
 {
@@ -25,7 +25,7 @@ internal static class Core
     public static PrefabCollectionSystem PrefabCollection { get; } = Server.GetExistingSystemManaged<PrefabCollectionSystem>();
 
     public static RespawnPreventionService RespawnPrevention { get; } = new();
-    public static VignetteService VignetteService { get; } = new();
+    public static SchematicService SchematicService { get; } = new();
 	public static ConfigSettingsService ConfigSettings { get; } = new();
 
     public const int MAX_REPLY_LENGTH = 509;
@@ -62,7 +62,7 @@ internal static class Core
 
         Tile.Populate();
 
-        Log.LogInfo($"{nameof(InitializeAfterLoaded)} completed");
+        Log.LogInfo($"KindredSchematics Initialized");
 	}
 	private static bool _hasInitialized = false;
 
@@ -83,7 +83,7 @@ internal static class Core
     {
         if (monoBehaviour == null)
         {
-            var go = new GameObject("KindredVignettes");
+            var go = new GameObject("KindredSchematics");
             monoBehaviour = go.AddComponent<IgnorePhysicsDebugSystem>();
             Object.DontDestroyOnLoad(go);
         }

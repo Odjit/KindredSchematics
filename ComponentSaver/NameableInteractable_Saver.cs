@@ -1,9 +1,9 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM;
 using System.Text.Json;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver
+namespace KindredSchematics.ComponentSaver
 {
     [ComponentType(typeof(NameableInteractable))]
     internal class NameableInteractable_Saver : ComponentSaver
@@ -48,7 +48,7 @@ namespace KindredVignettes.ComponentSaver
 
         public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
         {
-            var saveData = jsonData.Deserialize<NameableInteractable_Save>(VignetteService.GetJsonOptions());
+            var saveData = jsonData.Deserialize<NameableInteractable_Save>(SchematicService.GetJsonOptions());
 
             if (!entity.Has<NameableInteractable>())
                 entity.Add<NameableInteractable>();

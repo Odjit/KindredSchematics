@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Unity.Entities;
 using Unity.Mathematics;
 
-namespace KindredVignettes.Services
+namespace KindredSchematics.Services
 {
     internal class CastleTerritoryService
     {

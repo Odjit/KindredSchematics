@@ -1,4 +1,4 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM.Shared;
 using Stunlock.Core;
 using System;
@@ -9,7 +9,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver;
+namespace KindredSchematics.ComponentSaver;
 
 [ComponentType(typeof(JewelInstance))]
 class JewelInstance_Saver : ComponentSaver
@@ -64,7 +64,7 @@ class JewelInstance_Saver : ComponentSaver
 
     public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
     {
-        var saveData = jsonData.Deserialize<JewelInstance_Save>(VignetteService.GetJsonOptions());
+        var saveData = jsonData.Deserialize<JewelInstance_Save>(SchematicService.GetJsonOptions());
 
         if (!entity.Has<JewelInstance>())
             entity.Add<JewelInstance>();

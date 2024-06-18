@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace KindredVignettes.Data;
+namespace KindredSchematics.Data;
 internal static class Tile
 {
     public static void Populate()

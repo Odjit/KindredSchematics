@@ -2,7 +2,7 @@
 using Unity.Physics;
 using UnityEngine;
 
-namespace KindredVignettes;
+namespace KindredSchematics;
 static class AabbHelper
 {
     static public bool MatchesOnTwoAxesAndOverlaps(this Aabb thisOne, Aabb other, float tolerance=0.01f)

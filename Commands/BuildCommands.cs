@@ -1,16 +1,12 @@
-﻿using Il2CppInterop.Runtime;
-using Il2CppSystem.Text;
-using KindredVignettes.Commands.Converter;
+﻿using Il2CppSystem.Text;
+using KindredSchematics.Commands.Converter;
 using ProjectM;
-using ProjectM.CastleBuilding;
 using ProjectM.Network;
 using ProjectM.Tiles;
 using Stunlock.Core;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
@@ -18,7 +14,7 @@ using Unity.Transforms;
 using UnityEngine;
 using VampireCommandFramework;
 
-namespace KindredVignettes.Commands
+namespace KindredSchematics.Commands
 {
     [CommandGroup("build", "Build commands")]
     internal class BuildCommands

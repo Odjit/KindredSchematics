@@ -1,9 +1,9 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM.CastleBuilding;
 using System.Text.Json;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver
+namespace KindredSchematics.ComponentSaver
 {
     [ComponentType(typeof(CastleRoomFloorsBuffer))]
     internal class CastleRoomFloorsBuffer_Saver : ComponentSaver
@@ -34,14 +34,14 @@ namespace KindredVignettes.ComponentSaver
                 floors = Core.EntityManager.AddBuffer<CastleRoomFloorsBuffer>(entity);
             floors.Clear();
 
-            var floorEntities = data.Deserialize<int[]>(VignetteService.GetJsonOptions());
+            var floorEntities = data.Deserialize<int[]>(SchematicService.GetJsonOptions());
             foreach(var i in floorEntities)
                 floors.Add(new CastleRoomFloorsBuffer { FloorEntity = entitiesBeingLoaded[i] });
         }
 
         public override int[] GetDependencies(JsonElement data)
         {
-            var saveData = data.Deserialize<int[]>(VignetteService.GetJsonOptions());
+            var saveData = data.Deserialize<int[]>(SchematicService.GetJsonOptions());
             return saveData;
         }
     }

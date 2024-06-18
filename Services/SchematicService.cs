@@ -1,7 +1,7 @@
 ﻿using BepInEx.Unity.IL2CPP.Utils.Collections;
-using KindredVignettes.Data;
-using KindredVignettes.JsonConverters;
-using KindredVignettes.Patches;
+using KindredSchematics.Data;
+using KindredSchematics.JsonConverters;
+using KindredSchematics.Patches;
 using ProjectM;
 using ProjectM.CastleBuilding;
 using ProjectM.Network;
@@ -21,13 +21,13 @@ using Unity.Physics;
 using Unity.Transforms;
 using UnityEngine;
 
-namespace KindredVignettes.Services
+namespace KindredSchematics.Services
 {
-    internal class VignetteService
+    internal class SchematicService
     {
         static readonly string CONFIG_PATH = Path.Combine(BepInEx.Paths.ConfigPath, MyPluginInfo.PLUGIN_NAME);
 
-        struct Vignette
+        struct Schematic
         {
             public string version { get; set; }
             public Vector3? location { get; set; }
@@ -47,16 +47,16 @@ namespace KindredVignettes.Services
         readonly List<Entity> usersClearingEntireArea = [];
         readonly List<Entity> usersPlacingOffGrid = [];
 
-        GameObject vignetteSvcGameObject;
-        IgnorePhysicsDebugSystem vignetteMonoBehaviour;
+        GameObject schematicSvcGameObject;
+        IgnorePhysicsDebugSystem schematicMonoBehaviour;
 
         HashSet<PrefabGUID> prefabsAllowedToDestroy = [];
 
 
-        public VignetteService()
+        public SchematicService()
         {
-            vignetteSvcGameObject = new GameObject("VignetteService");
-            vignetteMonoBehaviour = vignetteSvcGameObject.AddComponent<IgnorePhysicsDebugSystem>();
+            schematicSvcGameObject = new GameObject("SchematicService");
+            schematicMonoBehaviour = schematicSvcGameObject.AddComponent<IgnorePhysicsDebugSystem>();
 
             foreach(var (prefabGUID, prefabName) in Core.PrefabCollection._PrefabGuidToNameDictionary)
             {
@@ -71,17 +71,17 @@ namespace KindredVignettes.Services
 
         public void StartCoroutine(IEnumerator routine)
         {
-            vignetteMonoBehaviour.StartCoroutine(routine.WrapToIl2Cpp());
+            schematicMonoBehaviour.StartCoroutine(routine.WrapToIl2Cpp());
         }
 
-        public IEnumerable<string> GetVignetteNames()
+        public IEnumerable<string> GetSchematics()
         {
             if (!Directory.Exists(CONFIG_PATH))
             {
                 yield break;
             }
 
-            foreach (var file in Directory.EnumerateFiles(CONFIG_PATH, "*.vignette"))
+            foreach (var file in Directory.EnumerateFiles(CONFIG_PATH, "*.schematic"))
             {
                 yield return Path.GetFileNameWithoutExtension(file);
             }
@@ -105,24 +105,24 @@ namespace KindredVignettes.Services
             return options;
         }
 
-        public void SaveVignette(string name, float3? location = null, float? radius = null, Vector2? halfSize = null, int? territoryIndex = null)
+        public void SaveSchematic(string name, float3? location = null, float? radius = null, Vector2? halfSize = null, int? territoryIndex = null)
         {
             var startTime = Time.realtimeSinceStartup;
             float GetElapseTime() => Time.realtimeSinceStartup - startTime;
             Core.Log.LogInfo($"{GetElapseTime()} Starting to save {name}");
-            var vignette = new Vignette
+            var schematic = new Schematic
             {
                 version = "1.0",
                 entities = []
             };
 
             if (territoryIndex.HasValue)
-                vignette.territoryIndex = territoryIndex;
+                schematic.territoryIndex = territoryIndex;
             else
             {
                 var gridLocation = Helper.ConvertPosToTileGrid(location.Value);
-                vignette.boundingBox = new Aabb { Min = gridLocation, Max = gridLocation };
-                vignette.location = location;
+                schematic.boundingBox = new Aabb { Min = gridLocation, Max = gridLocation };
+                schematic.location = location;
             }
 
             IEnumerable<Entity> entities;
@@ -131,7 +131,7 @@ namespace KindredVignettes.Services
             else if (territoryIndex != null) entities = Helper.GetAllEntitiesInTerritory<Translation>(territoryIndex.Value);
             else
             {
-                Core.Log.LogError($"Vignette {name} has no radius, halfSize, or territory index");
+                Core.Log.LogError($"Schematic {name} has no radius, halfSize, or territory index");
                 return;
             }
 
@@ -171,8 +171,8 @@ namespace KindredVignettes.Services
                 {
 
                     aabbs.Add(aabb);
-                    aabb.Include(vignette.boundingBox);
-                    vignette.boundingBox = aabb;
+                    aabb.Include(schematic.boundingBox);
+                    schematic.boundingBox = aabb;
                 }
 
                 if (entity.Has<CastleFloor>())
@@ -226,25 +226,25 @@ namespace KindredVignettes.Services
             AabbHelper.MergeAabbsTogether(aabbs);
             Core.Log.LogInfo($"{GetElapseTime()} Reduced by {startNumAabbs - aabbs.Count} aabbs from {startNumAabbs} to {aabbs.Count}");
 
-            vignette.entities = entityPrefabDiffs.ToArray();
+            schematic.entities = entityPrefabDiffs.ToArray();
             if (territoryIndex == null)
-                vignette.aabbs = aabbs.ToArray();
+                schematic.aabbs = aabbs.ToArray();
 
-            Core.Log.LogInfo($"{GetElapseTime()} Serializing {vignette.entities.Length} entities for {name}");
-            var json = JsonSerializer.Serialize(vignette, GetJsonOptions());
+            Core.Log.LogInfo($"{GetElapseTime()} Serializing {schematic.entities.Length} entities for {name}");
+            var json = JsonSerializer.Serialize(schematic, GetJsonOptions());
 
-            Core.Log.LogInfo($"{GetElapseTime()} Writing {name}.vignette");
+            Core.Log.LogInfo($"{GetElapseTime()} Writing {name}.schematic");
             if (!Directory.Exists(CONFIG_PATH))
             {
                 Directory.CreateDirectory(CONFIG_PATH);
             }
-            File.WriteAllText($"{CONFIG_PATH}/{name}.vignette", json);
-            Core.Log.LogInfo($"{GetElapseTime()} Finished writing {name}.vignette");
+            File.WriteAllText($"{CONFIG_PATH}/{name}.schematic", json);
+            Core.Log.LogInfo($"{GetElapseTime()} Finished writing {name}.schematic");
         }
 
         public Entity CurUserEntity { get; private set; }
         public Entity CurCharEntity { get; private set; }
-        public string LoadVignette(string name, Entity userEntity, Entity charEntity, float expandClear, Vector3? newCenter = null)
+        public string LoadSchematic(string name, Entity userEntity, Entity charEntity, float expandClear, Vector3? newCenter = null)
         {
             CurUserEntity = userEntity;
             CurCharEntity = charEntity;
@@ -252,35 +252,35 @@ namespace KindredVignettes.Services
             string json;
             try
             {
-                json = File.ReadAllText($"{CONFIG_PATH}/{name}.vignette");
+                json = File.ReadAllText($"{CONFIG_PATH}/{name}.schematic");
             }
             catch (FileNotFoundException)
             {
-                return $"Vignette not found";
+                return $"Schematic not found";
             }
 
-            Vignette vignette;
+            Schematic schematic;
             try
             {
-                vignette = JsonSerializer.Deserialize<Vignette>(json, GetJsonOptions());
+                schematic = JsonSerializer.Deserialize<Schematic>(json, GetJsonOptions());
             }
             catch (JsonException e)
             {
-                Core.Log.LogError($"Error loading vignette {name}: {e.Message}");
+                Core.Log.LogError($"Error loading schematic {name}: {e.Message}");
                 return "Error in file";
             }
 
-            if (vignette.version != "1.0")
+            if (schematic.version != "1.0")
             {
-                return $"Has an unsupported version '{vignette.version}' loading old versions is coming soon";
+                return $"Has an unsupported version '{schematic.version}' loading old versions is coming soon";
             }
 
-            Core.StartCoroutine(FinishLoadingVignette(userEntity, charEntity, expandClear, newCenter, vignette));
+            Core.StartCoroutine(FinishLoadingSchematic(userEntity, charEntity, expandClear, newCenter, schematic));
 
             return null;
         }
 
-        private IEnumerator FinishLoadingVignette(Entity userEntity, Entity charEntity, float expandClear, Vector3? newCenter, Vignette vignette)
+        private IEnumerator FinishLoadingSchematic(Entity userEntity, Entity charEntity, float expandClear, Vector3? newCenter, Schematic schematic)
         {
             const float MESSAGE_FREQUENCY = 2.5f;
             var startTime = Time.realtimeSinceStartup;
@@ -302,10 +302,10 @@ namespace KindredVignettes.Services
             var translation = Vector3.zero;
             var heartAabbsInLoadArea = new List<Aabb>();
             List<Entity> entitiesToDestroy = [];
-            if (vignette.location.HasValue)
+            if (schematic.location.HasValue)
             {
-                var center = newCenter ?? vignette.location.Value;
-                translation = newCenter != null ? center - vignette.location.Value : Vector3.zero;
+                var center = newCenter ?? schematic.location.Value;
+                translation = newCenter != null ? center - schematic.location.Value : Vector3.zero;
 
                 // Figure out the translation to keep it on the grid
                 if (!usersPlacingOffGrid.Contains(userEntity))
@@ -317,7 +317,7 @@ namespace KindredVignettes.Services
 
                 var gridTranslation = new float3(translation.x * 2, translation.y, translation.z * 2);
 
-                var aabb = vignette.boundingBox;
+                var aabb = schematic.boundingBox;
                 aabb.Min += gridTranslation;
                 aabb.Max += gridTranslation;
                 aabb.Expand(expandClear);
@@ -343,10 +343,10 @@ namespace KindredVignettes.Services
 
                 Core.Log.LogInfo($"{GetElapseTime():f4} Checking {entitiesToCheck.Length} entities to see if they need to be cleared");
                 MessageUser($"Checking {entitiesToCheck.Length} entities to see if they need to be cleared");
-                var aabbArray = new Aabb[vignette.aabbs.Length];
-                for (var i = 0; i < vignette.aabbs.Length; i++)
+                var aabbArray = new Aabb[schematic.aabbs.Length];
+                for (var i = 0; i < schematic.aabbs.Length; i++)
                 {
-                    var newAabb = vignette.aabbs[i];
+                    var newAabb = schematic.aabbs[i];
                     newAabb.Min += gridTranslation;
                     newAabb.Max += gridTranslation;
                     newAabb.Expand(expandClear);
@@ -387,9 +387,9 @@ namespace KindredVignettes.Services
                     }
                 }
             }
-            else if (vignette.territoryIndex.HasValue)
+            else if (schematic.territoryIndex.HasValue)
             {
-                entitiesToDestroy.AddRange(Helper.GetAllEntitiesInTerritory<Translation>(vignette.territoryIndex.Value).
+                entitiesToDestroy.AddRange(Helper.GetAllEntitiesInTerritory<Translation>(schematic.territoryIndex.Value).
                     Where(x =>
                     {
                         if (!x.Has<PrefabGUID>())
@@ -413,7 +413,7 @@ namespace KindredVignettes.Services
             }
 
             Core.Log.LogInfo($"{GetElapseTime():f4} Filter {entitiesToDestroy.Count()} entities for clearing");
-            MessageUser($"Now deleting {entitiesToDestroy.Count()} entities before loading in the vignette", true);
+            MessageUser($"Now deleting {entitiesToDestroy.Count()} entities before loading in the schematic", true);
             Core.RespawnPrevention.PreventRespawns();
             yield return null;
             var entitiesDestroyingThisFrame = 0;
@@ -430,7 +430,7 @@ namespace KindredVignettes.Services
                 }
             }
 
-            MessageUser("Starting to load in the vignette", true);
+            MessageUser("Starting to load in the schematic", true);
             yield return null;
 
             var teamValue = charEntity.Read<Team>().Value;
@@ -467,21 +467,21 @@ namespace KindredVignettes.Services
             InitializeNewSpawnChainSystem_Patch.skipOnce = true;
 
             // First pass create all the entitiesToDestroy
-            var createdEntities = new Entity[vignette.entities.Length + 1];
+            var createdEntities = new Entity[schematic.entities.Length + 1];
             createdEntities[0] = Entity.Null;
 
             Core.Log.LogInfo($"{GetElapseTime():f4} Figuring out dependency groups");
             var dependentGroups = new Dictionary<int, List<int>>();
             // Initialize dependent groups with a list of everyone
-            for (var i = 0; i < vignette.entities.Length; ++i)
+            for (var i = 0; i < schematic.entities.Length; ++i)
             {
                 dependentGroups.Add(i, new List<int> { i });
             }
 
-            var dependencies = vignette.entities.Select(x => ComponentSaver.ComponentSaver.GetDependencies(x.componentData)).ToArray();
+            var dependencies = schematic.entities.Select(x => ComponentSaver.ComponentSaver.GetDependencies(x.componentData)).ToArray();
 
             // Grouping entities that are dependent on each other into groups that load together
-            for (var i = 0; i < vignette.entities.Length; ++i)
+            for (var i = 0; i < schematic.entities.Length; ++i)
             {
                 var group = dependentGroups[i];
                 foreach (var dependentOn in dependencies[i])
@@ -513,7 +513,7 @@ namespace KindredVignettes.Services
                     }
                 }
             }
-            Core.Log.LogInfo($"{GetElapseTime():f4} Finished figuring out {dependentGroups.Count} dependency groups from {vignette.entities.Length} entitiesToDestroy");
+            Core.Log.LogInfo($"{GetElapseTime():f4} Finished figuring out {dependentGroups.Count} dependency groups from {schematic.entities.Length} entitiesToDestroy");
 
             var entitiesLoaded = new HashSet<int>();
             var entitiesLoadedThisFrame = 0;
@@ -522,7 +522,7 @@ namespace KindredVignettes.Services
                 var time = Core.ServerTime;
 
                 List<int> entityGroupToLoad = [];
-                for (var i = 0; i < vignette.entities.Length; ++i)
+                for (var i = 0; i < schematic.entities.Length; ++i)
                 {
                     if (entitiesLoaded.Contains(i))
                         continue;
@@ -540,7 +540,7 @@ namespace KindredVignettes.Services
                 {
                     Core.Log.LogInfo($"{GetElapseTime():f4} Failed to find entity group to load so loading the remaining now");
                     yield return null;
-                    for (var i = 0; i < vignette.entities.Length; ++i)
+                    for (var i = 0; i < schematic.entities.Length; ++i)
                         if (!entitiesLoaded.Contains(i))
                             entityGroupToLoad.Add(i);
                 }
@@ -550,7 +550,7 @@ namespace KindredVignettes.Services
                     entitiesLoaded.Add(i);
                     entitiesLoadedThisFrame++;
 
-                    var entityData = vignette.entities[i];
+                    var entityData = schematic.entities[i];
 
                     if (entityData.prefab.GuidHash == 0)
                         continue;
@@ -636,7 +636,7 @@ namespace KindredVignettes.Services
                 // Second pass modify all their components
                 foreach (var i in entityGroupToLoad)
                 {
-                    var diff = vignette.entities[i];
+                    var diff = schematic.entities[i];
                     var entity = createdEntities[i + 1];
 
                     if (entity.Equals(Entity.Null))
@@ -648,16 +648,16 @@ namespace KindredVignettes.Services
 
                 if (Time.realtimeSinceStartup - lastYieldTime > 0.05f)
                 {
-                    Core.Log.LogInfo($"{GetElapseTime():f4} Loaded {entitiesLoadedThisFrame} entities this frame for {100 * (float)entitiesLoaded.Count / (float)vignette.entities.Length:F1}% complete");
-                    MessageUser($"Loading {100 * (float)entitiesLoaded.Count / (float)vignette.entities.Length:F1}% complete");
+                    Core.Log.LogInfo($"{GetElapseTime():f4} Loaded {entitiesLoadedThisFrame} entities this frame for {100 * (float)entitiesLoaded.Count / (float)schematic.entities.Length:F1}% complete");
+                    MessageUser($"Loading {100 * (float)entitiesLoaded.Count / (float)schematic.entities.Length:F1}% complete");
                     yield return null;
                     entitiesLoadedThisFrame = 0;
                     lastYieldTime = Time.realtimeSinceStartup;
                 }
-            } while (entitiesLoaded.Count < vignette.entities.Length);
+            } while (entitiesLoaded.Count < schematic.entities.Length);
 
-            Core.Log.LogInfo($"{GetElapseTime():f4} Finished Loading Vignette");
-            ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, userEntity.Read<User>(), $"Finished Loading Vignette");
+            Core.Log.LogInfo($"{GetElapseTime():f4} Finished Loading Schematic");
+            ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, userEntity.Read<User>(), $"Finished Loading Schematic");
             Core.RespawnPrevention.AllowRespawns();
         }
 

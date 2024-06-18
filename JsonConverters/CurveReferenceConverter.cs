@@ -2,7 +2,7 @@
 using System;
 using System.Text.Json;
 
-namespace KindredVignettes.JsonConverters
+namespace KindredSchematics.JsonConverters
 {
     public class CurveReferenceConverter : System.Text.Json.Serialization.JsonConverter<CurveReference>
     {

@@ -1,10 +1,10 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM;
 using Stunlock.Core;
 using System.Text.Json;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver;
+namespace KindredSchematics.ComponentSaver;
 [ComponentType(typeof(RestrictedInventory))]
 class RestrictedInventory_Saver : ComponentSaver
 {
@@ -46,7 +46,7 @@ class RestrictedInventory_Saver : ComponentSaver
 
     public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
     {
-        var saveData = jsonData.Deserialize<RestrictedInventory_Save>(VignetteService.GetJsonOptions());
+        var saveData = jsonData.Deserialize<RestrictedInventory_Save>(SchematicService.GetJsonOptions());
 
         if (!entity.Has<RestrictedInventory>())
             entity.Add<RestrictedInventory>();

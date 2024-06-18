@@ -1,11 +1,11 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM;
 using ProjectM.CastleBuilding;
 using Stunlock.Core;
 using System.Text.Json;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver
+namespace KindredSchematics.ComponentSaver
 {
     [ComponentType(typeof(DyeableCastleObject))]
     internal class DyeableCastleObject_Saver : ComponentSaver
@@ -47,7 +47,7 @@ namespace KindredVignettes.ComponentSaver
 
         public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
         {
-            var saveData = jsonData.Deserialize<DyeableCastleObject_Save>(VignetteService.GetJsonOptions());
+            var saveData = jsonData.Deserialize<DyeableCastleObject_Save>(SchematicService.GetJsonOptions());
 
             if (!entity.Has<DyeableCastleObject>())
                 entity.Add<DyeableCastleObject>();

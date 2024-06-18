@@ -8,7 +8,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using VampireCommandFramework;
 
-namespace KindredVignettes.Commands
+namespace KindredSchematics.Commands
 {
     internal class MiscCommands
     {

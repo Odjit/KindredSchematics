@@ -1,9 +1,9 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM;
 using System.Text.Json;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver
+namespace KindredSchematics.ComponentSaver
 {
     [ComponentType(typeof(ServantConnectedCoffin))]
     internal class ServantConnectedCoffin_Saver : ComponentSaver
@@ -30,7 +30,7 @@ namespace KindredVignettes.ComponentSaver
 
         public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
         {
-            var saveData = jsonData.Deserialize<ServantConnectedCoffin_Save>(VignetteService.GetJsonOptions());
+            var saveData = jsonData.Deserialize<ServantConnectedCoffin_Save>(SchematicService.GetJsonOptions());
 
             if (!entity.Has<ServantConnectedCoffin>())
                 entity.Add<ServantConnectedCoffin>();
@@ -43,7 +43,7 @@ namespace KindredVignettes.ComponentSaver
 
         public override int[] GetDependencies(JsonElement data)
         {
-            var saveData = data.Deserialize<ServantConnectedCoffin_Save>(VignetteService.GetJsonOptions());
+            var saveData = data.Deserialize<ServantConnectedCoffin_Save>(SchematicService.GetJsonOptions());
 
             return [saveData.CoffinEntity.Value];
         }

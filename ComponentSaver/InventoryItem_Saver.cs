@@ -1,9 +1,9 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM;
 using System.Text.Json;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver;
+namespace KindredSchematics.ComponentSaver;
 
 [ComponentType(typeof(InventoryItem))]
 class InventoryItem_Saver : ComponentSaver
@@ -42,7 +42,7 @@ class InventoryItem_Saver : ComponentSaver
 
     public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
     {
-        var saveData = jsonData.Deserialize<InventoryItem_Save>(VignetteService.GetJsonOptions());
+        var saveData = jsonData.Deserialize<InventoryItem_Save>(SchematicService.GetJsonOptions());
 
         if (!saveData.ContainerEntity.HasValue)
             return;
@@ -58,7 +58,7 @@ class InventoryItem_Saver : ComponentSaver
 
     public override int[] GetDependencies(JsonElement data)
     {
-        var saveData = data.Deserialize<InventoryItem_Save>(VignetteService.GetJsonOptions());
+        var saveData = data.Deserialize<InventoryItem_Save>(SchematicService.GetJsonOptions());
 
         if (!saveData.ContainerEntity.HasValue)
             return [];

@@ -1,10 +1,10 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM;
 using Stunlock.Core;
 using System.Text.Json;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver
+namespace KindredSchematics.ComponentSaver
 {
     [ComponentType(typeof(ServantPower))]
     internal class ServantPower_Saver : ComponentSaver
@@ -51,7 +51,7 @@ namespace KindredVignettes.ComponentSaver
 
         public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
         {
-            var saveData = jsonData.Deserialize<ServantPower_Save>(VignetteService.GetJsonOptions());
+            var saveData = jsonData.Deserialize<ServantPower_Save>(SchematicService.GetJsonOptions());
 
             if (!entity.Has<ServantPower>())
                 entity.Add<ServantPower>();

@@ -1,9 +1,9 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM;
 using System.Text.Json;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver;
+namespace KindredSchematics.ComponentSaver;
 [ComponentType(typeof(Attach))]
 class Attach_Saver : ComponentSaver
 {
@@ -41,7 +41,7 @@ class Attach_Saver : ComponentSaver
 
     public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
     {
-        var saveData = jsonData.Deserialize<Attach_Save>(VignetteService.GetJsonOptions());
+        var saveData = jsonData.Deserialize<Attach_Save>(SchematicService.GetJsonOptions());
 
         if (!saveData.Parent.HasValue)
             return;
@@ -54,7 +54,7 @@ class Attach_Saver : ComponentSaver
 
     public override int[] GetDependencies(JsonElement data)
     {
-        var saveData = data.Deserialize<Attach_Save>(VignetteService.GetJsonOptions());
+        var saveData = data.Deserialize<Attach_Save>(SchematicService.GetJsonOptions());
 
         return [saveData.Parent.Value];
     }

@@ -2,7 +2,7 @@
 using System.Text.Json;
 using Unity.Mathematics;
 
-namespace KindredVignettes.JsonConverters
+namespace KindredSchematics.JsonConverters
 {
     public class int2Converter : System.Text.Json.Serialization.JsonConverter<int2>
     {

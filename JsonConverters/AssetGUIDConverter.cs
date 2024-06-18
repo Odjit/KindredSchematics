@@ -3,7 +3,7 @@ using Stunlock.Core;
 using System;
 using System.Text.Json;
 
-namespace KindredVignettes.JsonConverters
+namespace KindredSchematics.JsonConverters
 {
     public class AssetGUIDConverter : System.Text.Json.Serialization.JsonConverter<AssetGuid>
     {

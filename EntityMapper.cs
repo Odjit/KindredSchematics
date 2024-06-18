@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using Unity.Entities;
 
-namespace KindredVignettes
+namespace KindredSchematics
 {
     internal class EntityMapper
     {

@@ -1,4 +1,4 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM;
 using Stunlock.Core;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.Text.Json;
 using Unity.Entities;
 using static ProjectM.InventoryInstanceElement;
 
-namespace KindredVignettes.ComponentSaver
+namespace KindredSchematics.ComponentSaver
 {
     [ComponentType(typeof(InventoryInstanceElement))]
     internal class InventoryInstanceElement_Saver : ComponentSaver
@@ -51,7 +51,7 @@ namespace KindredVignettes.ComponentSaver
 
         public override void ApplyComponentData(Entity entity, JsonElement data, Entity[] entitiesBeingLoaded)
         {
-            var inventoryData = data.Deserialize<InventoryInstanceElementSave[]>(VignetteService.GetJsonOptions());
+            var inventoryData = data.Deserialize<InventoryInstanceElementSave[]>(SchematicService.GetJsonOptions());
 
             DynamicBuffer<InventoryInstanceElement> inventoryInstances;
             if (entity.Has<InventoryInstanceElement>())
@@ -77,7 +77,7 @@ namespace KindredVignettes.ComponentSaver
 
         public override int[] GetDependencies(JsonElement data)
         {
-            var saveData = data.Deserialize<InventoryInstanceElementSave[]>(VignetteService.GetJsonOptions());
+            var saveData = data.Deserialize<InventoryInstanceElementSave[]>(SchematicService.GetJsonOptions());
             return saveData.Select(x => x.ExternalInventoryEntity).ToArray();
         }
     }

@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text.Json;
 
-namespace KindredVignettes.Services;
+namespace KindredSchematics.Services;
 internal class ConfigSettingsService
 {
 	private static readonly string CONFIG_PATH = Path.Combine(BepInEx.Paths.ConfigPath, MyPluginInfo.PLUGIN_NAME);

@@ -1,9 +1,9 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using System.Text.Json;
 using Unity.Entities;
 using static ProjectM.SpawnChainData;
 
-namespace KindredVignettes.ComponentSaver
+namespace KindredSchematics.ComponentSaver
 {
     [ComponentType(typeof(ActiveChildElement))]
     internal class ActiveChildElement_Saver : ComponentSaver
@@ -40,7 +40,7 @@ namespace KindredVignettes.ComponentSaver
 
         public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
         {
-            var saveData = jsonData.Deserialize<ActiveChildElement_Save>(VignetteService.GetJsonOptions());
+            var saveData = jsonData.Deserialize<ActiveChildElement_Save>(SchematicService.GetJsonOptions());
 
             if (!entity.Has<ActiveChildElement>())
                 entity.Add<ActiveChildElement>();
@@ -55,7 +55,7 @@ namespace KindredVignettes.ComponentSaver
 
         public override int[] GetDependencies(JsonElement data)
         {
-            var saveData = data.Deserialize<ActiveChildElement_Save>(VignetteService.GetJsonOptions());
+            var saveData = data.Deserialize<ActiveChildElement_Save>(SchematicService.GetJsonOptions());
             if (saveData.ActiveEntityId.HasValue)
                 return [saveData.ActiveEntityId.Value];
             return new int[0];

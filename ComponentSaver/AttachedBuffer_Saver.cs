@@ -1,9 +1,9 @@
-﻿using KindredVignettes.Data;
+﻿using KindredSchematics.Data;
 using ProjectM;
 using System.Text.Json;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver;
+namespace KindredSchematics.ComponentSaver;
 
 [ComponentType(typeof(AttachedBuffer))]
 internal class AttachedBuffer_Saver : ComponentSaver

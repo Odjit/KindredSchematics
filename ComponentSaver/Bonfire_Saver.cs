@@ -1,10 +1,10 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM;
 using Stunlock.Core;
 using System.Text.Json;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver;
+namespace KindredSchematics.ComponentSaver;
 
 [ComponentType(typeof(Bonfire))]
 internal class Bonfire_Saver : ComponentSaver
@@ -79,7 +79,7 @@ internal class Bonfire_Saver : ComponentSaver
 
     public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
     {
-        var saveData = jsonData.Deserialize<Bonfire_Save>(VignetteService.GetJsonOptions());
+        var saveData = jsonData.Deserialize<Bonfire_Save>(SchematicService.GetJsonOptions());
 
         if (!entity.Has<Bonfire>())
             entity.Add<Bonfire>();
@@ -111,7 +111,7 @@ internal class Bonfire_Saver : ComponentSaver
     }
     public override int[] GetDependencies(JsonElement data)
     {
-        var saveData = data.Deserialize<Bonfire_Save>(VignetteService.GetJsonOptions());
+        var saveData = data.Deserialize<Bonfire_Save>(SchematicService.GetJsonOptions());
         if (saveData.ActiveSequenceState.HasValue)
             return new int[] { saveData.ActiveSequenceState.Value };
         return new int[0];

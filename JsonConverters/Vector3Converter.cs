@@ -2,7 +2,7 @@
 using System.Text.Json;
 using UnityEngine;
 
-namespace KindredVignettes.JsonConverters
+namespace KindredSchematics.JsonConverters
 {
     public class Vector3Converter : System.Text.Json.Serialization.JsonConverter<Vector3>
     {

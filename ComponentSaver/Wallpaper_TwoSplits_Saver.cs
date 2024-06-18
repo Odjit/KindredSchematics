@@ -2,7 +2,7 @@
 using System.Text.Json;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver
+namespace KindredSchematics.ComponentSaver
 {
     /*[ComponentType(typeof(Wallpaper_TwoSplits))]
     internal class Wallpaper_TwoSplits_Saver : ComponentSaver

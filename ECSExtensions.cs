@@ -6,7 +6,7 @@ using System;
 using System.Runtime.InteropServices;
 using Unity.Entities;
 
-namespace KindredVignettes;
+namespace KindredSchematics;
 
 //#pragma warning disable CS8500
 public static class ECSExtensions

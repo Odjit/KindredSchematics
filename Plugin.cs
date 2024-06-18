@@ -4,7 +4,7 @@ using BepInEx.Unity.IL2CPP;
 using HarmonyLib;
 using VampireCommandFramework;
 
-namespace KindredVignettes;
+namespace KindredSchematics;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 [BepInDependency("gg.deca.VampireCommandFramework")]
@@ -44,11 +44,11 @@ public class Plugin : BasePlugin
     // /// <remarks>
     // /// How you could call this command from chat:
     // ///
-    // /// .kindredvignettes-example "some quoted string" 1 1.5
-    // /// .kindredvignettes-example boop 21232
-    // /// .kindredvignettes-example boop-boop
+    // /// .kindredschematics-example "some quoted string" 1 1.5
+    // /// .kindredschematics-example boop 21232
+    // /// .kindredschematics-example boop-boop
     // ///</remarks>
-    // [Command("kindredvignettes-example", description: "Example command from kindredvignettes", adminOnly: true)]
+    // [Command("kindredschematics-example", description: "Example command from kindredschematics", adminOnly: true)]
     // public void ExampleCommand(ICommandContext ctx, string someString, int num = 5, float num2 = 1.5f)
     // { 
     //     ctx.Reply($"You passed in {someString} and {num} and {num2}");

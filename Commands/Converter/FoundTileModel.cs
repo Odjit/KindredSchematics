@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using VampireCommandFramework;
 
-namespace KindredVignettes.Commands.Converter;
+namespace KindredSchematics.Commands.Converter;
 
 public record FoundTileModel(PrefabGUID Value, string name);
 

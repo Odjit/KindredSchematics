@@ -1,9 +1,9 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM;
 using System.Text.Json;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver
+namespace KindredSchematics.ComponentSaver
 {
     [ComponentType(typeof(AutoChainInstanceData))]
     internal class AutoChainInstanceData_Saver : ComponentSaver
@@ -41,7 +41,7 @@ namespace KindredVignettes.ComponentSaver
 
         public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
         {
-            var AutoChainInstanceData = jsonData.Deserialize<AutoChainInstanceData_Save>(VignetteService.GetJsonOptions());
+            var AutoChainInstanceData = jsonData.Deserialize<AutoChainInstanceData_Save>(SchematicService.GetJsonOptions());
 
             if(!entity.Has<AutoChainInstanceData>())
                 entity.Add<AutoChainInstanceData>();

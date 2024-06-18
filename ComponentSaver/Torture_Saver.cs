@@ -1,11 +1,11 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM;
 using System.Collections;
 using System.Text.Json;
 using Unity.Entities;
 using UnityEngine;
 
-namespace KindredVignettes.ComponentSaver
+namespace KindredSchematics.ComponentSaver
 {
     [ComponentType(typeof(Torture))]
     internal class Torture_Saver : ComponentSaver
@@ -49,12 +49,12 @@ namespace KindredVignettes.ComponentSaver
 
         public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
         {
-            var saveData = jsonData.Deserialize<Torture_Save>(VignetteService.GetJsonOptions());
+            var saveData = jsonData.Deserialize<Torture_Save>(SchematicService.GetJsonOptions());
 
             if (!entity.Has<Torture>())
                 entity.Add<Torture>();
 
-            Core.VignetteService.StartCoroutine(DelayLoad());
+            Core.SchematicService.StartCoroutine(DelayLoad());
 
             IEnumerator DelayLoad()
             {

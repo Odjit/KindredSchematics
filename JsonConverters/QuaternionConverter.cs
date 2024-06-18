@@ -2,7 +2,7 @@
 using System.Text.Json;
 using UnityEngine;
 
-namespace KindredVignettes.JsonConverters
+namespace KindredSchematics.JsonConverters
 {
     public class QuaternionConverter : System.Text.Json.Serialization.JsonConverter<Quaternion>
     {

@@ -1,9 +1,8 @@
 using HarmonyLib;
 using ProjectM;
-using System.Linq;
 
 
-namespace KindredVignettes.Patches;
+namespace KindredSchematics.Patches;
 
 [HarmonyPatch(typeof(InitializeNewSpawnChainSystem), nameof(InitializeNewSpawnChainSystem.OnUpdate))]
 public static class InitializeNewSpawnChainSystem_Patch

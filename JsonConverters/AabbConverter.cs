@@ -8,7 +8,7 @@ using Unity.Mathematics;
 using Unity.Physics;
 using UnityEngine;
 
-namespace KindredVignettes.JsonConverters
+namespace KindredSchematics.JsonConverters
 {
     public class AabbConverter : System.Text.Json.Serialization.JsonConverter<Aabb>
     {

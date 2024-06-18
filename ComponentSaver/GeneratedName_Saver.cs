@@ -1,10 +1,10 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM.Shared;
 using Stunlock.Core;
 using System.Text.Json;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver;
+namespace KindredSchematics.ComponentSaver;
 
 [ComponentType(typeof(GeneratedName))]
 class GeneratedName_Saver : ComponentSaver
@@ -55,7 +55,7 @@ class GeneratedName_Saver : ComponentSaver
 
     public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
     {
-        var saveData = jsonData.Deserialize<GeneratedName_Save>(VignetteService.GetJsonOptions());
+        var saveData = jsonData.Deserialize<GeneratedName_Save>(SchematicService.GetJsonOptions());
 
         if (!entity.Has<GeneratedName>())
             entity.Add<GeneratedName>();

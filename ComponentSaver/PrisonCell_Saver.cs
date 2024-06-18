@@ -1,10 +1,10 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM;
 using Stunlock.Core;
 using System.Text.Json;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver
+namespace KindredSchematics.ComponentSaver
 {
     [ComponentType(typeof(PrisonCell))]
     internal class PrisonCell_Saver : ComponentSaver
@@ -57,7 +57,7 @@ namespace KindredVignettes.ComponentSaver
 
         public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
         {
-            var saveData = jsonData.Deserialize<PrisonCell_Save>(VignetteService.GetJsonOptions());
+            var saveData = jsonData.Deserialize<PrisonCell_Save>(SchematicService.GetJsonOptions());
 
             if (!entity.Has<PrisonCell>())
                 entity.Add<PrisonCell>();
@@ -80,7 +80,7 @@ namespace KindredVignettes.ComponentSaver
 
         public override int[] GetDependencies(JsonElement data)
         {
-            var saveData = data.Deserialize<PrisonCell_Save>(VignetteService.GetJsonOptions());
+            var saveData = data.Deserialize<PrisonCell_Save>(SchematicService.GetJsonOptions());
             if (!saveData.ImprisonedEntity.HasValue)
                 return [];
             return [ saveData.ImprisonedEntity.Value ];

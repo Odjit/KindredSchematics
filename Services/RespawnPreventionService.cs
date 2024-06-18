@@ -5,7 +5,7 @@ using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
 
-namespace KindredVignettes.Services;
+namespace KindredSchematics.Services;
 class RespawnPreventionService
 {
     bool preventRespawns => preventRespawnsCount > 0;

@@ -1,10 +1,10 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM;
 using Stunlock.Core;
 using System.Text.Json;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver;
+namespace KindredSchematics.ComponentSaver;
 
 [ComponentType(typeof(StoredBlood))]
 class StoredBlood_Saver : ComponentSaver
@@ -47,7 +47,7 @@ class StoredBlood_Saver : ComponentSaver
 
     public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
     {
-        var saveData = jsonData.Deserialize<StoredBlood_Save>(VignetteService.GetJsonOptions());
+        var saveData = jsonData.Deserialize<StoredBlood_Save>(SchematicService.GetJsonOptions());
 
         if (!entity.Has<StoredBlood>())
             entity.Add<StoredBlood>();

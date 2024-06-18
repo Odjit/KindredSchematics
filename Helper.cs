@@ -1,5 +1,5 @@
 using Il2CppInterop.Runtime;
-using KindredVignettes.Data;
+using KindredSchematics.Data;
 using ProjectM;
 using ProjectM.CastleBuilding;
 using ProjectM.Shared;
@@ -12,7 +12,7 @@ using Unity.Physics;
 using Unity.Transforms;
 using UnityEngine;
 
-namespace KindredVignettes;
+namespace KindredSchematics;
 
 // This is an anti-pattern, move stuff away from Helper not into it
 internal static partial class Helper

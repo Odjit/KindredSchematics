@@ -1,9 +1,9 @@
-﻿using KindredVignettes.Services;
+﻿using KindredSchematics.Services;
 using ProjectM.CastleBuilding;
 using System.Text.Json;
 using Unity.Entities;
 
-namespace KindredVignettes.ComponentSaver
+namespace KindredSchematics.ComponentSaver
 {
     [ComponentType(typeof(CastleRoom))]
     internal class CastleRoom_Saver : ComponentSaver
@@ -38,7 +38,7 @@ namespace KindredVignettes.ComponentSaver
 
         public override void ApplyComponentData(Entity entity, JsonElement jsonData, Entity[] entitiesBeingLoaded)
         {
-            var dyeDiff = jsonData.Deserialize<CastleRoom_Save>(VignetteService.GetJsonOptions());
+            var dyeDiff = jsonData.Deserialize<CastleRoom_Save>(SchematicService.GetJsonOptions());
 
             if (!entity.Has<CastleRoom>())
                 entity.Add<CastleRoom>();

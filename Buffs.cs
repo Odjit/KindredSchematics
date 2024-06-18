@@ -5,7 +5,7 @@ using ProjectM.Shared;
 using Stunlock.Core;
 using static ProjectM.Metrics;
 
-namespace KindredVignettes;
+namespace KindredSchematics;
 internal class Buffs
 {
 	public static bool AddBuff(Entity User, Entity Character, PrefabGUID buffPrefab, int duration = 0, bool immortal = false)
