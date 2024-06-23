@@ -50,7 +50,7 @@ namespace KindredSchematics.Commands
         };
 
 
-        [Command("free", "f", description: "Makes building costs free for everyone", adminOnly: true)]
+        [Command("free", "f", description: "Makes building costs free for everyone (Global)", adminOnly: true)]
         public static void ToggleBuildingCostsCommand(ChatCommandContext ctx)
         {
             if (Core.ConfigSettings.FreeBuildDisabled)
@@ -77,7 +77,7 @@ namespace KindredSchematics.Commands
             }
         }
 
-        [Command("restrictions", "r", description: "Toggles building placement restrictions. Also disables all respawns.", adminOnly: true)]
+        [Command("restrictions", "r", description: "Toggles building placement restrictions. Also disables all respawns. This is a GLOBAL mode.", adminOnly: true)]
         public static void ToggleBuildingPlacementRestrictions(ChatCommandContext ctx)
         {
             if (Core.ConfigSettings.FreeBuildDisabled)
