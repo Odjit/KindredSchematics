@@ -1,5 +1,6 @@
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP.Utils.Collections;
+using KindredSchematics.Commands.Converter;
 using KindredSchematics.Data;
 using KindredSchematics.Services;
 using ProjectM;
@@ -24,6 +25,7 @@ internal static class Core
     public static CastleTerritoryService CastleTerritory { get; private set; }
     public static PrefabCollectionSystem PrefabCollection { get; } = Server.GetExistingSystemManaged<PrefabCollectionSystem>();
 
+    public static GlowService GlowService { get; } = new();
     public static RespawnPreventionService RespawnPrevention { get; } = new();
     public static SchematicService SchematicService { get; } = new();
 	public static ConfigSettingsService ConfigSettings { get; } = new();
@@ -60,6 +62,7 @@ internal static class Core
         ComponentSaver.ComponentSaver.PopulateComponentSavers();
 		CastleTerritory = new();
 
+        FoundBuffConverter.InitializeBuffPrefabs();
         Tile.Populate();
 
         Log.LogInfo($"KindredSchematics Initialized");
