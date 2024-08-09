@@ -225,10 +225,40 @@ namespace KindredSchematics.Services
             var startNumAabbs = aabbs.Count;
             AabbHelper.MergeAabbsTogether(aabbs);
             Core.Log.LogInfo($"{GetElapseTime()} Reduced by {startNumAabbs - aabbs.Count} aabbs from {startNumAabbs} to {aabbs.Count}");
+            if (territoryIndex == null)
+            {
+                schematic.aabbs = aabbs.ToArray();
+
+                // Time to do a second pass based off the AABBs to see if there was entities we missed saving out
+                Core.Log.LogInfo($"{GetElapseTime()} Starting to check for entities we missed saving out");
+                var startEntityMapperIndex = entityMapper.Count;
+                var entitiesToCheck = Helper.GetAllEntitiesInTileAabb<Translation>(schematic.boundingBox).
+                        Where(x =>
+                        {
+                            if (entityMapper.Contains(x))
+                                return false;
+
+                            foreach (var aabb in aabbs)
+                            {
+                                if (Helper.IsEntityInAabb(x, aabb))
+                                {
+                                    entityMapper.AddEntity(x);
+                                    return true;
+                                }
+                            }
+                            return false;
+                        });
+
+                for (var i = startEntityMapperIndex; i < entityMapper.Count; ++i)
+                {
+                    var data = EntityPrefabDiff.DiffFromPrefab(entityMapper[i], entityMapper);
+                    entityPrefabDiffs.Add(data);
+                }
+
+                Core.Log.LogInfo($"{GetElapseTime()} Finished checking for entities we missed saving out and added {entityMapper.Count - startEntityMapperIndex} more");
+            }
 
             schematic.entities = entityPrefabDiffs.ToArray();
-            if (territoryIndex == null)
-                schematic.aabbs = aabbs.ToArray();
 
             Core.Log.LogInfo($"{GetElapseTime()} Serializing {schematic.entities.Length} entities for {name}");
             var json = JsonSerializer.Serialize(schematic, GetJsonOptions());
@@ -609,6 +639,15 @@ namespace KindredSchematics.Services
                             if (!entity.Has<Immortal>())
                                 entity.Add<Immortal>();
                             entity.Write(new Immortal() { IsImmortal = true });
+                            if (entity.Has<EntityCategory>())
+                            {
+                                var category = entity.Read<EntityCategory>();
+                                if (category.MaterialCategory == MaterialCategory.Vegetation)
+                                {
+                                    category.MaterialCategory = MaterialCategory.Mineral;
+                                    entity.Write(category);
+                                }
+                            }
                         }
 
                         // Can't have entities overlap a heart so they have to be destroyed

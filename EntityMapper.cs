@@ -56,5 +56,10 @@ namespace KindredSchematics
             return AddEntity(entity);
         }
 
+        public bool Contains(Entity entity)
+        {
+            return entityIndexLookup.ContainsKey(entity);
+        }
+
     }
 }
