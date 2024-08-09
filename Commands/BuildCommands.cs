@@ -171,7 +171,7 @@ namespace KindredSchematics.Commands
             var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
 
             Core.Log.LogInfo($"{Time.realtimeSinceStartup - startTime} Deleting tile at {aimPos} now finding closest tile model");
-            var closest = Helper.FindClosest<TilePosition>(aimPos, "TM_");
+            var closest = Helper.FindClosestTilePosition(aimPos);
             Core.Log.LogInfo($"{Time.realtimeSinceStartup - startTime} Found closest tile model {closest}");
             var prefabName = closest.Read<PrefabGUID>().LookupName();
             Core.Log.LogInfo($"{Time.realtimeSinceStartup - startTime} Deleting tile {prefabName}");
@@ -221,7 +221,7 @@ namespace KindredSchematics.Commands
         {
             var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
 
-            var closest = Helper.FindClosest<TilePosition>(aimPos, "TM_");
+            var closest = Helper.FindClosestTilePosition(aimPos);
             if (!closest.Has<Immortal>())
                 closest.Add<Immortal>();
             closest.Write(new Immortal { IsImmortal = true });
@@ -245,7 +245,7 @@ namespace KindredSchematics.Commands
         {
             var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
 
-            var closest = Helper.FindClosest<TilePosition>(aimPos, "TM_");
+            var closest = Helper.FindClosestTilePosition(aimPos);
             var closestPos = closest.Read<Translation>().Value.xz;
 
             var tiles = Helper.GetAllEntitiesInRadius<TilePosition>(closestPos, range);
@@ -273,7 +273,7 @@ namespace KindredSchematics.Commands
         {
             var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
 
-            var closest = Helper.FindClosest<TilePosition>(aimPos, "TM_");
+            var closest = Helper.FindClosestTilePosition(aimPos);
             if (closest.Has<Immortal>())
                 closest.Remove<Immortal>();
             
@@ -295,7 +295,7 @@ namespace KindredSchematics.Commands
         {
             var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
 
-            var closest = Helper.FindClosest<TilePosition>(aimPos, "TM_");
+            var closest = Helper.FindClosestTilePosition(aimPos);
             var closestPos = closest.Read<Translation>().Value.xz;
 
             var tiles = Helper.GetAllEntitiesInRadius<TilePosition>(closestPos, range);
@@ -324,7 +324,7 @@ namespace KindredSchematics.Commands
         {
             var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
 
-            var closest = Helper.FindClosest<TilePosition>(aimPos, "TM_");
+            var closest = Helper.FindClosestTilePosition(aimPos);
             if (!closest.Has<CanPreventDisableWhenNoPlayersInRange>())
                 closest.Add<CanPreventDisableWhenNoPlayersInRange>();
 
@@ -339,7 +339,7 @@ namespace KindredSchematics.Commands
         {
             var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
 
-            var closest = Helper.FindClosest<TilePosition>(aimPos, "TM_");
+            var closest = Helper.FindClosestTilePosition(aimPos);
             var tilePos = closest.Read<TilePosition>();
             tilePos.TileRotation = (TileRotation)((((int)tilePos.TileRotation) + 1) % 4);
             closest.Write(tilePos);

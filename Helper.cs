@@ -315,10 +315,10 @@ internal static partial class Helper
 	{
         var closestEntity = Entity.Null;
         var closestDistance = float.MaxValue;
-        var entities = GetEntitiesByComponentType<T>(includeSpawn: true, includeDisabled: true);
+        maxDistance *= maxDistance;
+        var entities = GetEntitiesByComponentTypes<T, Translation>(includeSpawn: true, includeDisabled: true);
         foreach (var entity in entities)
 		{
-            if (!entity.Has<Translation>()) continue;
 			if (startsWith != null)
 			{
 				var prefabName = GetPrefabGUID(entity).LookupName();
@@ -326,7 +326,7 @@ internal static partial class Helper
 			}
 
             var entityPos = entity.Read<Translation>().Value;
-            var distance = Vector3.Distance(pos, entityPos);
+            var distance = math.distancesq(pos, entityPos);
             if (distance < closestDistance && (maxDistance < 0 || distance < maxDistance))
 			{
                 closestDistance = distance;
@@ -334,6 +334,45 @@ internal static partial class Helper
             }
         }
         entities.Dispose();
+        return closestEntity;
+    }
+
+
+    static EntityQuery tilePositionQuery = default;
+    public static Entity FindClosestTilePosition(Vector3 pos)
+    {
+        if (tilePositionQuery == default)
+        {
+            tilePositionQuery = Core.EntityManager.CreateEntityQuery(new EntityQueryDesc
+            {
+                All = new ComponentType[] {
+                    new(Il2CppType.Of<TilePosition>(), ComponentType.AccessMode.ReadOnly),
+                    new(Il2CppType.Of<Translation>(), ComponentType.AccessMode.ReadOnly)
+                },
+                Options = EntityQueryOptions.IncludeDisabled | EntityQueryOptions.IncludeSpawnTag
+            });
+        }
+
+        var closestEntity = Entity.Null;
+        var closestDistance = float.MaxValue;
+        var entities = tilePositionQuery.ToEntityArray(Allocator.Temp);
+        for (var i = 0; i < entities.Length; ++i)
+        {
+            var entity = entities[i];
+            if (!entity.Has<TilePosition>()) continue;
+            var entityPos = entity.Read<Translation>().Value;
+            var distance = math.distancesq(pos, entityPos);
+            if (distance < closestDistance)
+            {
+                var prefabName = GetPrefabGUID(entity).LookupName();
+                if (!prefabName.StartsWith("TM_")) continue;
+
+                closestDistance = distance;
+                closestEntity = entity;
+            }
+        }
+        entities.Dispose();
+
         return closestEntity;
     }
 }

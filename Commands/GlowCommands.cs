@@ -29,7 +29,7 @@ class GlowCommands
     public static void GlowTile(ChatCommandContext ctx, FoundGlow glow)
     {
         var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
-        var closest = Helper.FindClosest<TilePosition>(aimPos, "TM_");
+        var closest = Helper.FindClosestTilePosition(aimPos);
 
         Core.GlowService.AddGlow(ctx.Event.SenderUserEntity, closest, glow.prefab);
 
@@ -40,7 +40,7 @@ class GlowCommands
     public static void RemoveGlowTile(ChatCommandContext ctx, FoundGlow glow)
     {
         var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
-        var closest = Helper.FindClosest<TilePosition>(aimPos, "TM_");
+        var closest = Helper.FindClosestTilePosition(aimPos);
         
         if(Core.GlowService.RemoveGlow(closest, glow.prefab))
             ctx.Reply($"Removed glow <color=yellow>{glow.name}</color> from tile <color=white>{closest.Read<PrefabGUID>().LookupName()}</color>");
@@ -86,7 +86,7 @@ class GlowCommands
     public static void CheckGlowTile(ChatCommandContext ctx)
     {
         var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
-        var closest = Helper.FindClosest<TilePosition>(aimPos, "TM_");
+        var closest = Helper.FindClosestTilePosition(aimPos);
 
         var glowsOnTarget = Core.GlowService.ListGlows(closest);
 
