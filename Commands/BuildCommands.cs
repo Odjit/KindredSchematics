@@ -1,6 +1,7 @@
 ﻿using Il2CppSystem.Text;
 using KindredSchematics.Commands.Converter;
 using ProjectM;
+using ProjectM.CastleBuilding;
 using ProjectM.Network;
 using ProjectM.Tiles;
 using Stunlock.Core;
@@ -127,6 +128,7 @@ namespace KindredSchematics.Commands
         }
 
         static readonly Dictionary<Entity, float2> cornerPos = [];
+
         [Command("setcorner", "sc", description: "Sets a corner for clearing", adminOnly: true)]
         public static void SetCorner(ChatCommandContext ctx)
         {
@@ -224,7 +226,46 @@ namespace KindredSchematics.Commands
                 closest.Add<Immortal>();
             closest.Write(new Immortal { IsImmortal = true });
 
+            if (closest.Has<EntityCategory>())
+            {
+                var entityCategory = closest.Read<EntityCategory>();
+                if (entityCategory.MaterialCategory == MaterialCategory.Vegetation)
+                {
+                    entityCategory.MaterialCategory = MaterialCategory.Mineral;
+                    closest.Write(entityCategory);
+
+                }
+            }
+
             ctx.Reply($"Made tile {closest.Read<PrefabGUID>().LookupName()} immortal");
+        }
+
+        [Command("immortalrange", "ir", description: "Makes all tiles within a range immortal", adminOnly: true)]
+        public static void ImmortalRange(ChatCommandContext ctx, float range)
+        {
+            var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
+
+            var closest = Helper.FindClosest<TilePosition>(aimPos, "TM_");
+            var closestPos = closest.Read<Translation>().Value.xz;
+
+            var tiles = Helper.GetAllEntitiesInRadius<TilePosition>(closestPos, range);
+            foreach (var tile in tiles)
+            {
+                if (!tile.Has<Immortal>())
+                    tile.Add<Immortal>();
+                tile.Write(new Immortal { IsImmortal = true });
+                if (tile.Has<EntityCategory>())
+                {
+                    var entityCategory = tile.Read<EntityCategory>();
+                    if (entityCategory.MaterialCategory == MaterialCategory.Vegetation)
+                    {
+                        entityCategory.MaterialCategory = MaterialCategory.Mineral;
+                        tile.Write(entityCategory);
+                    }
+                }
+            }
+
+                ctx.Reply($"Made {tiles.Count()} tiles within {range} immortal");
         }
 
         [Command("mortal", description: "Makes the tile closest to mouse cursor mortal", adminOnly: true)]
@@ -233,11 +274,65 @@ namespace KindredSchematics.Commands
             var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
 
             var closest = Helper.FindClosest<TilePosition>(aimPos, "TM_");
-            if (!closest.Has<Immortal>())
-                closest.Add<Immortal>();
-            closest.Write(new Immortal { IsImmortal = false });
+            if (closest.Has<Immortal>())
+                closest.Remove<Immortal>();
+            
+            if (closest.Has<EntityCategory>())
+            {
+                var prefabGuid = closest.Read<PrefabGUID>();
+                var prefab = Core.PrefabCollection._PrefabLookupMap[prefabGuid];
+                var entityCategory = prefab.Read<EntityCategory>();
+                if (entityCategory.MaterialCategory == MaterialCategory.Vegetation)
+                {
+                    closest.Write(entityCategory);
+                }
+            }
             ctx.Reply($"Made tile {closest.Read<PrefabGUID>().LookupName()} mortal");
         }
+
+        [Command("mortalrange", "mr", description: "Makes all tiles within a range mortal", adminOnly: true)]
+        public static void MortalRange(ChatCommandContext ctx, float range)
+        {
+            var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
+
+            var closest = Helper.FindClosest<TilePosition>(aimPos, "TM_");
+            var closestPos = closest.Read<Translation>().Value.xz;
+
+            var tiles = Helper.GetAllEntitiesInRadius<TilePosition>(closestPos, range);
+            foreach (var tile in tiles)
+            {
+                if (tile.Has<Immortal>())
+                    tile.Remove<Immortal>();
+
+                if (tile.Has<EntityCategory>())
+                {
+                    var prefabGuid = tile.Read<PrefabGUID>();
+                    var prefab = Core.PrefabCollection._PrefabLookupMap[prefabGuid];
+                    var entityCategory = prefab.Read<EntityCategory>();
+                    if (entityCategory.MaterialCategory == MaterialCategory.Vegetation)
+                    {
+                        tile.Write(entityCategory);
+                    }
+                }
+            }
+
+            ctx.Reply($"Made {tiles.Count()} tiles within {range} mortal");
+        }
+
+        [Command("persist", description: "Makes the tile closest to mouse cursor stay loaded when no players are in range. Keeps things loaded, use sparingly.", adminOnly: true)]
+        public static void PersistTile(ChatCommandContext ctx)
+        {
+            var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
+
+            var closest = Helper.FindClosest<TilePosition>(aimPos, "TM_");
+            if (!closest.Has<CanPreventDisableWhenNoPlayersInRange>())
+                closest.Add<CanPreventDisableWhenNoPlayersInRange>();
+
+            closest.Write(new CanPreventDisableWhenNoPlayersInRange());
+
+            ctx.Reply($"Made tile {closest.Read<PrefabGUID>().LookupName()} persist");
+        }
+
 
         [Command("rotate", description: "Rotates the tile closest to mouse cursor by 90 degrees", adminOnly: true)]
         public static void RotateTile(ChatCommandContext ctx)
@@ -303,6 +398,7 @@ namespace KindredSchematics.Commands
                 Core.LogException(e);
             }
         }
+
     }
     }
 
