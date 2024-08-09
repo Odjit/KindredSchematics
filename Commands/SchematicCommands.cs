@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using ProjectM;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Unity.Entities;
@@ -11,7 +12,7 @@ namespace KindredSchematics.Commands
     [CommandGroup("schematic", "sc")]
     internal class SchematicCommands
     {
-        [Command("list", "l", description: "Lists all saved schematics")]
+        [Command("list", "l", description: "Lists all saved schematics", adminOnly: true)]
         public static void ListSchematics(ChatCommandContext ctx)
         {
             var schematics = Core.SchematicService.GetSchematics();
