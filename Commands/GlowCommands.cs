@@ -109,10 +109,13 @@ class GlowCommands
         else
         {
             ctx.Reply($"Tile {closest.Read<PrefabGUID>().LookupName()} has no glows");
-            var buffs = Core.EntityManager.GetBuffer<BuffBuffer>(closest);
-            foreach(var buff in buffs)
+            if (closest.Has<BuffBuffer>())
             {
-                ctx.Reply($"Does have buff <color=yellow>{buff.PrefabGuid.LookupName()}</color> - <color=white>{buff.PrefabGuid._Value}</color>");
+                var buffs = Core.EntityManager.GetBuffer<BuffBuffer>(closest);
+                foreach (var buff in buffs)
+                {
+                    ctx.Reply($"Does have buff <color=yellow>{buff.PrefabGuid.LookupName()}</color> - <color=white>{buff.PrefabGuid._Value}</color>");
+                }
             }
         }
     }
