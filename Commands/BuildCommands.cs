@@ -399,6 +399,26 @@ namespace KindredSchematics.Commands
             }
         }
 
+        [Command("setfallbackheart", "sfh", description: "Sets the fallback castle heart for loading or building without restrictions to the nearby heart", adminOnly: true)]
+        public static void SetFallbackHeart(ChatCommandContext ctx)
+        {
+            var castleHearts = Helper.GetEntitiesByComponentType<CastleHeart>();
+            var playerPos = ctx.Event.SenderCharacterEntity.Read<LocalToWorld>().Position;
+            foreach (var castleHeart in castleHearts)
+            {
+                var castleHeartPos = castleHeart.Read<LocalToWorld>().Position;
+
+                if (Vector3.Distance(playerPos, castleHeartPos) > 5f)
+                {
+                    continue;
+                }
+
+                Core.SchematicService.SetFallbackCastleHeart(ctx.Event.SenderCharacterEntity, castleHeart);
+                ctx.Reply("Fallback castle heart set");
+                return;
+            }
+            ctx.Reply("Not close enough to a castle heart");
+        }
     }
-    }
+}
 

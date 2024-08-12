@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
@@ -41,8 +42,9 @@ namespace KindredSchematics.Services
         {
             public Entity CastleHeart;
             public Entity TeamReference;
-            public int TeamValue;
         };
+
+        Dictionary<Entity, HeartInfo> fallbackHeart = [];
 
         readonly List<Entity> usersClearingEntireArea = [];
         readonly List<Entity> usersPlacingOffGrid = [];
@@ -318,7 +320,7 @@ namespace KindredSchematics.Services
             var lastYieldTime = Time.realtimeSinceStartup;
             var timeSinceLastMessage = Time.realtimeSinceStartup;
 
-            bool MessageUser(string message, bool always=false)
+            bool MessageUser(string message, bool always = false)
             {
                 if (always || Time.realtimeSinceStartup - timeSinceLastMessage > MESSAGE_FREQUENCY)
                 {
@@ -383,12 +385,12 @@ namespace KindredSchematics.Services
                     aabbArray[i] = newAabb;
                 }
 
-                for(var i=0; i < entitiesToCheck.Length; i++)
+                for (var i = 0; i < entitiesToCheck.Length; i++)
                 {
                     var entity = entitiesToCheck[i];
                     if (Time.realtimeSinceStartup - lastYieldTime > 0.05f)
                     {
-                        if(MessageUser($"Checked {i}/{entitiesToCheck.Length} for deletion so far with {entitiesToDestroy.Count} marked to be deleted"))
+                        if (MessageUser($"Checked {i}/{entitiesToCheck.Length} for deletion so far with {entitiesToDestroy.Count} marked to be deleted"))
                             Core.Log.LogInfo($"{GetElapseTime():f4} Checked {i}/{entitiesToCheck.Length} for deletion so far with {entitiesToDestroy.Count} marked to be deleted");
                         lastYieldTime = Time.realtimeSinceStartup;
                         yield return null;
@@ -447,7 +449,7 @@ namespace KindredSchematics.Services
             Core.RespawnPrevention.PreventRespawns();
             yield return null;
             var entitiesDestroyingThisFrame = 0;
-            foreach(var entity in entitiesToDestroy)
+            foreach (var entity in entitiesToDestroy)
             {
                 Helper.DestroyEntityAndCastleAttachments(entity);
                 entitiesDestroyingThisFrame++;
@@ -464,28 +466,12 @@ namespace KindredSchematics.Services
             yield return null;
 
             var teamValue = charEntity.Read<Team>().Value;
-            var castleHeartEntity = Entity.Null;
-            var castleTeamReference = Entity.Null;
-            if (charEntity.Has<TeamReference>())
-            {
-                var team = charEntity.Read<TeamReference>().Value;
-                foreach (var allyEntries in Core.EntityManager.GetBuffer<TeamAllies>(team))
-                {
-                    var allyEntity = allyEntries.Value;
-                    if (allyEntity.Has<CastleTeamData>())
-                    {
-                        castleHeartEntity = allyEntity.Read<CastleTeamData>().CastleHeart;
-                        castleTeamReference = allyEntity;
-                        break;
-                    }
-                }
-            }
+            GetFallbackCastleHeart(charEntity, out var castleHeartEntity, out var castleTeamReference);
 
             var defaultHeartInfo = new HeartInfo
             {
                 CastleHeart = castleHeartEntity,
                 TeamReference = castleTeamReference,
-                TeamValue = teamValue
             };
 
             var territoryToHeartInfo = new Dictionary<int, HeartInfo>
@@ -525,7 +511,7 @@ namespace KindredSchematics.Services
                     if (dependencies[dependentIndex].Contains(i + 1))
                     {
                         var otherGroup = dependentGroups[dependentIndex];
-                        foreach(var k in otherGroup)
+                        foreach (var k in otherGroup)
                         {
                             dependentGroups[k] = group;
                             group.Add(k);
@@ -575,7 +561,7 @@ namespace KindredSchematics.Services
                             entityGroupToLoad.Add(i);
                 }
 
-                foreach(var i in entityGroupToLoad)
+                foreach (var i in entityGroupToLoad)
                 {
                     entitiesLoaded.Add(i);
                     entitiesLoadedThisFrame++;
@@ -603,7 +589,6 @@ namespace KindredSchematics.Services
                             else
                             {
                                 heartInfo.CastleHeart = heartEntity;
-                                heartInfo.TeamValue = heartEntity.Read<Team>().Value;
                                 heartInfo.TeamReference = Entity.Null;
                                 if (heartEntity.Has<TeamReference>())
                                     heartInfo.TeamReference = heartEntity.Read<TeamReference>().Value;
@@ -620,10 +605,10 @@ namespace KindredSchematics.Services
                         {
                             if (entity.Has<Team>())
                             {
-                                entity.Write(new Team { Value = heartInfo.TeamValue, FactionIndex = -1 });
+                                entity.Write(heartInfo.CastleHeart.Read<Team>());
 
                                 entity.Add<UserOwner>();
-                                entity.Write(new UserOwner() { Owner = userEntity });
+                                entity.Write(heartInfo.CastleHeart.Read<UserOwner>());
                             }
 
                             if (entity.Has<TeamReference>() && !heartInfo.TeamReference.Equals(Entity.Null))
@@ -698,6 +683,43 @@ namespace KindredSchematics.Services
             Core.Log.LogInfo($"{GetElapseTime():f4} Finished Loading Schematic");
             ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, userEntity.Read<User>(), $"Finished Loading Schematic");
             Core.RespawnPrevention.AllowRespawns();
+        }
+
+        public void SetFallbackCastleHeart(Entity charEntity, Entity castleHeartEntity)
+        {
+            fallbackHeart[charEntity] = new HeartInfo
+            {
+                CastleHeart = castleHeartEntity,
+                TeamReference = castleHeartEntity.Read<TeamReference>().Value.Value,
+            };
+        }
+
+        public void GetFallbackCastleHeart(Entity charEntity, out Entity castleHeartEntity, out Entity castleTeamReference)
+        {
+            castleHeartEntity = Entity.Null;
+            castleTeamReference = Entity.Null;
+
+            if (fallbackHeart.TryGetValue(charEntity, out var heartInfo))
+            {
+                castleHeartEntity = heartInfo.CastleHeart;
+                castleTeamReference = heartInfo.TeamReference;
+                return;
+            }
+
+            if (charEntity.Has<TeamReference>())
+            {
+                var team = charEntity.Read<TeamReference>().Value;
+                foreach (var allyEntries in Core.EntityManager.GetBuffer<TeamAllies>(team))
+                {
+                    var allyEntity = allyEntries.Value;
+                    if (allyEntity.Has<CastleTeamData>())
+                    {
+                        castleHeartEntity = allyEntity.Read<CastleTeamData>().CastleHeart;
+                        castleTeamReference = allyEntity;
+                        break;
+                    }
+                }
+            }
         }
 
         private static Entity SpawnEntity(Entity userEntity, Vector3 translation, EntityData diff, Entity prefab)
