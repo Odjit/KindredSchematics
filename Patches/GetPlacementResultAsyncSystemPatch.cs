@@ -25,21 +25,27 @@ public static class GetPlacementResultAsyncSystemPatch
             if (userEntity == Entity.Null) continue;
 
             var charEntity = userEntity.Read<User>().LocalCharacter.GetEntityOnServer();
-            Core.SchematicService.GetFallbackCastleHeart(charEntity, out var castleHeartEntity, out var castleTeamReference);
+            Core.SchematicService.GetFallbackCastleHeart(charEntity, out var castleHeartEntity, out var ownerDoors);
 
-            castleEntity.Write(new CastleHeartConnection { CastleHeartEntity = castleHeartEntity });
-            castleEntity.Write(castleHeartEntity.Read<UserOwner>());
-
-            if (castleEntity.Has<Team>())
+            if (ownerDoors || !castleEntity.Has<Door>())
             {
-                castleEntity.Write(castleHeartEntity.Read<Team>());
-            }
+                castleEntity.Write(new CastleHeartConnection { CastleHeartEntity = castleHeartEntity });
 
-            if (castleEntity.Has<TeamReference>())
-            {
-                var t = new TeamReference();
-                t.Value._Value = castleTeamReference;
-                castleEntity.Write(t);
+                var castleTeamReference = (Entity)castleHeartEntity.Read<TeamReference>().Value;
+                var teamData = castleTeamReference.Read<TeamData>();
+                castleEntity.Write(castleHeartEntity.Read<UserOwner>());
+
+                if (castleEntity.Has<Team>())
+                {
+                    castleEntity.Write(new Team() { Value = teamData.TeamValue, FactionIndex = -1 });
+                }
+
+                if (castleEntity.Has<TeamReference>())
+                {
+                    var t = new TeamReference();
+                    t.Value._Value = castleTeamReference;
+                    castleEntity.Write(t);
+                }
             }
         }
     }

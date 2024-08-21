@@ -1,6 +1,7 @@
 ﻿using Il2CppSystem.Text;
 using KindredSchematics.Commands.Converter;
 using ProjectM;
+using ProjectM.Behaviours;
 using ProjectM.CastleBuilding;
 using ProjectM.Network;
 using ProjectM.Tiles;
@@ -14,6 +15,8 @@ using Unity.Physics;
 using Unity.Transforms;
 using UnityEngine;
 using VampireCommandFramework;
+using static Unity.Entities.ComponentSystemSorter;
+using Math = System.Math;
 
 namespace KindredSchematics.Commands
 {
@@ -399,8 +402,54 @@ namespace KindredSchematics.Commands
             }
         }
 
+        [Command("changeheart", "ch", description: "Changes the heart of the tile to the current fallback", adminOnly: true)]
+        public static void ChangeHeart(ChatCommandContext ctx)
+        {
+            var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
+
+            var closest = Helper.FindClosestTilePosition(aimPos);
+
+            Core.SchematicService.GetFallbackCastleHeart(ctx.Event.SenderCharacterEntity, out var castleHeartEntity, out var ownerDoors);
+            if (ownerDoors || !closest.Has<Door>())
+            {
+                if (closest.Has<CastleHeartConnection>())
+                    closest.Write(new CastleHeartConnection { CastleHeartEntity = castleHeartEntity });
+
+                var castleTeamReference = (Entity)castleHeartEntity.Read<TeamReference>().Value;
+                var teamData = castleTeamReference.Read<TeamData>();
+                closest.Write(castleHeartEntity.Read<UserOwner>());
+
+                if (closest.Has<Team>())
+                {
+                    closest.Write(new Team() { Value = teamData.TeamValue, FactionIndex = -1 });
+                }
+
+                if (closest.Has<TeamReference>())
+                {
+                    var t = new TeamReference();
+                    t.Value._Value = castleTeamReference;
+                    closest.Write(t);
+                }
+                ctx.Reply($"Changed the heart connection for {closest.Read<PrefabGUID>().LookupName()}");
+            }
+            else
+            {
+                if (closest.Has<CastleHeartConnection>())
+                    closest.Write(new CastleHeartConnection { CastleHeartEntity = Entity.Null });
+                closest.Write(new Team() { Value = 1, FactionIndex = -1 });
+                if (closest.Has<TeamReference>() )
+                {
+                    var t = new TeamReference();
+                    t.Value._Value = Core.SchematicService.NeutralTeam;
+                    closest.Write(t);
+                }
+
+                ctx.Reply($"Changed the door {closest.Read<PrefabGUID>().LookupName()} to be a neutral door");
+            }
+        }
+
         [Command("setfallbackheart", "sfh", description: "Sets the fallback castle heart for loading or building without restrictions to the nearby heart", adminOnly: true)]
-        public static void SetFallbackHeart(ChatCommandContext ctx)
+        public static void SetFallbackHeart(ChatCommandContext ctx, bool useNeutralTeam = false)
         {
             var castleHearts = Helper.GetEntitiesByComponentType<CastleHeart>();
             var playerPos = ctx.Event.SenderCharacterEntity.Read<LocalToWorld>().Position;
@@ -413,11 +462,56 @@ namespace KindredSchematics.Commands
                     continue;
                 }
 
-                Core.SchematicService.SetFallbackCastleHeart(ctx.Event.SenderCharacterEntity, castleHeart);
+                Core.SchematicService.SetFallbackCastleHeart(ctx.Event.SenderCharacterEntity, castleHeart, useNeutralTeam);
                 ctx.Reply("Fallback castle heart set");
                 return;
             }
             ctx.Reply("Not close enough to a castle heart");
+        }
+
+        [Command("neutraldoors", "nd", description: "Sets the doors to be neutral", adminOnly: true)]
+        public static void NeutralDoors(ChatCommandContext ctx)
+        {
+            Core.SchematicService.UseNeutralTeam(ctx.Event.SenderCharacterEntity);
+            ctx.Reply("Doors will be built as neutral");
+        }
+
+        [Command("ownerdoors", "od", description: "Sets the doors to be owned based", adminOnly: true)]
+        public static void OwnerDoors(ChatCommandContext ctx)
+        {
+            Core.SchematicService.UseOwnerDoors(ctx.Event.SenderCharacterEntity);
+            ctx.Reply("Doors will be owned by the current castle");
+        }
+
+        static readonly string[] stringDirections = { "W", "SW", "S", "SE", "E", "NE", "N", "NW" };
+
+        [Command("checkfallbackheart", "cfh", description: "Checks the fallback castle heart", adminOnly: true)]
+        public static void CheckFallbackHeart(ChatCommandContext ctx)
+        {
+            Core.SchematicService.GetFallbackCastleHeart(ctx.Event.SenderCharacterEntity, out var castleHeartEntity, out var ownerDoors);
+            if (castleHeartEntity == Entity.Null)
+            {
+                ctx.Reply("No fallback castle heart set");
+                return;
+            }
+
+            var fallbackHeartPos = castleHeartEntity.Read<LocalToWorld>().Position;
+            var playerPos = ctx.Event.SenderCharacterEntity.Read<LocalToWorld>().Position;
+            var distance = math.distance(playerPos.xz, fallbackHeartPos.xz);
+            // Want a simple direction of N, NW, W, SW, S, SE, E, NE
+            var direction = (int)Math.Round(Math.Atan2(fallbackHeartPos.z - playerPos.z, fallbackHeartPos.x - playerPos.x) / (Math.PI / 4));
+            direction = (direction + 8) % 8;
+
+            // Get the territory index
+            var heartData = castleHeartEntity.Read<CastleHeart>();
+            var castleTerritoryEntity = heartData.CastleTerritoryEntity;
+            var territoryIndex = castleTerritoryEntity.Equals(Entity.Null) ?
+                                 -1 :
+                                 castleTerritoryEntity.Read<CastleTerritory>().CastleTerritoryIndex;
+
+            var usingNeutralDoors = ownerDoors ? "Owner doors" : "Neutral doors";
+
+            ctx.Reply($"Fallback castle heart set on territory {territoryIndex} at {fallbackHeartPos} ({distance}m away to the {stringDirections[direction]}) using {usingNeutralDoors}");
         }
     }
 }

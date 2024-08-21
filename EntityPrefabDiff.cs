@@ -37,7 +37,7 @@ namespace KindredSchematics
             var diffData = new EntityData();
             // Compare the two entities and return a list of differences
             diffData.prefab = entity.Read<PrefabGUID>();
-            if(entity.Has<Translation>())
+            if (entity.Has<Translation>())
                 diffData.pos = entity.Read<Translation>().Value;
             if(entity.Has<Rotation>())
                 diffData.rot = entity.Read<Rotation>().Value;
@@ -50,7 +50,8 @@ namespace KindredSchematics
                 diffData.tileBoundsMax = bounds.Value.Max;
             }
 
-            if(entity.Has<TeamReference>())
+
+            if (entity.Has<TeamReference>())
             {
                 var teamReference = entity.Read<TeamReference>().Value;
                 if(teamReference.Value != Entity.Null)

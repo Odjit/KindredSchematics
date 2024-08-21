@@ -41,10 +41,12 @@ namespace KindredSchematics.Services
         struct HeartInfo
         {
             public Entity CastleHeart;
-            public Entity TeamReference;
+            public bool OwnerDoors;
         };
 
         Dictionary<Entity, HeartInfo> fallbackHeart = [];
+        Entity neutralTeam;
+        public Entity NeutralTeam => neutralTeam;
 
         readonly List<Entity> usersClearingEntireArea = [];
         readonly List<Entity> usersPlacingOffGrid = [];
@@ -69,6 +71,8 @@ namespace KindredSchematics.Services
                     prefabsAllowedToDestroy.Add(prefabGUID);
                 }
             }
+
+            neutralTeam = Helper.GetEntitiesByComponentType<NeutralTeam>(includeDisabled: true).ToArray().FirstOrDefault();
         }
 
         public void StartCoroutine(IEnumerator routine)
@@ -466,12 +470,12 @@ namespace KindredSchematics.Services
             yield return null;
 
             var teamValue = charEntity.Read<Team>().Value;
-            GetFallbackCastleHeart(charEntity, out var castleHeartEntity, out var castleTeamReference);
+            GetFallbackCastleHeart(charEntity, out var castleHeartEntity, out var ownerDoors);
 
             var defaultHeartInfo = new HeartInfo
             {
                 CastleHeart = castleHeartEntity,
-                TeamReference = castleTeamReference,
+                OwnerDoors = ownerDoors,
             };
 
             var territoryToHeartInfo = new Dictionary<int, HeartInfo>
@@ -589,32 +593,58 @@ namespace KindredSchematics.Services
                             else
                             {
                                 heartInfo.CastleHeart = heartEntity;
-                                heartInfo.TeamReference = Entity.Null;
-                                if (heartEntity.Has<TeamReference>())
-                                    heartInfo.TeamReference = heartEntity.Read<TeamReference>().Value;
                             }
                             territoryToHeartInfo.Add(territoryIndex, heartInfo);
                         }
 
-                        if (entity.Has<CastleHeartConnection>())
+                        if (heartInfo.OwnerDoors || !entity.Has<Door>())
                         {
-                            entity.Write(new CastleHeartConnection { CastleHeartEntity = heartInfo.CastleHeart });
-                        }
+                            if (entity.Has<CastleHeartConnection>())
+                            {
+                                entity.Write(new CastleHeartConnection { CastleHeartEntity = heartInfo.CastleHeart });
+                            }
 
-                        if (!entityData.notCastleTeam.HasValue || !entityData.notCastleTeam.Value)
+                            if (!entityData.notCastleTeam.HasValue || !entityData.notCastleTeam.Value)
+                            {
+                                var teamRef = (Entity)heartInfo.CastleHeart.Read<TeamReference>().Value;
+                                if (entity.Has<Team>())
+                                {
+                                    var teamData = teamRef.Read<TeamData>();
+                                    entity.Write(new Team() { Value = teamData.TeamValue, FactionIndex = -1 });
+
+                                    entity.Add<UserOwner>();
+                                    entity.Write(heartInfo.CastleHeart.Read<UserOwner>());
+                                }
+
+                                if (entity.Has<TeamReference>() && !teamRef.Equals(Entity.Null))
+                                {
+                                    var t = new TeamReference();
+                                    t.Value._Value = teamRef;
+                                    entity.Write(t);
+                                }
+                            }
+                        }
+                        else
                         {
+                            if (entity.Has<CastleHeartConnection>())
+                            {
+                                entity.Write(new CastleHeartConnection { CastleHeartEntity = Entity.Null });
+                            }
+
+                            var teamRef = neutralTeam;
                             if (entity.Has<Team>())
                             {
-                                entity.Write(heartInfo.CastleHeart.Read<Team>());
+                                var teamData = teamRef.Read<TeamData>();
+                                entity.Write(new Team() { Value = teamData.TeamValue, FactionIndex = -1 });
 
                                 entity.Add<UserOwner>();
                                 entity.Write(heartInfo.CastleHeart.Read<UserOwner>());
                             }
 
-                            if (entity.Has<TeamReference>() && !heartInfo.TeamReference.Equals(Entity.Null))
+                            if (entity.Has<TeamReference>() && !teamRef.Equals(Entity.Null))
                             {
                                 var t = new TeamReference();
-                                t.Value._Value = heartInfo.TeamReference;
+                                t.Value._Value = teamRef;
                                 entity.Write(t);
                             }
                         }
@@ -685,24 +715,46 @@ namespace KindredSchematics.Services
             Core.RespawnPrevention.AllowRespawns();
         }
 
-        public void SetFallbackCastleHeart(Entity charEntity, Entity castleHeartEntity)
+        public void SetFallbackCastleHeart(Entity charEntity, Entity castleHeartEntity, bool ownerDoors=false)
         {
             fallbackHeart[charEntity] = new HeartInfo
             {
                 CastleHeart = castleHeartEntity,
-                TeamReference = castleHeartEntity.Read<TeamReference>().Value.Value,
+                OwnerDoors = ownerDoors,
             };
         }
 
-        public void GetFallbackCastleHeart(Entity charEntity, out Entity castleHeartEntity, out Entity castleTeamReference)
+        public void UseNeutralTeam(Entity charEntity)
+        {
+            GetFallbackCastleHeart(charEntity, out var castleHeartEntity, out var castleTeamReference);
+            fallbackHeart[charEntity] = new HeartInfo
+            {
+                CastleHeart = castleHeartEntity,
+                OwnerDoors = false,
+            };
+        }
+
+        public void UseOwnerDoors(Entity charEntity)
+        {
+            GetFallbackCastleHeart(charEntity, out var castleHeartEntity, out var castleTeamReference);
+            fallbackHeart[charEntity] = new HeartInfo
+            {
+                CastleHeart = castleHeartEntity,
+                OwnerDoors = true,
+            };
+        }
+
+        public bool IsNeutralTeam(Entity entityToCheck) => entityToCheck.Equals(neutralTeam);
+
+        public void GetFallbackCastleHeart(Entity charEntity, out Entity castleHeartEntity, out bool ownerDoors)
         {
             castleHeartEntity = Entity.Null;
-            castleTeamReference = Entity.Null;
+            ownerDoors = true;
 
             if (fallbackHeart.TryGetValue(charEntity, out var heartInfo))
             {
                 castleHeartEntity = heartInfo.CastleHeart;
-                castleTeamReference = heartInfo.TeamReference;
+                ownerDoors = heartInfo.OwnerDoors;
                 return;
             }
 
@@ -715,7 +767,6 @@ namespace KindredSchematics.Services
                     if (allyEntity.Has<CastleTeamData>())
                     {
                         castleHeartEntity = allyEntity.Read<CastleTeamData>().CastleHeart;
-                        castleTeamReference = allyEntity;
                         break;
                     }
                 }
