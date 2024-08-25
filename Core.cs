@@ -65,6 +65,17 @@ internal static class Core
         FoundBuffConverter.InitializeBuffPrefabs();
         Tile.Populate();
 
+        // Fix immortal plants to prevent infinite fire bug
+        foreach (var entity in Helper.GetEntitiesByComponentTypes<Immortal, EntityCategory>(includeDisabled: true))
+        {
+            var entityCategory = entity.Read<EntityCategory>();
+            if (entityCategory.MaterialCategory == MaterialCategory.Vegetation)
+            {
+                entityCategory.MaterialCategory = MaterialCategory.Mineral;
+                entity.Write(entityCategory);
+            }
+        }
+
         Log.LogInfo($"KindredSchematics Initialized");
 	}
 	private static bool _hasInitialized = false;
