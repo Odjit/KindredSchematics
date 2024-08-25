@@ -104,7 +104,7 @@ namespace KindredSchematics.Commands
 
             if (BuildingPlacementRestrictionsDisabledSetting.Value)
             {
-                ServerChatUtils.SendSystemMessageToAllClients(Core.EntityManager, "Building placement restrictions disabled. Respawns are also disabled <color=red>Don't place hearts or the server will crash</color>");
+                ServerChatUtils.SendSystemMessageToAllClients(Core.EntityManager, "Building placement restrictions disabled. Respawns are also disabled <color=red>Cannot place castlehearts.</color>");
             }
             else
             {
@@ -187,7 +187,8 @@ namespace KindredSchematics.Commands
         [Command("spawn", description: "Spawns a tile at the player's location", adminOnly: true)]
         public static void SpawnTile(ChatCommandContext ctx, FoundTileModel tile)
         {
-            if (!Core.PrefabCollection._PrefabLookupMap.TryGetValue(tile.Value, out var prefab))
+            if (!Core.PrefabCollection._PrefabLookupMap.TryGetValue(tile.Value, out var prefab) &&
+                !Core.PrefabCollection._PrefabGuidToEntityMap.TryGetValue(tile.Value, out prefab))
             {
                 ctx.Reply("Tile not found");
                 return;
@@ -322,7 +323,7 @@ namespace KindredSchematics.Commands
             ctx.Reply($"Made {tiles.Count()} tiles within {range} mortal");
         }
 
-        [Command("persist", description: "Makes the tile closest to mouse cursor stay loaded when no players are in range. Keeps things loaded, use sparingly.", adminOnly: true)]
+        //[Command("persist", description: "Makes the tile closest to mouse cursor stay loaded when no players are in range. Keeps things loaded, use sparingly.", adminOnly: true)]
         public static void PersistTile(ChatCommandContext ctx)
         {
             var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
@@ -409,6 +410,12 @@ namespace KindredSchematics.Commands
 
             var closest = Helper.FindClosestTilePosition(aimPos);
 
+            if (closest == Entity.Null)
+            {
+                ctx.Reply("No tile found");
+                return;
+            }
+
             Core.SchematicService.GetFallbackCastleHeart(ctx.Event.SenderCharacterEntity, out var castleHeartEntity, out var ownerDoors);
             if (ownerDoors || !closest.Has<Door>())
             {
@@ -485,7 +492,7 @@ namespace KindredSchematics.Commands
 
         static readonly string[] stringDirections = { "W", "SW", "S", "SE", "E", "NE", "N", "NW" };
 
-        [Command("checkfallbackheart", "cfh", description: "Checks the fallback castle heart", adminOnly: true)]
+        [Command("settings", description: "Checks the fallback castle heart, and build augments statuses.", adminOnly: true)]
         public static void CheckFallbackHeart(ChatCommandContext ctx)
         {
             Core.SchematicService.GetFallbackCastleHeart(ctx.Event.SenderCharacterEntity, out var castleHeartEntity, out var ownerDoors);
