@@ -455,6 +455,52 @@ namespace KindredSchematics.Commands
             }
         }
 
+        [Command("lookupheart", "lh", description: "Looks up the heart of the tile", adminOnly: true)]
+        public static void LookupHeart(ChatCommandContext ctx)
+        {
+            var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
+
+            var closest = Helper.FindClosestTilePosition(aimPos);
+            if (closest == Entity.Null)
+            {
+                ctx.Reply("No tile found");
+                return;
+            }
+
+            if (closest.Has<CastleHeartConnection>())
+            {
+                var castleHeartEntity = closest.Read<CastleHeartConnection>().CastleHeartEntity.GetEntityOnServer();
+                if (castleHeartEntity == Entity.Null)
+                {
+                    ctx.Reply("No heart connected");
+                    return;
+                }
+
+                var pos = castleHeartEntity.Read<LocalToWorld>().Position;
+                var playerPos = ctx.Event.SenderCharacterEntity.Read<LocalToWorld>().Position;
+                var distance = math.distance(playerPos.xz, pos.xz);
+                // Want a simple direction of N, NW, W, SW, S, SE, E, NE
+                var direction = (int)Math.Round(Math.Atan2(pos.z - playerPos.z, pos.x - playerPos.x) / (Math.PI / 4));
+                direction = (direction + 8) % 8;
+
+                var heartData = castleHeartEntity.Read<CastleHeart>();
+                var castleTerritoryEntity = heartData.CastleTerritoryEntity;
+                var territoryIndex = castleTerritoryEntity.Equals(Entity.Null) ?
+                                     -1 :
+                                     castleTerritoryEntity.Read<CastleTerritory>().CastleTerritoryIndex;
+
+                var owner = castleHeartEntity.Read<UserOwner>().Owner.GetEntityOnServer();
+                var ownerName = "<None>";
+                if (owner != Entity.Null)
+                    ownerName = owner.Read<User>().CharacterName.ToString();
+                ctx.Reply($"Heart connected to {ownerName} on territory {territoryIndex} at {pos} ({distance}m away to the {stringDirections[direction]})");
+            }
+            else
+            {
+                ctx.Reply("No heart connected");
+            }
+        }
+
         [Command("setfallbackheart", "sfh", description: "Sets the fallback castle heart for loading or building without restrictions to the nearby heart", adminOnly: true)]
         public static void SetFallbackHeart(ChatCommandContext ctx, bool useNeutralTeam = false)
         {
@@ -518,7 +564,11 @@ namespace KindredSchematics.Commands
 
             var usingNeutralDoors = ownerDoors ? "Owner doors" : "Neutral doors";
 
-            ctx.Reply($"Fallback castle heart set on territory {territoryIndex} at {fallbackHeartPos} ({distance}m away to the {stringDirections[direction]}) using {usingNeutralDoors}");
+            var owner = castleHeartEntity.Read<UserOwner>().Owner.GetEntityOnServer();
+            var ownerName = "<None>";
+            if (owner != Entity.Null)
+                ownerName = owner.Read<User>().CharacterName.ToString();
+            ctx.Reply($"Fallback castle heart owned by {ownerName} set on territory {territoryIndex} at {fallbackHeartPos} ({distance}m away to the {stringDirections[direction]}) using {usingNeutralDoors}");
         }
     }
 }
