@@ -42,6 +42,7 @@ namespace KindredSchematics.Services
         {
             public Entity CastleHeart;
             public bool OwnerDoors;
+            public bool OwnerChests;
         };
 
         Dictionary<Entity, HeartInfo> fallbackHeart = [];
@@ -470,12 +471,13 @@ namespace KindredSchematics.Services
             yield return null;
 
             var teamValue = charEntity.Read<Team>().Value;
-            GetFallbackCastleHeart(charEntity, out var castleHeartEntity, out var ownerDoors);
+            GetFallbackCastleHeart(charEntity, out var castleHeartEntity, out var ownerDoors, out var ownerChests);
 
             var defaultHeartInfo = new HeartInfo
             {
                 CastleHeart = castleHeartEntity,
                 OwnerDoors = ownerDoors,
+                OwnerChests = ownerChests
             };
 
             var territoryToHeartInfo = new Dictionary<int, HeartInfo>
@@ -597,7 +599,33 @@ namespace KindredSchematics.Services
                             territoryToHeartInfo.Add(territoryIndex, heartInfo);
                         }
 
-                        if (heartInfo.OwnerDoors || !entity.Has<Door>())
+                        if (!heartInfo.OwnerDoors && entity.Has<Door>() ||
+                            !heartInfo.OwnerChests && Helper.EntityIsChest(entity))
+
+                        {
+                            if (entity.Has<CastleHeartConnection>())
+                            {
+                                entity.Write(new CastleHeartConnection { CastleHeartEntity = Entity.Null });
+                            }
+
+                            var teamRef = neutralTeam;
+                            if (entity.Has<Team>())
+                            {
+                                var teamData = teamRef.Read<TeamData>();
+                                entity.Write(new Team() { Value = teamData.TeamValue, FactionIndex = -1 });
+
+                                entity.Add<UserOwner>();
+                                entity.Write(heartInfo.CastleHeart.Read<UserOwner>());
+                            }
+
+                            if (entity.Has<TeamReference>() && !teamRef.Equals(Entity.Null))
+                            {
+                                var t = new TeamReference();
+                                t.Value._Value = teamRef;
+                                entity.Write(t);
+                            }
+                        }
+                        else
                         {
                             if (entity.Has<CastleHeartConnection>())
                             {
@@ -622,30 +650,6 @@ namespace KindredSchematics.Services
                                     t.Value._Value = teamRef;
                                     entity.Write(t);
                                 }
-                            }
-                        }
-                        else
-                        {
-                            if (entity.Has<CastleHeartConnection>())
-                            {
-                                entity.Write(new CastleHeartConnection { CastleHeartEntity = Entity.Null });
-                            }
-
-                            var teamRef = neutralTeam;
-                            if (entity.Has<Team>())
-                            {
-                                var teamData = teamRef.Read<TeamData>();
-                                entity.Write(new Team() { Value = teamData.TeamValue, FactionIndex = -1 });
-
-                                entity.Add<UserOwner>();
-                                entity.Write(heartInfo.CastleHeart.Read<UserOwner>());
-                            }
-
-                            if (entity.Has<TeamReference>() && !teamRef.Equals(Entity.Null))
-                            {
-                                var t = new TeamReference();
-                                t.Value._Value = teamRef;
-                                entity.Write(t);
                             }
                         }
 
@@ -724,37 +728,63 @@ namespace KindredSchematics.Services
             };
         }
 
-        public void UseNeutralTeam(Entity charEntity)
+        public void UseNeutralDoors(Entity charEntity)
         {
-            GetFallbackCastleHeart(charEntity, out var castleHeartEntity, out var castleTeamReference);
+            GetFallbackCastleHeart(charEntity, out var castleHeartEntity, out var _, out var ownerChests);
             fallbackHeart[charEntity] = new HeartInfo
             {
                 CastleHeart = castleHeartEntity,
                 OwnerDoors = false,
+                OwnerChests = ownerChests,
             };
         }
 
         public void UseOwnerDoors(Entity charEntity)
         {
-            GetFallbackCastleHeart(charEntity, out var castleHeartEntity, out var castleTeamReference);
+            GetFallbackCastleHeart(charEntity, out var castleHeartEntity, out var _, out var ownerChests);
             fallbackHeart[charEntity] = new HeartInfo
             {
                 CastleHeart = castleHeartEntity,
                 OwnerDoors = true,
+                OwnerChests = ownerChests,
+            };
+        }
+
+        public void UseNeutralChests(Entity charEntity)
+        {
+            GetFallbackCastleHeart(charEntity, out var castleHeartEntity, out var ownerDoors, out var _);
+            fallbackHeart[charEntity] = new HeartInfo
+            {
+                CastleHeart = castleHeartEntity,
+                OwnerDoors = ownerDoors,
+                OwnerChests = false,
+            };
+        }
+
+        public void UseOwnerChests(Entity charEntity)
+        {
+            GetFallbackCastleHeart(charEntity, out var castleHeartEntity, out var ownerDoors, out var _);
+            fallbackHeart[charEntity] = new HeartInfo
+            {
+                CastleHeart = castleHeartEntity,
+                OwnerDoors = ownerDoors,
+                OwnerChests = true,
             };
         }
 
         public bool IsNeutralTeam(Entity entityToCheck) => entityToCheck.Equals(neutralTeam);
 
-        public void GetFallbackCastleHeart(Entity charEntity, out Entity castleHeartEntity, out bool ownerDoors)
+        public void GetFallbackCastleHeart(Entity charEntity, out Entity castleHeartEntity, out bool ownerDoors, out bool ownerChests)
         {
             castleHeartEntity = Entity.Null;
             ownerDoors = true;
+            ownerChests = true;
 
             if (fallbackHeart.TryGetValue(charEntity, out var heartInfo))
             {
                 castleHeartEntity = heartInfo.CastleHeart;
                 ownerDoors = heartInfo.OwnerDoors;
+                ownerChests = heartInfo.OwnerChests;
                 return;
             }
 

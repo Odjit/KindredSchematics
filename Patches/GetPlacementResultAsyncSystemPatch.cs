@@ -25,9 +25,10 @@ public static class GetPlacementResultAsyncSystemPatch
             if (userEntity == Entity.Null) continue;
 
             var charEntity = userEntity.Read<User>().LocalCharacter.GetEntityOnServer();
-            Core.SchematicService.GetFallbackCastleHeart(charEntity, out var castleHeartEntity, out var ownerDoors);
+            Core.SchematicService.GetFallbackCastleHeart(charEntity, out var castleHeartEntity, out var ownerDoors, out var ownerChests);
 
-            if (ownerDoors || !castleEntity.Has<Door>())
+            if (!(!ownerDoors && castleEntity.Has<Door>() ||
+                  !ownerChests && Helper.EntityIsChest(castleEntity)))
             {
                 castleEntity.Write(new CastleHeartConnection { CastleHeartEntity = castleHeartEntity });
 

@@ -416,8 +416,23 @@ namespace KindredSchematics.Commands
                 return;
             }
 
-            Core.SchematicService.GetFallbackCastleHeart(ctx.Event.SenderCharacterEntity, out var castleHeartEntity, out var ownerDoors);
-            if (ownerDoors || !closest.Has<Door>())
+            Core.SchematicService.GetFallbackCastleHeart(ctx.Event.SenderCharacterEntity, out var castleHeartEntity, out var ownerDoors, out var ownerChests);
+            if (!ownerDoors && closest.Has<Door>() ||
+                !ownerChests && Helper.EntityIsChest(closest))
+            {
+                if (closest.Has<CastleHeartConnection>())
+                    closest.Write(new CastleHeartConnection { CastleHeartEntity = Entity.Null });
+                closest.Write(new Team() { Value = 1, FactionIndex = -1 });
+                if (closest.Has<TeamReference>())
+                {
+                    var t = new TeamReference();
+                    t.Value._Value = Core.SchematicService.NeutralTeam;
+                    closest.Write(t);
+                }
+
+                ctx.Reply($"Changed {closest.Read<PrefabGUID>().LookupName()} to be neutral");
+            }
+            else
             {
                 if (closest.Has<CastleHeartConnection>())
                     closest.Write(new CastleHeartConnection { CastleHeartEntity = castleHeartEntity });
@@ -438,20 +453,6 @@ namespace KindredSchematics.Commands
                     closest.Write(t);
                 }
                 ctx.Reply($"Changed the heart connection for {closest.Read<PrefabGUID>().LookupName()}");
-            }
-            else
-            {
-                if (closest.Has<CastleHeartConnection>())
-                    closest.Write(new CastleHeartConnection { CastleHeartEntity = Entity.Null });
-                closest.Write(new Team() { Value = 1, FactionIndex = -1 });
-                if (closest.Has<TeamReference>() )
-                {
-                    var t = new TeamReference();
-                    t.Value._Value = Core.SchematicService.NeutralTeam;
-                    closest.Write(t);
-                }
-
-                ctx.Reply($"Changed the door {closest.Read<PrefabGUID>().LookupName()} to be a neutral door");
             }
         }
 
@@ -525,15 +526,29 @@ namespace KindredSchematics.Commands
         [Command("neutraldoors", "nd", description: "Sets the doors to be neutral", adminOnly: true)]
         public static void NeutralDoors(ChatCommandContext ctx)
         {
-            Core.SchematicService.UseNeutralTeam(ctx.Event.SenderCharacterEntity);
+            Core.SchematicService.UseNeutralDoors(ctx.Event.SenderCharacterEntity);
             ctx.Reply("Doors will be built as neutral");
         }
 
-        [Command("ownerdoors", "od", description: "Sets the doors to be owned based", adminOnly: true)]
+        [Command("ownerdoors", "od", description: "Sets the doors to be owner based", adminOnly: true)]
         public static void OwnerDoors(ChatCommandContext ctx)
         {
             Core.SchematicService.UseOwnerDoors(ctx.Event.SenderCharacterEntity);
             ctx.Reply("Doors will be owned by the current castle");
+        }
+
+        [Command("neutralchests", "nc", description: "Sets the chests to be neutral", adminOnly: true)]
+        public static void NeutralChests(ChatCommandContext ctx)
+        {
+            Core.SchematicService.UseNeutralChests(ctx.Event.SenderCharacterEntity);
+            ctx.Reply("Chests will be built as neutral");
+        }
+
+        [Command("ownerchests", "oc", description: "Sets the chests to be owner based", adminOnly: true)]
+        public static void OwnerChests(ChatCommandContext ctx)
+        {
+            Core.SchematicService.UseOwnerChests(ctx.Event.SenderCharacterEntity);
+            ctx.Reply("Chests will be owned by the current castle");
         }
 
         static readonly string[] stringDirections = { "W", "SW", "S", "SE", "E", "NE", "N", "NW" };
@@ -541,7 +556,7 @@ namespace KindredSchematics.Commands
         [Command("settings", description: "Checks the fallback castle heart, and build augments statuses.", adminOnly: true)]
         public static void CheckFallbackHeart(ChatCommandContext ctx)
         {
-            Core.SchematicService.GetFallbackCastleHeart(ctx.Event.SenderCharacterEntity, out var castleHeartEntity, out var ownerDoors);
+            Core.SchematicService.GetFallbackCastleHeart(ctx.Event.SenderCharacterEntity, out var castleHeartEntity, out var ownerDoors, out var ownerChests);
             if (castleHeartEntity == Entity.Null)
             {
                 ctx.Reply("No fallback castle heart set");
@@ -563,12 +578,13 @@ namespace KindredSchematics.Commands
                                  castleTerritoryEntity.Read<CastleTerritory>().CastleTerritoryIndex;
 
             var usingNeutralDoors = ownerDoors ? "Owner doors" : "Neutral doors";
+            var usingNeutralChests = ownerChests ? "Owner chests" : "Neutral chests";
 
             var owner = castleHeartEntity.Read<UserOwner>().Owner.GetEntityOnServer();
             var ownerName = "<None>";
             if (owner != Entity.Null)
                 ownerName = owner.Read<User>().CharacterName.ToString();
-            ctx.Reply($"Fallback castle heart owned by {ownerName} set on territory {territoryIndex} at {fallbackHeartPos} ({distance}m away to the {stringDirections[direction]}) using {usingNeutralDoors}");
+            ctx.Reply($"Fallback castle heart owned by {ownerName} set on territory {territoryIndex} at {fallbackHeartPos} ({distance}m away to the {stringDirections[direction]})\n{usingNeutralDoors}\n{usingNeutralChests}");
         }
     }
 }

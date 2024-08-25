@@ -375,4 +375,21 @@ internal static partial class Helper
 
         return closestEntity;
     }
+
+    readonly static PrefabGUID openContainerAbility = new PrefabGUID(-1662046920);
+    public static bool EntityIsChest(Entity entity)
+    {
+        if (!entity.Has<InteractAbilityBuffer>()) return false;
+
+        var interactBuffer = Core.EntityManager.GetBufferReadOnly<InteractAbilityBuffer>(entity);
+        foreach (var interact in interactBuffer)
+        {
+            if (interact.Ability == openContainerAbility)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
