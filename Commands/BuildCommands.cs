@@ -187,7 +187,7 @@ namespace KindredSchematics.Commands
         [Command("spawn", description: "Spawns a tile at the player's location", adminOnly: true)]
         public static void SpawnTile(ChatCommandContext ctx, FoundTileModel tile)
         {
-            if (!Core.PrefabCollection._PrefabLookupMap.TryGetValue(tile.Value, out var prefab) &&
+            if (!Core.PrefabCollection._PrefabLookupMap.TryGetValueWithoutLogging(tile.Value, out var prefab) &&
                 !Core.PrefabCollection._PrefabGuidToEntityMap.TryGetValue(tile.Value, out prefab))
             {
                 ctx.Reply("Tile not found");
@@ -219,6 +219,52 @@ namespace KindredSchematics.Commands
                 entity.Write(new Rotation { Value = quaternion.RotateY(math.radians(90 * (int)tilePos.TileRotation)) });
             }
         }
+
+        [Command("check", description: "Retrieves the prefab of the entity closest to mouse")]
+        public static void CheckTile(ChatCommandContext ctx)
+        {
+            var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
+            var closest = Helper.FindClosestTilePosition(aimPos);
+            var guid = closest.Read<PrefabGUID>();
+            ctx.Reply($"PrefabGuid: {guid.LookupName()}");
+        }
+
+        [Command("lock", description: "Prevents the tile from being dismantled", adminOnly: true)]
+        public static void LockedTile(ChatCommandContext ctx)
+        {
+            var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
+
+            var closest = Helper.FindClosestTilePosition(aimPos);
+            if (!closest.Has<EditableTileModel>())
+            {
+                ctx.Reply("Tile is not lockable");
+                return;
+            }
+            var etm = closest.Read<EditableTileModel>();
+            etm.CanDismantle = false;
+            closest.Write(etm);
+
+            ctx.Reply($"Locked tile {closest.Read<PrefabGUID>().LookupName()}");
+        }
+
+        [Command("unlock", description: "Allows the tile to be dismantled", adminOnly: true)]
+        public static void UnlockedTile(ChatCommandContext ctx)
+        {
+            var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
+
+            var closest = Helper.FindClosestTilePosition(aimPos);
+            if (!closest.Has<EditableTileModel>())
+            {
+                ctx.Reply("Tile is not unlockable");
+                return;
+            }
+            var etm = closest.Read<EditableTileModel>();
+            etm.CanDismantle = true;
+            closest.Write(etm);
+
+            ctx.Reply($"Unlocked tile {closest.Read<PrefabGUID>().LookupName()}");
+        }
+
 
         [Command("immortal", description: "Makes the tile closest to mouse cursor immortal", adminOnly: true)]
         public static void ImmortalTile(ChatCommandContext ctx)
@@ -416,6 +462,14 @@ namespace KindredSchematics.Commands
                 return;
             }
 
+            var prefabGuid = closest.Read<PrefabGUID>();
+
+            if (!closest.Has<CastleHeartConnection>())
+            {
+                ctx.Reply($"Tile {prefabGuid.LookupName()} does not have a castle heart connection");
+                return;
+            }
+
             Core.SchematicService.GetFallbackCastleHeart(ctx.Event.SenderCharacterEntity, out var castleHeartEntity, out var ownerDoors, out var ownerChests);
             if (!ownerDoors && closest.Has<Door>() ||
                 !ownerChests && Helper.EntityIsChest(closest))
@@ -430,10 +484,23 @@ namespace KindredSchematics.Commands
                     closest.Write(t);
                 }
 
+                if (closest.Has<EditableTileModel>())
+                {
+                    var etm = closest.Read<EditableTileModel>();
+                    etm.CanDismantle = true;
+                    closest.Write(etm);
+                }
+
                 ctx.Reply($"Changed {closest.Read<PrefabGUID>().LookupName()} to be neutral");
             }
             else
             {
+                if (castleHeartEntity == Entity.Null)
+                {
+                    ctx.Reply("No fallback castle heart set");
+                    return;
+                }
+
                 if (closest.Has<CastleHeartConnection>())
                     closest.Write(new CastleHeartConnection { CastleHeartEntity = castleHeartEntity });
 
@@ -452,6 +519,14 @@ namespace KindredSchematics.Commands
                     t.Value._Value = castleTeamReference;
                     closest.Write(t);
                 }
+
+                if (closest.Has<EditableTileModel>())
+                {
+                    var etm = closest.Read<EditableTileModel>();
+                    etm.CanDismantle = false;
+                    closest.Write(etm);
+                }
+
                 ctx.Reply($"Changed the heart connection for {closest.Read<PrefabGUID>().LookupName()}");
             }
         }
@@ -503,7 +578,7 @@ namespace KindredSchematics.Commands
         }
 
         [Command("setfallbackheart", "sfh", description: "Sets the fallback castle heart for loading or building without restrictions to the nearby heart", adminOnly: true)]
-        public static void SetFallbackHeart(ChatCommandContext ctx, bool useNeutralTeam = false)
+        public static void SetFallbackHeart(ChatCommandContext ctx, bool useOwnerDoor = true, bool useOwnerChest = true)
         {
             var castleHearts = Helper.GetEntitiesByComponentType<CastleHeart>();
             var playerPos = ctx.Event.SenderCharacterEntity.Read<LocalToWorld>().Position;
@@ -516,7 +591,7 @@ namespace KindredSchematics.Commands
                     continue;
                 }
 
-                Core.SchematicService.SetFallbackCastleHeart(ctx.Event.SenderCharacterEntity, castleHeart, useNeutralTeam);
+                Core.SchematicService.SetFallbackCastleHeart(ctx.Event.SenderCharacterEntity, castleHeart, useOwnerDoor, useOwnerChest);
                 ctx.Reply("Fallback castle heart set");
                 return;
             }

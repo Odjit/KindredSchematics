@@ -10,7 +10,7 @@ namespace KindredSchematics.Patches;
 
 
 [HarmonyLib.HarmonyPatch(typeof(CastleHasItemsOnSpawnSystem), nameof(CastleHasItemsOnSpawnSystem.OnUpdate))]
-public static class GetPlacementResultAsyncSystemPatch
+public static class CastleHasItemsOnSpawnSystemPatch
 {
     public static void Prefix(CastleHasItemsOnSpawnSystem __instance)
     {
@@ -26,6 +26,8 @@ public static class GetPlacementResultAsyncSystemPatch
 
             var charEntity = userEntity.Read<User>().LocalCharacter.GetEntityOnServer();
             Core.SchematicService.GetFallbackCastleHeart(charEntity, out var castleHeartEntity, out var ownerDoors, out var ownerChests);
+
+            if (castleHeartEntity == Entity.Null) continue;
 
             if (!(!ownerDoors && castleEntity.Has<Door>() ||
                   !ownerChests && Helper.EntityIsChest(castleEntity)))
@@ -47,6 +49,12 @@ public static class GetPlacementResultAsyncSystemPatch
                     t.Value._Value = castleTeamReference;
                     castleEntity.Write(t);
                 }
+            }
+            else if(castleEntity.Has<EditableTileModel>())
+            {
+                var etm = castleEntity.Read<EditableTileModel>();
+                etm.CanDismantle = false;
+                castleEntity.Write(etm);
             }
         }
     }

@@ -445,7 +445,7 @@ namespace KindredSchematics.Services
                         }
 
                         var prefabName = x.Read<PrefabGUID>().LookupName();
-                        return prefabName.StartsWith("TM_") || prefabName.StartsWith("Chain_") || x.Has<CastleBuildingFusedRoot>();
+                        return prefabName.StartsWith("TM_") || prefabName.StartsWith("Chain_") || prefabName.StartsWith("BP_") || x.Has<CastleBuildingFusedRoot>();
                     }));
             }
 
@@ -625,7 +625,7 @@ namespace KindredSchematics.Services
                                 entity.Write(t);
                             }
                         }
-                        else
+                        else if (heartInfo.CastleHeart != Entity.Null)
                         {
                             if (entity.Has<CastleHeartConnection>())
                             {
@@ -650,6 +650,13 @@ namespace KindredSchematics.Services
                                     t.Value._Value = teamRef;
                                     entity.Write(t);
                                 }
+                            }
+
+                            if (entity.Has<EditableTileModel>())
+                            {
+                                var etm = entity.Read<EditableTileModel>();
+                                etm.CanDismantle = false;
+                                entity.Write(etm);
                             }
                         }
 
@@ -719,12 +726,13 @@ namespace KindredSchematics.Services
             Core.RespawnPrevention.AllowRespawns();
         }
 
-        public void SetFallbackCastleHeart(Entity charEntity, Entity castleHeartEntity, bool ownerDoors=false)
+        public void SetFallbackCastleHeart(Entity charEntity, Entity castleHeartEntity, bool ownerDoors=false, bool ownerChests=false)
         {
             fallbackHeart[charEntity] = new HeartInfo
             {
                 CastleHeart = castleHeartEntity,
                 OwnerDoors = ownerDoors,
+                OwnerChests = ownerChests,
             };
         }
 

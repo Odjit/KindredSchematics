@@ -255,7 +255,7 @@ internal static partial class Helper
             if (entity.Has<CastleHeart>()) continue;
 
             var prefabName = GetPrefabGUID(entity).LookupName();
-            if (!prefabName.StartsWith("TM_") && !prefabName.StartsWith("Chain_") && !entity.Has<CastleBuildingFusedRoot>())
+            if (!prefabName.StartsWith("TM_") && !prefabName.StartsWith("Chain_") &&  !prefabName.StartsWith("BP_") && !entity.Has<CastleBuildingFusedRoot>())
             {
                 continue;
             }
