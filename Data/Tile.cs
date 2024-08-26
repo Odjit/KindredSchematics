@@ -11,10 +11,9 @@ internal static class Tile
         {
             if (!name.StartsWith("TM_")) continue;
 
-
             // Verify the prefab actually exists
             if (!Core.PrefabCollection._PrefabGuidToEntityMap.TryGetValue(prefabGuid, out var _) &&
-                !Core.PrefabCollection._PrefabLookupMap.TryGetValue(prefabGuid, out var _))
+                !Core.PrefabCollection._PrefabLookupMap.TryGetValueWithoutLogging(prefabGuid, out var _))
             {
                 continue;
             }
@@ -30,7 +29,7 @@ internal static class Tile
 
             // Verify the prefab actually exists
             if (!Core.PrefabCollection._PrefabGuidToEntityMap.TryGetValue(prefabGuid, out var _) &&
-                !Core.PrefabCollection._PrefabLookupMap.TryGetValue(prefabGuid, out var _))
+                !Core.PrefabCollection._PrefabLookupMap.TryGetValueWithoutLogging(prefabGuid, out var _))
             {
                 continue;
             }
