@@ -586,13 +586,9 @@ namespace KindredSchematics.Services
                         var heartInfo = defaultHeartInfo;
                         if (!territoryToHeartInfo.TryGetValue(territoryIndex, out heartInfo))
                         {
-
+                            heartInfo = defaultHeartInfo;
                             var heartEntity = Core.CastleTerritory.GetHeartForTerritory(territoryIndex);
-                            if (heartEntity.Equals(Entity.Null))
-                            {
-                                heartInfo = defaultHeartInfo;
-                            }
-                            else
+                            if (!heartEntity.Equals(Entity.Null))
                             {
                                 heartInfo.CastleHeart = heartEntity;
                             }
@@ -658,6 +654,12 @@ namespace KindredSchematics.Services
                                 etm.CanDismantle = false;
                                 entity.Write(etm);
                             }
+                        }
+                        else if (entity.Has<EditableTileModel>())
+                        {
+                            var etm = entity.Read<EditableTileModel>();
+                            etm.CanDismantle = false;
+                            entity.Write(etm);
                         }
 
                         if (territoryIndex == -1 && entity.Has<TileModel>())

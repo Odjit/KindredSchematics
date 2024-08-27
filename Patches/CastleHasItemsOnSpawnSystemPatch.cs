@@ -27,7 +27,17 @@ public static class CastleHasItemsOnSpawnSystemPatch
             var charEntity = userEntity.Read<User>().LocalCharacter.GetEntityOnServer();
             Core.SchematicService.GetFallbackCastleHeart(charEntity, out var castleHeartEntity, out var ownerDoors, out var ownerChests);
 
-            if (castleHeartEntity == Entity.Null) continue;
+            if (castleHeartEntity == Entity.Null)
+            {
+                if (castleEntity.Has<EditableTileModel>())
+                {
+                    var etm = castleEntity.Read<EditableTileModel>();
+                    etm.CanDismantle = false;
+                    castleEntity.Write(etm);
+                }
+
+                continue;
+            }
 
             if (!(!ownerDoors && castleEntity.Has<Door>() ||
                   !ownerChests && Helper.EntityIsChest(castleEntity)))
