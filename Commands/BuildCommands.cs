@@ -265,6 +265,84 @@ namespace KindredSchematics.Commands
             ctx.Reply($"Unlocked tile {closest.Read<PrefabGUID>().LookupName()}");
         }
 
+        [Command("unlockrange", description: "Unlocks all tiles within a range", adminOnly: true)]
+        public static void UnlockRange(ChatCommandContext ctx, float range)
+        {
+            var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
+
+            var closest = Helper.FindClosestTilePosition(aimPos);
+            var closestPos = closest.Read<Translation>().Value.xz;
+
+            var tiles = Helper.GetAllEntitiesInRadius<TilePosition>(closestPos, range);
+            foreach (var tile in tiles)
+            {
+                if (tile.Has<EditableTileModel>())
+                {
+                    var etm = tile.Read<EditableTileModel>();
+                    etm.CanDismantle = true;
+                    tile.Write(etm);
+                }
+            }
+
+            ctx.Reply($"Unlocked {tiles.Count()} tiles within {range}");
+        }
+
+        [Command("unlockterritory", description: "Unlocks all tiles in a territory", adminOnly: true)]
+        public static void UnlockTerritory(ChatCommandContext ctx, int territoryIndex)
+        {
+            var tiles = Helper.GetAllEntitiesInTerritory<TilePosition>(territoryIndex);
+            foreach (var tile in tiles)
+            {
+                if (tile.Has<EditableTileModel>())
+                {
+                    var etm = tile.Read<EditableTileModel>();
+                    etm.CanDismantle = true;
+                    tile.Write(etm);
+                }
+            }
+
+            ctx.Reply($"Unlocked {tiles.Count()} tiles in territory {territoryIndex}");
+        }
+
+        [Command("lockrange", description: "Locks all tiles within a range", adminOnly: true)]
+        public static void LockRange(ChatCommandContext ctx, float range)
+        {
+            var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
+
+            var closest = Helper.FindClosestTilePosition(aimPos);
+            var closestPos = closest.Read<Translation>().Value.xz;
+
+            var tiles = Helper.GetAllEntitiesInRadius<TilePosition>(closestPos, range);
+            foreach (var tile in tiles)
+            {
+                if (tile.Has<EditableTileModel>())
+                {
+                    var etm = tile.Read<EditableTileModel>();
+                    etm.CanDismantle = false;
+                    tile.Write(etm);
+                }
+            }
+
+            ctx.Reply($"Locked {tiles.Count()} tiles within {range}");
+        }
+
+        [Command("lockterritory", description: "Locks all tiles in a territory", adminOnly: true)]
+        public static void LockTerritory(ChatCommandContext ctx, int territoryIndex)
+        {
+            var tiles = Helper.GetAllEntitiesInTerritory<TilePosition>(territoryIndex);
+            foreach (var tile in tiles)
+            {
+                if (tile.Has<EditableTileModel>())
+                {
+                    var etm = tile.Read<EditableTileModel>();
+                    etm.CanDismantle = false;
+                    tile.Write(etm);
+                }
+            }
+
+            ctx.Reply($"Locked {tiles.Count()} tiles in territory {territoryIndex}");
+        }
+
 
         [Command("immortal", description: "Makes the tile closest to mouse cursor immortal", adminOnly: true)]
         public static void ImmortalTile(ChatCommandContext ctx)
