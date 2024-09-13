@@ -647,13 +647,6 @@ namespace KindredSchematics.Services
                                     entity.Write(t);
                                 }
                             }
-
-                            if (entity.Has<EditableTileModel>())
-                            {
-                                var etm = entity.Read<EditableTileModel>();
-                                etm.CanDismantle = false;
-                                entity.Write(etm);
-                            }
                         }
                         else if (entity.Has<EditableTileModel>())
                         {
