@@ -56,7 +56,7 @@ Feel free to reach out to me on discord (odjit) if you have any questions or nee
 - `.build rotate` 
   - rotates a tile at your aimed position.
 - `.build immortal`
- - makes the tile you are looking at immortal. (can't be broken)
+  - makes the tile you are looking at immortal. (can't be broken)
 - `.build immortalrange (radius)`
   - makes all tiles in a radius immortal. (can't be broken)
 - `.build mortal`
@@ -83,6 +83,14 @@ Feel free to reach out to me on discord (odjit) if you have any questions or nee
   - Prevents the tile from being dismantled.
 - `.build unlock`
   - Allows the tile to be dismantled.
+- `.build lockrange (radius)`
+  - Prevents all tiles in a radius from being dismantled.
+- `.build unlockrange (radius)`
+  - Allows all tiles in a radius to be dismantled.
+- `.build lockterritory (territoryIndex)`
+  - Prevents all tiles in a territory from being dismantled.
+- `.build unlockterritory (territoryIndex)`
+  - Allows all tiles in a territory to be dismantled.
 
 ### Schematic Commands
 - `.schematic list`

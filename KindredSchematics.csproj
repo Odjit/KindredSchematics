@@ -3,12 +3,12 @@
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>KindredSchematics</AssemblyName>
     <Description>Save and load builds</Description>
-    <Version>1.2.0</Version>
+    <Version>1.2.1</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <RootNamespace>KindredSchematics</RootNamespace>
-    <AssemblyVersion>0.1.2.0</AssemblyVersion>
-    <FileVersion>0.1.2.0</FileVersion>
+    <AssemblyVersion>0.1.2.1</AssemblyVersion>
+    <FileVersion>0.1.2.1</FileVersion>
     <InformationalVersion>0.1.2+2.Branch.main.Sha.62bb8fcf39ee2ebe62410e48ec8f8fdc72e85b10</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
