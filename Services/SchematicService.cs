@@ -72,8 +72,9 @@ namespace KindredSchematics.Services
                     prefabsAllowedToDestroy.Add(prefabGUID);
                 }
             }
-
-            neutralTeam = Helper.GetEntitiesByComponentType<NeutralTeam>(includeDisabled: true).ToArray().FirstOrDefault();
+            var neutralTeams = Helper.GetEntitiesByComponentType<NeutralTeam>(includeDisabled: true);
+            neutralTeam = neutralTeams.ToArray().FirstOrDefault();
+            neutralTeams.Dispose();
         }
 
         public void StartCoroutine(IEnumerator routine)
@@ -119,7 +120,7 @@ namespace KindredSchematics.Services
             Core.Log.LogInfo($"{GetElapseTime()} Starting to save {name}");
             var schematic = new Schematic
             {
-                version = "1.0",
+                version = "1.0.1",
                 entities = []
             };
 
@@ -307,7 +308,7 @@ namespace KindredSchematics.Services
                 return "Error in file";
             }
 
-            if (schematic.version != "1.0")
+            if (schematic.version != "1.0.1")
             {
                 return $"Has an unsupported version '{schematic.version}' loading old versions is coming soon";
             }
@@ -710,7 +711,7 @@ namespace KindredSchematics.Services
                 {
                     Core.Log.LogInfo($"{GetElapseTime():f4} Loaded {entitiesLoadedThisFrame} entities this frame for {100 * (float)entitiesLoaded.Count / (float)schematic.entities.Length:F1}% complete");
                     MessageUser($"Loading {100 * (float)entitiesLoaded.Count / (float)schematic.entities.Length:F1}% complete");
-                    yield return null;
+                    yield return new WaitForSeconds(1);
                     entitiesLoadedThisFrame = 0;
                     lastYieldTime = Time.realtimeSinceStartup;
                 }
