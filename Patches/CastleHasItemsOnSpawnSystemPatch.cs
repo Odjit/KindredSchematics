@@ -67,6 +67,7 @@ public static class CastleHasItemsOnSpawnSystemPatch
                 castleEntity.Write(etm);
             }
         }
+        spawnCastleEntities.Dispose();
     }
 }
 

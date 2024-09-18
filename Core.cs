@@ -67,7 +67,8 @@ internal static class Core
         Tile.Populate();
 
         // Fix immortal plants to prevent infinite fire bug
-        foreach (var entity in Helper.GetEntitiesByComponentTypes<Immortal, EntityCategory>(includeDisabled: true))
+        var entities = Helper.GetEntitiesByComponentTypes<Immortal, EntityCategory>(includeDisabled: true);
+        foreach (var entity in entities)
         {
             var entityCategory = entity.Read<EntityCategory>();
             if (entityCategory.MaterialCategory == MaterialCategory.Vegetation)
@@ -76,6 +77,7 @@ internal static class Core
                 entity.Write(entityCategory);
             }
         }
+        entities.Dispose();
 
         Log.LogInfo($"KindredSchematics Initialized");
 	}

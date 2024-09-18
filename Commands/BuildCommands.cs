@@ -660,19 +660,27 @@ namespace KindredSchematics.Commands
         {
             var castleHearts = Helper.GetEntitiesByComponentType<CastleHeart>();
             var playerPos = ctx.Event.SenderCharacterEntity.Read<LocalToWorld>().Position;
-            foreach (var castleHeart in castleHearts)
+            try
             {
-                var castleHeartPos = castleHeart.Read<LocalToWorld>().Position;
-
-                if (Vector3.Distance(playerPos, castleHeartPos) > 5f)
+                foreach (var castleHeart in castleHearts)
                 {
-                    continue;
-                }
+                    var castleHeartPos = castleHeart.Read<LocalToWorld>().Position;
 
-                Core.SchematicService.SetFallbackCastleHeart(ctx.Event.SenderCharacterEntity, castleHeart, useOwnerDoor, useOwnerChest);
-                ctx.Reply("Fallback castle heart set");
-                return;
+                    if (Vector3.Distance(playerPos, castleHeartPos) > 5f)
+                    {
+                        continue;
+                    }
+
+                    Core.SchematicService.SetFallbackCastleHeart(ctx.Event.SenderCharacterEntity, castleHeart, useOwnerDoor, useOwnerChest);
+                    ctx.Reply("Fallback castle heart set");
+                    return;
+                }
             }
+            finally
+            {
+                castleHearts.Dispose();
+            }
+
             ctx.Reply("Not close enough to a castle heart");
         }
 
