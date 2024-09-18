@@ -26,7 +26,7 @@ internal static class Core
     public static PrefabCollectionSystem PrefabCollection { get; } = Server.GetExistingSystemManaged<PrefabCollectionSystem>();
 
     public static GlowService GlowService { get; } = new();
-    public static RespawnPreventionService RespawnPrevention { get; } = new();
+    public static RespawnPreventionService RespawnPrevention { get; private set; }
     public static SchematicService SchematicService { get; } = new();
 	public static ConfigSettingsService ConfigSettings { get; } = new();
 
@@ -61,6 +61,7 @@ internal static class Core
 
         ComponentSaver.ComponentSaver.PopulateComponentSavers();
 		CastleTerritory = new();
+        RespawnPrevention = new();
 
         FoundBuffConverter.InitializeBuffPrefabs();
         Tile.Populate();
