@@ -446,7 +446,7 @@ namespace KindredSchematics.Services
                         }
 
                         var prefabName = x.Read<PrefabGUID>().LookupName();
-                        return prefabName.StartsWith("TM_") || prefabName.StartsWith("Chain_") || prefabName.StartsWith("BP_") || x.Has<CastleBuildingFusedRoot>();
+                        return prefabName.StartsWith("TM_") || prefabName.StartsWith("Chain_") || prefabName.StartsWith("BP_") || prefabName.StartsWith("RandChain") || x.Has<CastleBuildingFusedRoot>();
                     }));
             }
 
@@ -460,12 +460,12 @@ namespace KindredSchematics.Services
                 Helper.DestroyEntityAndCastleAttachments(entity);
                 entitiesDestroyingThisFrame++;
 
-                if (entitiesDestroyingThisFrame > 50)
+                /*if (entitiesDestroyingThisFrame > 50)
                 {
                     entitiesDestroyingThisFrame = 0;
                     yield return null;
                     lastYieldTime = Time.realtimeSinceStartup;
-                }
+                }*/
             }
 
             MessageUser("Starting to load in the schematic", true);
@@ -568,6 +568,7 @@ namespace KindredSchematics.Services
                             entityGroupToLoad.Add(i);
                 }
 
+                Core.Log.LogInfo($"{GetElapseTime():f4} Loading {entityGroupToLoad.Count} entities this iteration");
                 foreach (var i in entityGroupToLoad)
                 {
                     entitiesLoaded.Add(i);
@@ -692,6 +693,8 @@ namespace KindredSchematics.Services
 
                         createdEntities[i + 1] = entity;
                     }
+
+                    //yield return null;
                 }
 
                 // Second pass modify all their components
@@ -703,13 +706,23 @@ namespace KindredSchematics.Services
                     if (entity.Equals(Entity.Null))
                         continue;
 
+                    Core.Log.LogInfo($"{GetElapseTime():f4} Applying component data for {entity.Read<PrefabGUID>().LookupName()}");
+
                     ComponentSaver.ComponentSaver.ApplyComponentData(entity, diff.componentData, createdEntities);
                     ComponentSaver.ComponentSaver.ApplyRemovals(entity, diff.removals);
+
+                    //yield return null;
                 }
+
+                /*if (entitiesLoaded.Count >= 404)
+                {
+                    Core.RespawnPrevention.AllowRespawns();
+                    yield break;
+                }*/
 
                 if (Time.realtimeSinceStartup - lastYieldTime > 0.05f)
                 {
-                    Core.Log.LogInfo($"{GetElapseTime():f4} Loaded {entitiesLoadedThisFrame} entities this frame for {100 * (float)entitiesLoaded.Count / (float)schematic.entities.Length:F1}% complete");
+                    Core.Log.LogInfo($"{GetElapseTime():f4} Loaded {entitiesLoadedThisFrame} entities this frame for {100 * (float)entitiesLoaded.Count / (float)schematic.entities.Length:F1}% complete {entitiesLoaded.Count}/{schematic.entities.Length}");
                     MessageUser($"Loading {100 * (float)entitiesLoaded.Count / (float)schematic.entities.Length:F1}% complete");
                     yield return new WaitForSeconds(1);
                     entitiesLoadedThisFrame = 0;
@@ -809,6 +822,7 @@ namespace KindredSchematics.Services
 
         private static Entity SpawnEntity(Entity userEntity, Vector3 translation, EntityData diff, Entity prefab)
         {
+            Core.Log.LogInfo($"Spawning {prefab.Read<PrefabGUID>().LookupName()}");
             var entity = Core.EntityManager.Instantiate(prefab);
             if (diff.pos.HasValue)
             {
