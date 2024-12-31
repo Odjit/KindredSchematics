@@ -220,7 +220,7 @@ namespace KindredSchematics.Commands
             }
         }
 
-        [Command("check", description: "Retrieves the prefab of the entity closest to mouse")]
+        [Command("check", description: "Retrieves the prefab of the entity closest to mouse", adminOnly: true)]
         public static void CheckTile(ChatCommandContext ctx)
         {
             var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
@@ -341,6 +341,75 @@ namespace KindredSchematics.Commands
             }
 
             ctx.Reply($"Locked {tiles.Count()} tiles in territory {territoryIndex}");
+        }
+        [Command("movelock", description: "Prevents the tile from being moved", adminOnly: true)]
+        public static void MoveLockedTile(ChatCommandContext ctx)
+        {
+            var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
+
+            var closest = Helper.FindClosestTilePosition(aimPos);
+            if (!closest.Has<EditableTileModel>())
+            {
+                ctx.Reply("Tile is not lockable");
+                return;
+            }
+            var etm = closest.Read<EditableTileModel>();
+            etm.CanMoveAfterBuild = false;
+            closest.Write(etm);
+
+            ctx.Reply($"Move locked tile {closest.Read<PrefabGUID>().LookupName()}");
+        }
+
+        [Command("moveunlock", description: "Allows the tile to be moved", adminOnly: true)]
+        public static void MoveUnlockedTile(ChatCommandContext ctx)
+        {
+            var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
+
+            var closest = Helper.FindClosestTilePosition(aimPos);
+            if (!closest.Has<EditableTileModel>())
+            {
+                ctx.Reply("Tile is not unlockable");
+                return;
+            }
+            var etm = closest.Read<EditableTileModel>();
+            etm.CanMoveAfterBuild = true;
+            closest.Write(etm);
+
+            ctx.Reply($"Move unlocked tile {closest.Read<PrefabGUID>().LookupName()}");
+        }
+
+        [Command("movelockterritory", description: "Unlocks all tiles in a territory", adminOnly: true)]
+        public static void MoveLockTerritory(ChatCommandContext ctx, int territoryIndex)
+        {
+            var tiles = Helper.GetAllEntitiesInTerritory<TilePosition>(territoryIndex);
+            foreach (var tile in tiles)
+            {
+                if (tile.Has<EditableTileModel>())
+                {
+                    var etm = tile.Read<EditableTileModel>();
+                    etm.CanMoveAfterBuild = false;
+                    tile.Write(etm);
+                }
+            }
+
+            ctx.Reply($"Move locked {tiles.Count()} tiles in territory {territoryIndex}");
+        }
+
+        [Command("moveunlockterritory", description: "Unlocks all tiles in a territory", adminOnly: true)]
+        public static void MoveUnlockTerritory(ChatCommandContext ctx, int territoryIndex)
+        {
+            var tiles = Helper.GetAllEntitiesInTerritory<TilePosition>(territoryIndex);
+            foreach (var tile in tiles)
+            {
+                if (tile.Has<EditableTileModel>())
+                {
+                    var etm = tile.Read<EditableTileModel>();
+                    etm.CanMoveAfterBuild = true;
+                    tile.Write(etm);
+                }
+            }
+
+            ctx.Reply($"Move unlocked {tiles.Count()} tiles in territory {territoryIndex}");
         }
 
 
@@ -609,6 +678,73 @@ namespace KindredSchematics.Commands
             }
         }
 
+        [Command("changeheartrange", "chr", description: "Changes the heart of all tiles within a range to the current fallback", adminOnly: true)]
+        public static void ChangeHeartRange(ChatCommandContext ctx, float range)
+        {
+            Core.SchematicService.GetFallbackCastleHeart(ctx.Event.SenderCharacterEntity, out var castleHeartEntity, out var ownerDoors, out var ownerChests);
+
+            var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
+
+            var closest = Helper.FindClosestTilePosition(aimPos);
+            var closestPos = closest.Read<Translation>().Value.xz;
+
+            var tiles = Helper.GetAllEntitiesInRadius<CastleHeartConnection>(closestPos, range);
+            foreach (var tile in tiles)
+            {                
+                if (!ownerDoors && tile.Has<Door>() || !ownerChests && Helper.EntityIsChest(tile))
+                {
+                    if (tile.Has<CastleHeartConnection>())
+                        tile.Write(new CastleHeartConnection { CastleHeartEntity = Entity.Null });
+                    tile.Write(new Team() { Value = 1, FactionIndex = -1 });
+                    if (tile.Has<TeamReference>())
+                    {
+                        var t = new TeamReference();
+                        t.Value._Value = Core.SchematicService.NeutralTeam;
+                        tile.Write(t);
+                    }
+
+                    if (tile.Has<EditableTileModel>())
+                    {
+                        var etm = tile.Read<EditableTileModel>();
+                        etm.CanDismantle = true;
+                        tile.Write(etm);
+                    }
+                }
+                else
+                {
+                    if (castleHeartEntity == Entity.Null)
+                    {
+                        ctx.Reply("No fallback castle heart set");
+                        return;
+                    }
+
+                    if (tile.Has<CastleHeartConnection>())
+                        tile.Write(new CastleHeartConnection { CastleHeartEntity = castleHeartEntity });
+
+                    var castleTeamReference = (Entity)castleHeartEntity.Read<TeamReference>().Value;
+                    var teamData = castleTeamReference.Read<TeamData>();
+                    if (tile.Has<UserOwner>())
+                    {
+                        tile.Write(castleHeartEntity.Read<UserOwner>());
+                    }
+
+                    if (tile.Has<Team>())
+                    {
+                        tile.Write(new Team() { Value = teamData.TeamValue, FactionIndex = -1 });
+                    }
+
+                    if (tile.Has<TeamReference>())
+                    {
+                        var t = new TeamReference();
+                        t.Value._Value = castleTeamReference;
+                        tile.Write(t);
+                    }
+                }
+            }
+        }
+
+      
+
         [Command("lookupheart", "lh", description: "Looks up the heart of the tile", adminOnly: true)]
         public static void LookupHeart(ChatCommandContext ctx)
         {
@@ -746,6 +882,18 @@ namespace KindredSchematics.Commands
             if (owner != Entity.Null)
                 ownerName = owner.Read<User>().CharacterName.ToString();
             ctx.Reply($"Fallback castle heart owned by {ownerName} set on territory {territoryIndex} at {fallbackHeartPos} ({distance}m away to the {stringDirections[direction]})\n{usingNeutralDoors}\n{usingNeutralChests}");
+        }
+        [Command("scale", description: "changes the scale of the tile closest to the mouse cursor", adminOnly: true)]
+        public static void ScaleTile(ChatCommandContext ctx, float scale)
+        {
+            var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
+
+            var closest = Helper.FindClosestTilePosition(aimPos);
+            var localTransform = closest.Read<LocalTransform>();
+            localTransform.Scale = scale;
+            closest.Write(localTransform);
+
+            ctx.Reply($"Scaled tile {closest.Read<PrefabGUID>().LookupName()} to {scale}");
         }
     }
 }
