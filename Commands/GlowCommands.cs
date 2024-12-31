@@ -125,6 +125,11 @@ class GlowCommands
     [Command("library", description: "Spawns/visit a library of valid buffs for glows", adminOnly: true)]
     public static void SpawnGlowLibrary(ChatCommandContext ctx)
     {
+        if (Core.ConfigSettings.FreeBuildDisabled)
+        {
+            ctx.Reply("Glow Library is disabled in the config and has to be manually edited to be reenabled");
+            return;
+        }
         var dummyQueryDesc = new EntityQueryDesc
         {
             All = new ComponentType[] {
