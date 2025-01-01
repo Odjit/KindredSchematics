@@ -7,10 +7,11 @@ Save out castles or designs, and load them into other maps. Share your castle de
 This mod is meant for most use in a local server, with the ideal being that you use it to only load on a live server. Safest action is to practice and design off-server. It will cause some lag when loading in, varying depending on the complexity of the build and if you're deleting tiles to load in the schematic.
 
 A few notes: 
+- DO NOT have a glow library up on a live map. That is hundreds of buffs going off at once and will lag out the server. The buffs aren't all garaunteed to not cause problems, they are filtered to what won't immediately crash a server being applied only.
 - DO NOT use .build free on a live map, as it will allow all players to build without cost.
 - DO NOT use .build restrictions on a live map, as it will allow all players to build off plot.
 - Set a fallback heart for building off plots/restrictions off. If you don't, it will default to the first heart you placed on the map.
-- Loading in schematics outside of a territory with a heart will tie the buildings to your fallback heart, wherever it is. I advise admins set this to the dev island territory.
+- Loading in schematics outside of a territory with a heart will tie the buildings to your fallback heart, wherever it is. I advise admins set this to the dev island territory (territory 0).
 - On castle territories, first place down a heart before you load in a territory save. 
 - Complicated builds will lag out the server for a few moments. Loading a schematic into a place with existing tiles (thus triggering a delete and then a load) will do the same.
 - Be very certain where you want to load things in. Cleanup is annoying, and clearing will permanently delete respawning nodes and the like, and if you want them back, you'll need to use .build spawn to put them back in one by one. 
@@ -34,7 +35,7 @@ Feel free to reach out to me on discord (odjit) if you have any questions or nee
   - toggles building placement restrictions. Also disables all respawns. DO NOT USE THIS ON A LIVE SERVER. There is a config file to disable this command for your live server.
   - Shortcut: `.build r`
 - `.build disablefreebuild`
-  - disables freebuild and restrictionless build modes. You will need to edit the config to turn them back on. (useful for live servers)
+  - disables freebuild and restrictionless build modes. Also disables spawning in the glow library. You will need to edit the config to turn them back on. (useful for live servers)
 - `.build clearradius (radius)` 
   - Deletes out everything in a radius centered on you. 
 - `.build setcorner` 
@@ -65,6 +66,8 @@ Feel free to reach out to me on discord (odjit) if you have any questions or nee
   - makes all tiles in a radius mortal. (can be broken)
 - `.build changeheart`
   - changes the heart of the tile you are looking at to your fallback heart.
+- `.build changeheartrange (radius)`
+  - changes the heart of all tiles in a radius to your fallback heart.
 - `.build lookupheart`
   - looks up the heart of the tile you are looking at.
 - `.build setfallbackheart (useOwnerDoors=true) (useOwnerChests=true)`
@@ -91,6 +94,14 @@ Feel free to reach out to me on discord (odjit) if you have any questions or nee
   - Prevents all tiles in a territory from being dismantled.
 - `.build unlockterritory (territoryIndex)`
   - Allows all tiles in a territory to be dismantled.
+- `.build movelock`
+  - Prevents the tile from being moved.
+- `.build moveunlock`
+  - Allows the tile to be moved.
+- `.build movelockterritory (territoryIndex)`
+  - Prevents all tiles in a territory from being moved.
+- `.build moveunlockterritory (territoryIndex)`
+  - Allows all tiles in a territory to be moved.
 
 ### Schematic Commands
 - `.schematic list`
@@ -121,6 +132,29 @@ Feel free to reach out to me on discord (odjit) if you have any questions or nee
 - `.schematic toggleplacegrid`
   - on = will attempt to paste in any schematic along grid lines or off grid will allow for offgrid (and thus, misaligned) placement.
 
+### HeartLimit Commands
+- `.heartlimit floorcount (#)`
+  - change the floorcount of the heart you are next to.
+- `.heartlimit blockrelocate`
+  - blocks the heart from being relocated.
+- `.heartlimit tombcount (#)`
+  - change the tomb count of the heart you are next to.
+- `.heartlimit nestcount (#)`
+  - change the nest count of the heart you are next to.
+- `.heartlimit safetyboxcount (#)`
+  - change the safety box count of the heart you are next to.
+- `.heartlimit eyestructurecount (#)`
+  - change the eye structure count of the heart you are next to.
+- `.heartlimit prisoncellcount (#)`
+  - change the prison cell count of the heart you are next to.
+- `.heartlimit servantcount (#)`
+  - change the servant count of the heart you are next to.
+- `.heartlimit nethergatecount (#)`
+  - change the nether gate count of the heart you are next to.
+- `heartlimit throneofdarknesscount (#)`
+  - change the throne of darkness count of the heart you are next to.
+- `.heartlimit musicplayercount (#)`
+  - change the music player count of the heart you are next to.
 
 ### Glow Commands
 - `.glow add (glow)`
