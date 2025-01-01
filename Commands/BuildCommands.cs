@@ -442,10 +442,10 @@ namespace KindredSchematics.Commands
         {
             var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
 
-            var closest = Helper.FindClosestTilePosition(aimPos);
-            var closestPos = closest.Read<Translation>().Value.xz;
+            var closestPos = ctx.Event.SenderCharacterEntity.Read<Translation>().Value.xz;
 
-            var tiles = Helper.GetAllEntitiesInRadius<TilePosition>(closestPos, range);
+            var tiles = Helper.GetAllEntitiesInRadius<TilePosition>(closestPos, range)
+                .Where(e => e.Read<PrefabGUID>().LookupName().StartsWith("TM_"));
             foreach (var tile in tiles)
             {
                 if (!tile.Has<Immortal>())
@@ -462,7 +462,7 @@ namespace KindredSchematics.Commands
                 }
             }
 
-                ctx.Reply($"Made {tiles.Count()} tiles within {range} immortal");
+            ctx.Reply($"Made {tiles.Count()} tiles within {range} immortal");
         }
 
         [Command("mortal", description: "Makes the tile closest to mouse cursor mortal", adminOnly: true)]
@@ -492,10 +492,10 @@ namespace KindredSchematics.Commands
         {
             var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
 
-            var closest = Helper.FindClosestTilePosition(aimPos);
-            var closestPos = closest.Read<Translation>().Value.xz;
+            var closestPos = ctx.Event.SenderCharacterEntity.Read<Translation>().Value.xz;
 
-            var tiles = Helper.GetAllEntitiesInRadius<TilePosition>(closestPos, range);
+            var tiles = Helper.GetAllEntitiesInRadius<TilePosition>(closestPos, range)
+                .Where(e => e.Read<PrefabGUID>().LookupName().StartsWith("TM_"));
             foreach (var tile in tiles)
             {
                 if (tile.Has<Immortal>())
@@ -882,18 +882,6 @@ namespace KindredSchematics.Commands
             if (owner != Entity.Null)
                 ownerName = owner.Read<User>().CharacterName.ToString();
             ctx.Reply($"Fallback castle heart owned by {ownerName} set on territory {territoryIndex} at {fallbackHeartPos} ({distance}m away to the {stringDirections[direction]})\n{usingNeutralDoors}\n{usingNeutralChests}");
-        }
-        [Command("scale", description: "changes the scale of the tile closest to the mouse cursor", adminOnly: true)]
-        public static void ScaleTile(ChatCommandContext ctx, float scale)
-        {
-            var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
-
-            var closest = Helper.FindClosestTilePosition(aimPos);
-            var localTransform = closest.Read<LocalTransform>();
-            localTransform.Scale = scale;
-            closest.Write(localTransform);
-
-            ctx.Reply($"Scaled tile {closest.Read<PrefabGUID>().LookupName()} to {scale}");
         }
     }
 }

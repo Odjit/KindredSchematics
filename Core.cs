@@ -1,5 +1,6 @@
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP.Utils.Collections;
+using Il2CppInterop.Runtime;
 using KindredSchematics.Commands.Converter;
 using KindredSchematics.Data;
 using KindredSchematics.Services;
@@ -9,6 +10,7 @@ using ProjectM.Physics;
 using ProjectM.Scripting;
 using System.Collections;
 using System.Runtime.CompilerServices;
+using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
 
@@ -35,10 +37,7 @@ internal static class Core
 	static ServerScriptMapper serverScriptMapper;
 	public static ServerScriptMapper ServerScriptMapper { get
 		{
-			if (serverScriptMapper == null)
-			{
-                serverScriptMapper = Server.GetExistingSystemManaged<ServerScriptMapper>();
-            }
+            serverScriptMapper ??= Server.GetExistingSystemManaged<ServerScriptMapper>();
 			return serverScriptMapper;
 		}
 	}
@@ -79,6 +78,9 @@ internal static class Core
         }
         entities.Dispose();
 
+        // Fix an old bug where players had immortal removed
+        AddImmortalToPlayers();
+
         Log.LogInfo($"KindredSchematics Initialized");
 	}
 	private static bool _hasInitialized = false;
@@ -116,5 +118,29 @@ internal static class Core
         }
 
         monoBehaviour.StopCoroutine(coroutine);
+    }
+
+    static void AddImmortalToPlayers()
+    {
+        EntityQueryDesc queryDesc = new()
+        {
+            All = new ComponentType[] { new(Il2CppType.Of<PlayerCharacter>(), ComponentType.AccessMode.ReadWrite) },
+            None = new ComponentType[] { new(Il2CppType.Of<Immortal>(), ComponentType.AccessMode.ReadWrite) },
+            Options = EntityQueryOptions.IncludeDisabled
+        };
+
+        var query = Core.EntityManager.CreateEntityQuery(queryDesc);
+
+        var entities = query.ToEntityArray(Allocator.Temp);
+
+        foreach (var entity in entities)
+        {
+            entity.Add<Immortal>();
+            entity.Write(new Immortal
+            {
+                IsImmortal = true
+            });
+        }
+        entities.Dispose();
     }
 }
