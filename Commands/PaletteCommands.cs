@@ -7,7 +7,7 @@ using VampireCommandFramework;
 
 namespace KindredSchematics.Commands;
 
-[CommandGroup("palette")]
+[CommandGroup("palette", "pal")]
 static class PaletteCommands
 {
     [Command("add", "a", "Adds a specified prefab search to the build palette.", adminOnly: true)]

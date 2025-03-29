@@ -26,82 +26,191 @@ Feel free to reach out to me on discord (odjit) if you have any questions or nee
 
 [V Rising Modding Discord](https://vrisingmods.com/discord)
 
+## Build Mode & Palette System (Preview for Testing)
+
+Sneak Peek for **Build Mode** and **Palette System** aimed at making construction more intuitive and efficient. These features allow you to quickly browse through prefabs, place tiles down, and manage your build palette. Try them out and [share your feedback](https://discord.gg/Tp4yBzhKVs)!
+
+### Build Mode
+
+- **Toggle Build Mode**: Use `.build mode` to turn Build Mode on or off.
+- **Entity Highlighting**: Build Mode will highlight certain tiles that you are aiming at (more tiles will be supported over time).
+- **Grab Tiles**: Use **Left Click** to grab a tile.
+- **Rotate Tiles**: Use **Q** to rotate counterclockwise and **E** to rotate clockwise any item you have grabbed.
+- **Delete or Copy Tiles**: Press **Space** to delete a grabbed item, or to grab a *copy* of what you last grabbed.
+- **Copy Hovered Tiles**: Press **R** to make a copy of whatever tile you are currently hovering over.
+
+### Palette System
+
+The Palette System offers a powerful toolset for managing prefabs with ease:
+- **Adding Prefabs to Palette** (`.palette add`) – Search for and add prefabs to your palette for easy access.
+- **Removing Prefabs from Palette** (`.palette remove`) – Remove unwanted prefabs from your palette.
+- **Listing Palette Contents** (`.palette list`) – Display all prefabs currently stored in your palette.
+- **Clearing Palette** (`.palette clear`) – Wipe the palette clean and start fresh.
+- **Cycling Through Palette**: While in Build Mode, use **C** and **T** to cycle backwards and forwards through your current palette respectively.
+
+
 ## Commands
 
 ### Build Commands
-- `.build free` 
-  - turns on debug mode free building. Building/Crafting will have no cost. DO NOT USE THIS ON A LIVE SERVER. There is a config file to disable this command for your live server.
-- `.build restrictions`
-  - toggles building placement restrictions. Also disables all respawns. DO NOT USE THIS ON A LIVE SERVER. There is a config file to disable this command for your live server.
+
+- `.build free`  
+  - Turns on debug mode free building. Building/Crafting will have no cost.  
+  - DO NOT USE THIS ON A LIVE SERVER. There is a config file to disable this command for your live server.
+
+- `.build restrictions`  
+  - Toggles building placement restrictions. Also disables all respawns.  
+  - DO NOT USE THIS ON A LIVE SERVER. There is a config file to disable this command for your live server.  
   - Shortcut: `.build r`
-- `.build disablefreebuild`
-  - disables freebuild and restrictionless build modes. Also disables spawning in the glow library. You will need to edit the config to turn them back on. (useful for live servers)
-- `.build clearradius (radius)` 
-  - Deletes out everything in a radius centered on you. 
-- `.build setcorner` 
-  - sets corner coordinates for rectangular work area
-- `.build clearbox`
-  - clears a box with your current coordinates and the coordinates from setcorner.
-- `.build clearterritory (territoryIndex)` 
-  - clears out a territory of all tiles except a heart.
+
+- `.build disablefreebuild`  
+  - Disables freebuild and restrictionless build modes. Also disables spawning in the glow library. You will need to edit the config to turn them back on (useful for live servers).
+
+- `.build mode`  
+  - Toggles build mode.
+
+- `.build setcursor`  
+  - Sets a cursor prefab to place tiles.
+
+- `.build clearradius (radius)`  
+  - Deletes out everything in a radius centered on you.
+
+- `.build setcorner`  
+  - Sets corner coordinates for rectangular work area.
+
+- `.build clearbox`  
+  - Clears a box with your current coordinates and the coordinates from `setcorner`.
+
+- `.build clearterritory (territoryIndex)`  
+  - Clears out a territory of all tiles except a heart.  
   - Shortcut: `.build ct (territoryIndex)`
-- `.build spawn (tile)`
-  - spawns in the specified tile at your aimed position. This is ueful for Tile Models NOT included in the build menu.
-- `.build search (searchterm)`
-  - searches through tile prefabs for a match to the search term.
+
+- `.build spawn (tile)`  
+  - Spawns in the specified tile at your aimed position.  
+  - Useful for Tile Models NOT included in the build menu.
+
+- `.build search (searchterm)`  
+  - Searches through tile prefabs for a match to the search term.  
   - Shortcut: `.build s (searchterm)`
-- `.build check`
-  - checks the tile you are looking at for a prefab name. This will only fetch an *entities' prefab*, if it is not a placeable entity you won't get a read on it. (invalid models)
-- `.build delete` 
-  - deletes the tile model you are looking at.
-- `.build rotate` 
-  - rotates a tile at your aimed position.
-- `.build immortal`
-  - makes the tile you are looking at immortal. (can't be broken)
-- `.build immortalrange (radius)`
-  - makes all tiles in a radius immortal. (can't be broken)
-- `.build mortal`
-  - makes the tile you are looking at mortal. (can be broken)
-- `.build mortalrange (radius)`
-  - makes all tiles in a radius mortal. (can be broken)
-- `.build changeheart`
-  - changes the heart of the tile you are looking at to your fallback heart.
-- `.build changeheartrange (radius)`
-  - changes the heart of all tiles in a radius to your fallback heart.
-- `.build lookupheart`
-  - looks up the heart of the tile you are looking at.
-- `.build setfallbackheart (useOwnerDoors=true) (useOwnerChests=true)`
-  - Sets the fallback castle heart for loading or building without restrictions to the nearby heart. You can also specify whether to use Owner or Neutral for doors and chests. Defaults to owner.
-- `.build neutraldoors`
-  - Any doors you place will be neutral and will not belong to a heart. (useable by all)
-- `.build ownerdoors`
-  - Any doors you place will belong to the your fallback heart. (normal door behavior)
-- `.build neutralchests`
-  - Any chests you place will be neutral and will not belong to a heart. (useable by all)
-- `.build ownerchests`
-  - Any chests you place will belong to the your fallback heart. (normal chest behavior)
-- `.build settings`
-  - Shows the current settings for the .build commands. Current heart, and what doors/chests will be placed as.
-- `.build lock`
-  - Prevents the tile from being dismantled.
-- `.build unlock`
-  - Allows the tile to be dismantled.
-- `.build lockrange (radius)`
-  - Prevents all tiles in a radius from being dismantled.
-- `.build unlockrange (radius)`
-  - Allows all tiles in a radius to be dismantled.
-- `.build lockterritory (territoryIndex)`
-  - Prevents all tiles in a territory from being dismantled.
-- `.build unlockterritory (territoryIndex)`
-  - Allows all tiles in a territory to be dismantled.
-- `.build movelock`
-  - Prevents the tile from being moved.
-- `.build moveunlock`
-  - Allows the tile to be moved.
-- `.build movelockterritory (territoryIndex)`
-  - Prevents all tiles in a territory from being moved.
-- `.build moveunlockterritory (territoryIndex)`
-  - Allows all tiles in a territory to be moved.
+
+- `.build check`  
+  - Checks the tile you are looking at for a prefab name.  
+  - This will only fetch an entity’s prefab—if it is not a placeable entity you won’t get a read on it. (invalid models)
+
+- `.build delete`  
+  - Deletes the tile model you are looking at.
+
+- `.build rotate`  
+  - Rotates a tile at your aimed position.
+
+- `.build changeheart`  
+  - Changes the heart of the tile you are looking at to your fallback heart.
+
+- `.build changeheartrange (radius)`  
+  - Changes the heart of all tiles in a radius to your fallback heart.
+
+- `.build lookupheart`  
+  - Looks up the heart of the tile you are looking at.
+
+- `.build setfallbackheart (useOwnerDoors=true) (useOwnerChests=true)`  
+  - Sets the fallback castle heart for loading or building without restrictions to the nearby heart.  
+  - You can also specify whether to use Owner or Neutral for doors and chests. Defaults to Owner.
+
+- `.build neutraldoors`  
+  - Any doors you place will be neutral and will not belong to a heart (useable by all).
+
+- `.build ownerdoors`  
+  - Any doors you place will belong to your fallback heart (normal door behavior).
+
+- `.build neutralchests`  
+  - Any chests you place will be neutral and will not belong to a heart (useable by all).
+
+- `.build ownerchests`  
+  - Any chests you place will belong to your fallback heart (normal chest behavior).
+
+- `.build settings`  
+  - Shows the current settings for the `.build` commands — current heart, and what doors/chests will be placed as.
+
+### Palette Commands
+
+- `.palette add (searchterm)`  
+  - Adds a specified prefab search to the build palette.  
+  - Shortcut: `.pal a (searchterm)`
+
+- `.palette remove (searchterm)`  
+  - Removes a specified prefab search from the build palette.  
+  - Shortcut: `.pal r (seachterm)`
+
+- `.palette list`  
+  - Lists all prefabs in the build palette.  
+  - Shortcut: `.pal l`
+
+- `.palette clear`  
+  - Clears the build palette.  
+  - Shortcut: `.pal c`
+
+### Modifytile Commands
+
+- `.modifytile lock`  
+  - Prevents the tile you are looking at from being dismantled.  
+  - Shortcut: `.modt lock`
+
+- `.modifytile unlock`  
+  - Allows the tile you are looking at to be dismantled.  
+  - Shortcut: `.modt unlock`
+
+- `.modifytile lockrange (radius)`  
+  - Prevents all tiles in a radius from being dismantled.  
+  - Shortcut: `.modt lockrange (radius)`
+
+- `.modifytile unlockrange (radius)`  
+  - Allows all tiles in a radius to be dismantled.  
+  - Shortcut: `.modt unlockrange (radius)`
+
+- `.modifytile lockterritory (territoryIndex)`  
+  - Prevents all tiles in a territory from being dismantled.  
+  - Shortcut: `.modt lockterritory (territoryIndex)`
+
+- `.modifytile unlockterritory (territoryIndex)`  
+  - Allows all tiles in a territory to be dismantled.  
+  - Shortcut: `.modt unlockterritory (territoryIndex)`
+
+- `.modifytile movelock`  
+  - Prevents the tile you are looking at from being moved.  
+  - Shortcut: `.modt movelock`
+
+- `.modifytile moveunlock`  
+  - Allows the tile you are looking at to be moved.  
+  - Shortcut: `.modt moveunlock`
+
+- `.modifytile movelockterritory (territoryIndex)`  
+  - Prevents all tiles in a territory from being moved.  
+  - Shortcut: `.modt movelockterritory (territoryIndex)`
+
+- `.modifytile moveunlockterritory (territoryIndex)`  
+  - Allows all tiles in a territory from being moved.  
+  - Shortcut: `.modt moveunlockterritory (territoryIndex)`
+
+- `.modifytile immortal`  
+  - Makes the tile you are looking at immortal (can’t be broken).  
+  - Shortcut: `.modt immortal`
+
+- `.modifytile immortalrange (radius)`  
+  - Makes all tiles in a radius immortal (can’t be broken).  
+  - Shortcut: `.modt immortalrange (radius)`  
+  - Alias: `.modt ir (radius)`
+
+- `.modifytile mortal`  
+  - Makes the tile you are looking at mortal (can be broken).  
+  - Shortcut: `.modt mortal`
+
+- `.modifytile mortalrange (radius)`  
+  - Makes all tiles in a radius mortal (can be broken).  
+  - Shortcut: `.modt mortalrange (radius)`  
+  - Alias: `.modt mr (radius)`
+
+- `.modifytile pavementspeed (speed) (territoryIndex)`  
+  - Changes the PavementBonusSource movement speed for all tiles in the specified territory.  
+  - Shortcut: `.modt pavementspeed (speed) (territoryIndex)`
 
 ### Schematic Commands
 - `.schematic list`
@@ -171,6 +280,7 @@ Feel free to reach out to me on discord (odjit) if you have any questions or nee
   - checks the glow of the tile you are looking at.
 - `.glow library`
   - Spawns a library of all glows for you to look at. Will teleport you to the library if a library is already spawned. Spawns in off the coast of south west Silverlight.
+  - This is very resource consuming. Use this on an empty map to pick out your glows and save them to the config with `.glow new`. Do not use this on any map you intend to keep!
 
 ### Misc Commands
 - `.floorup (NumberofFloors)`

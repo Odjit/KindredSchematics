@@ -562,7 +562,7 @@ namespace KindredSchematics.Commands
             ctx.Reply($"Fallback castle heart owned by {ownerName} set on territory {territoryIndex} at {fallbackHeartPos} ({distance}m away to the {stringDirections[direction]})\n{usingNeutralDoors}\n{usingNeutralChests}");
         }
 
-        [Command("switch")]
+        [Command("mode", description:"toggle into and out of build mode", adminOnly: true)]
         public static void SwitchToBuildMode(ChatCommandContext ctx)
         {
             if (Core.BuildService.SwitchToBuildMode(ctx.Event.SenderCharacterEntity))
@@ -575,7 +575,7 @@ namespace KindredSchematics.Commands
             }
         }
 
-        [Command("setcursor")]
+        [Command("setcursor", adminOnly: true)]
         public static void SetCursor(ChatCommandContext ctx, FoundTileModel tile)
         {
             if (!BuildService.IsCharacterInBuildMode(ctx.Event.SenderCharacterEntity))
