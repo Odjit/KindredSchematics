@@ -86,7 +86,7 @@ class GlowCommands
     public static void CheckGlowTile(ChatCommandContext ctx)
     {
         var aimPos = ctx.Event.SenderCharacterEntity.Read<EntityAimData>().AimPosition;
-        var closest = Helper.FindClosestTilePosition(aimPos);
+        var closest = Helper.FindClosestTilePosition(aimPos, ignoreFloors: true);
 
         var glowsOnTarget = Core.GlowService.ListGlows(closest);
 
@@ -140,6 +140,7 @@ class GlowCommands
                 new(Il2CppType.Of<TilePosition>(), ComponentType.AccessMode.ReadWrite),
                 new(Il2CppType.Of<PrefabGUID>(), ComponentType.AccessMode.ReadWrite),
             },
+            Options = EntityQueryOptions.IncludeDisabled
         };
         var dummyQuery = Core.EntityManager.CreateEntityQuery(dummyQueryDesc);
         var entities = dummyQuery.ToEntityArray(Allocator.Temp);

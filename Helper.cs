@@ -3,6 +3,7 @@ using KindredSchematics.Data;
 using ProjectM;
 using ProjectM.CastleBuilding;
 using ProjectM.Shared;
+using ProjectM.Tiles;
 using Stunlock.Core;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -311,55 +312,25 @@ internal static partial class Helper
         DestroyUtility.Destroy(Core.EntityManager, entity);
     }
 
-	public static Entity FindClosest<T>(Vector3 pos, string startsWith = null, float maxDistance = -1)
-	{
-        var closestEntity = Entity.Null;
-        var closestDistance = float.MaxValue;
-        maxDistance *= maxDistance;
-        var entities = GetEntitiesByComponentTypes<T, Translation>(includeSpawn: true, includeDisabled: true);
-        foreach (var entity in entities)
-		{
-			if (startsWith != null)
-			{
-				var prefabName = GetPrefabGUID(entity).LookupName();
-				if (!prefabName.StartsWith(startsWith)) continue;
-			}
-
-            var entityPos = entity.Read<Translation>().Value;
-            var distance = math.distancesq(pos, entityPos);
-            if (distance < closestDistance && (maxDistance < 0 || distance < maxDistance))
-			{
-                closestDistance = distance;
-                closestEntity = entity;
-            }
-        }
-        entities.Dispose();
-        return closestEntity;
-    }
-
-
     static EntityQuery tilePositionQuery = default;
-    public static Entity FindClosestTilePosition(Vector3 pos)
+    public static Entity FindClosestTilePosition(Vector3 pos, bool ignoreFloors=false)
     {
-        if (tilePositionQuery == default)
-        {
-            tilePositionQuery = Core.EntityManager.CreateEntityQuery(new EntityQueryDesc
-            {
-                All = new ComponentType[] {
-                    new(Il2CppType.Of<TilePosition>(), ComponentType.AccessMode.ReadOnly),
-                    new(Il2CppType.Of<Translation>(), ComponentType.AccessMode.ReadOnly)
-                },
-                Options = EntityQueryOptions.IncludeDisabled | EntityQueryOptions.IncludeSpawnTag
-            });
-        }
+        var spatialData = Core.GenerateCastle._TileModelLookupSystemData;
+        var tileModelSpatialLookupRO = spatialData.GetSpatialLookupReadOnlyAndComplete(Core.GenerateCastle);
+
+        var gridPos = Helper.ConvertPosToTileGrid(pos);
+        var bounds = new BoundsMinMax((int)(gridPos.x - 2.5), (int)(gridPos.z - 2.5),
+                                      (int)(gridPos.x + 2.5), (int)(gridPos.z + 2.5));
 
         var closestEntity = Entity.Null;
         var closestDistance = float.MaxValue;
-        var entities = tilePositionQuery.ToEntityArray(Allocator.Temp);
+        var entities = tileModelSpatialLookupRO.GetEntities(ref bounds, TileType.All);
         for (var i = 0; i < entities.Length; ++i)
         {
             var entity = entities[i];
             if (!entity.Has<TilePosition>()) continue;
+            if (!entity.Has<Translation>()) continue;
+            if (ignoreFloors && entity.Has<CastleFloor>()) continue;
             var entityPos = entity.Read<Translation>().Value;
             var distance = math.distancesq(pos, entityPos);
             if (distance < closestDistance)
@@ -375,6 +346,7 @@ internal static partial class Helper
 
         return closestEntity;
     }
+
 
     readonly static PrefabGUID openContainerAbility = new PrefabGUID(-1662046920);
     public static bool EntityIsChest(Entity entity)
