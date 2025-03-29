@@ -14,10 +14,12 @@
   <ItemGroup>
     <None Remove="Data\SpawnRegions.txt" />
     <None Remove="Data\VisibleBuffs.txt" />
+    <None Remove="LICENSE.txt" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Data\SpawnRegions.txt" />
     <EmbeddedResource Include="Data\VisibleBuffs.txt" />
+    <EmbeddedResource Include="LICENSE.txt" />
   </ItemGroup>
   <ItemGroup>
 	  <PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be.691" IncludeAssets="compile" />

@@ -25,12 +25,15 @@ internal static class Core
     public static ServerGameManager ServerGameManager => ServerScriptMapper.GetServerGameManager();
     public static CastleBuildingAttachmentBuffSystem CastleBuildingAttachmentBuffSystem { get; } = Server.GetExistingSystemManaged<CastleBuildingAttachmentBuffSystem>();
     public static CastleTerritoryService CastleTerritory { get; private set; }
+
+    public static GenerateCastleSystem GenerateCastle { get; private set; }
     public static PrefabCollectionSystem PrefabCollection { get; } = Server.GetExistingSystemManaged<PrefabCollectionSystem>();
 
     public static GlowService GlowService { get; } = new();
     public static RespawnPreventionService RespawnPrevention { get; private set; }
     public static SchematicService SchematicService { get; } = new();
-	public static ConfigSettingsService ConfigSettings { get; } = new();
+    public static BuildService BuildService { get; } = new();
+    public static ConfigSettingsService ConfigSettings { get; } = new();
 
     public const int MAX_REPLY_LENGTH = 509;
 
@@ -57,6 +60,8 @@ internal static class Core
 		if (_hasInitialized) return;
 
 		_hasInitialized = true;
+
+        GenerateCastle = Server.GetOrCreateSystemManaged<GenerateCastleSystem>();
 
         ComponentSaver.ComponentSaver.PopulateComponentSavers();
 		CastleTerritory = new();

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Unity.Collections;
+using Unity.Entities.UniversalDelegates;
 using VampireCommandFramework;
 
 namespace KindredSchematics.Commands.Converter;
@@ -49,6 +50,8 @@ public class FoundBuffConverter : CommandArgumentConverter<FoundBuff>
         new PrefabGUID(-695537141),//sticky bomb, not a problem but gblows up other dummies
         new PrefabGUID(-2135755764), //2270
         new PrefabGUID(817492469), //explodes, damaging others.
+        new PrefabGUID(745999782),
+        new PrefabGUID(1629786723),
     };
 
     public static void InitializeBuffPrefabs()
@@ -69,6 +72,8 @@ public class FoundBuffConverter : CommandArgumentConverter<FoundBuff>
                 if (int.TryParse(line, out var guid))
                 {
                     var prefabGuid = new PrefabGUID(guid);
+
+                    if (skipBuffs.Contains(prefabGuid)) continue;
 
                     if (Core.PrefabCollection._PrefabGuidToEntityMap.TryGetValue(prefabGuid, out var entity) && entity.Has<Buff>() && Core.PrefabCollection._PrefabGuidToNameDictionary.TryGetValue(prefabGuid, out var name))
                     {
