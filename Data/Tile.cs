@@ -1,6 +1,8 @@
-﻿using Stunlock.Core;
+﻿using ProjectM;
+using Stunlock.Core;
 using System;
 using System.Collections.Generic;
+using Unity.Entities;
 
 namespace KindredSchematics.Data;
 internal static class Tile
@@ -12,11 +14,16 @@ internal static class Tile
             if (!name.StartsWith("TM_")) continue;
 
             // Verify the prefab actually exists
-            if (!Core.PrefabCollection._PrefabGuidToEntityMap.TryGetValue(prefabGuid, out var _) &&
-                !Core.PrefabCollection._PrefabLookupMap.TryGetValueWithoutLogging(prefabGuid, out var _))
+            var prefab2 = Entity.Null;
+            if (!Core.PrefabCollection._PrefabGuidToEntityMap.TryGetValue(prefabGuid, out var prefab1) &&
+                !Core.PrefabCollection._PrefabLookupMap.TryGetValueWithoutLogging(prefabGuid, out prefab2))
             {
                 continue;
             }
+
+            if (prefab1 != Entity.Null && prefab1.Has<TransitionWhenInventoryIsEmpty>() ||
+                prefab2 != Entity.Null && prefab2.Has<TransitionWhenInventoryIsEmpty>())
+                continue;
 
             Named[name] = prefabGuid;
             NameFromPrefab[prefabGuid.GuidHash] = name;
@@ -28,11 +35,16 @@ internal static class Tile
             if (!name.StartsWith("TM_")) continue;
 
             // Verify the prefab actually exists
-            if (!Core.PrefabCollection._PrefabGuidToEntityMap.TryGetValue(prefabGuid, out var _) &&
-                !Core.PrefabCollection._PrefabLookupMap.TryGetValueWithoutLogging(prefabGuid, out var _))
+            var prefab2 = Entity.Null;
+            if (!Core.PrefabCollection._PrefabGuidToEntityMap.TryGetValue(prefabGuid, out var prefab1) &&
+                !Core.PrefabCollection._PrefabLookupMap.TryGetValueWithoutLogging(prefabGuid, out prefab2))
             {
                 continue;
             }
+
+            if (prefab1 != Entity.Null && prefab1.Has<TransitionWhenInventoryIsEmpty>() ||
+                prefab2 != Entity.Null && prefab2.Has<TransitionWhenInventoryIsEmpty>())
+                continue;
 
             Named[name] = prefabGuid;
             NameFromPrefab[prefabGuid.GuidHash] = name;
