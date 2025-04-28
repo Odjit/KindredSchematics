@@ -3,7 +3,6 @@ using KindredSchematics.Data;
 using ProjectM;
 using ProjectM.CastleBuilding;
 using ProjectM.Shared;
-using ProjectM.Tiles;
 using Stunlock.Core;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -51,49 +50,46 @@ internal static partial class Helper
 			Core.LogException(e);
 		}
 		return new Entity();
-	}
+    }
 
-	public static NativeArray<Entity> GetEntitiesByComponentType<T1>(bool includeAll = false, bool includeDisabled = false, bool includeSpawn = false, bool includePrefab = false, bool includeDestroyed = false)
-	{
-		EntityQueryOptions options = EntityQueryOptions.Default;
-		if (includeAll) options |= EntityQueryOptions.IncludeAll;
-		if (includeDisabled) options |= EntityQueryOptions.IncludeDisabled;
-		if (includeSpawn) options |= EntityQueryOptions.IncludeSpawnTag;
-		if (includePrefab) options |= EntityQueryOptions.IncludePrefab;
-		if (includeDestroyed) options |= EntityQueryOptions.IncludeDestroyTag;
+    public static NativeArray<Entity> GetEntitiesByComponentType<T1>(bool includeAll = false, bool includeDisabled = false, bool includeSpawn = false, bool includePrefab = false, bool includeDestroyed = false)
+    {
+        EntityQueryOptions options = EntityQueryOptions.Default;
+        if (includeAll) options |= EntityQueryOptions.IncludeAll;
+        if (includeDisabled) options |= EntityQueryOptions.IncludeDisabled;
+        if (includeSpawn) options |= EntityQueryOptions.IncludeSpawnTag;
+        if (includePrefab) options |= EntityQueryOptions.IncludePrefab;
+        if (includeDestroyed) options |= EntityQueryOptions.IncludeDestroyTag;
 
-		EntityQueryDesc queryDesc = new()
-		{
-			All = new ComponentType[] { new(Il2CppType.Of<T1>(), ComponentType.AccessMode.ReadWrite) },
-			Options = options
-		};
+        var entityQueryBuilder = new EntityQueryBuilder(Allocator.Temp)
+            .AddAll(new(Il2CppType.Of<T1>(), ComponentType.AccessMode.ReadWrite))
+            .WithOptions(options);
 
-		var query = Core.EntityManager.CreateEntityQuery(queryDesc);
+        var query = Core.EntityManager.CreateEntityQuery(ref entityQueryBuilder);
 
-		var entities = query.ToEntityArray(Allocator.Temp);
-		return entities;
-	}
+        var entities = query.ToEntityArray(Allocator.Temp);
+        return entities;
+    }
 
-	public static NativeArray<Entity> GetEntitiesByComponentTypes<T1, T2>(bool includeAll = false, bool includeDisabled = false, bool includeSpawn = false, bool includePrefab = false, bool includeDestroyed = false)
-	{
-		EntityQueryOptions options = EntityQueryOptions.Default;
-		if (includeAll) options |= EntityQueryOptions.IncludeAll;
-		if (includeDisabled) options |= EntityQueryOptions.IncludeDisabled;
-		if (includeSpawn) options |= EntityQueryOptions.IncludeSpawnTag;
-		if (includePrefab) options |= EntityQueryOptions.IncludePrefab;
-		if (includeDestroyed) options |= EntityQueryOptions.IncludeDestroyTag;
+    public static NativeArray<Entity> GetEntitiesByComponentTypes<T1, T2>(bool includeAll = false, bool includeDisabled = false, bool includeSpawn = false, bool includePrefab = false, bool includeDestroyed = false)
+    {
+        EntityQueryOptions options = EntityQueryOptions.Default;
+        if (includeAll) options |= EntityQueryOptions.IncludeAll;
+        if (includeDisabled) options |= EntityQueryOptions.IncludeDisabled;
+        if (includeSpawn) options |= EntityQueryOptions.IncludeSpawnTag;
+        if (includePrefab) options |= EntityQueryOptions.IncludePrefab;
+        if (includeDestroyed) options |= EntityQueryOptions.IncludeDestroyTag;
 
-		EntityQueryDesc queryDesc = new()
-		{
-			All = new ComponentType[] { new(Il2CppType.Of<T1>(), ComponentType.AccessMode.ReadWrite), new(Il2CppType.Of<T2>(), ComponentType.AccessMode.ReadWrite) },
-			Options = options
-		};
+        var entityQueryBuilder = new EntityQueryBuilder(Allocator.Temp)
+            .AddAll(new(Il2CppType.Of<T1>(), ComponentType.AccessMode.ReadWrite))
+            .AddAll(new(Il2CppType.Of<T2>(), ComponentType.AccessMode.ReadWrite))
+            .WithOptions(options);
 
-		var query = Core.EntityManager.CreateEntityQuery(queryDesc);
+        var query = Core.EntityManager.CreateEntityQuery(ref entityQueryBuilder);
 
-		var entities = query.ToEntityArray(Allocator.Temp);
-		return entities;
-	}
+        var entities = query.ToEntityArray(Allocator.Temp);
+        return entities;
+    }
 
     public static int GetEntityTerritoryIndex(Entity entity)
     {
@@ -154,9 +150,20 @@ internal static partial class Helper
 
     public static IEnumerable<Entity> GetAllEntitiesInRadius<T>(float2 center, float radius)
 	{
-        var entities = GetEntitiesByComponentType<T>(includeSpawn: true, includeDisabled: true);
+        var spatialData = Core.GenerateCastle._TileModelLookupSystemData;
+        var tileModelSpatialLookupRO = spatialData.GetSpatialLookupReadOnlyAndComplete(Core.GenerateCastle);
+
+        var gridPos = ConvertPosToTileGrid(center);
+
+        var gridPosMin = ConvertPosToTileGrid(center - radius);
+        var gridPosMax = ConvertPosToTileGrid(center + radius);
+        var bounds = new BoundsMinMax(Mathf.FloorToInt(gridPosMin.x), Mathf.FloorToInt(gridPosMin.y),
+                                      Mathf.CeilToInt(gridPosMax.x), Mathf.CeilToInt(gridPosMax.y));
+
+        var entities = tileModelSpatialLookupRO.GetEntities(ref bounds, TileType.All);
         foreach (var entity in entities)
 		{
+            if (!entity.Has<T>()) continue;
             if (!entity.Has<Translation>()) continue;
             var pos = entity.Read<Translation>().Value;
             if (math.distance(center, pos.xz) <= radius)
@@ -169,9 +176,18 @@ internal static partial class Helper
 
 	public static IEnumerable<Entity> GetAllEntitiesInBox<T>(float2 center, float2 halfSize)
 	{
-        var entities = GetEntitiesByComponentType<T>(includeSpawn: true, includeDisabled: true);
+        var spatialData = Core.GenerateCastle._TileModelLookupSystemData;
+        var tileModelSpatialLookupRO = spatialData.GetSpatialLookupReadOnlyAndComplete(Core.GenerateCastle);
+
+        var gridPosMin = ConvertPosToTileGrid(center - halfSize);
+        var gridPosMax = ConvertPosToTileGrid(center + halfSize);
+        var bounds = new BoundsMinMax(Mathf.FloorToInt(gridPosMin.x), Mathf.FloorToInt(gridPosMin.y),
+                                      Mathf.CeilToInt(gridPosMax.x), Mathf.CeilToInt(gridPosMax.y));
+
+        var entities = tileModelSpatialLookupRO.GetEntities(ref bounds, TileType.All);
         foreach (var entity in entities)
 		{
+            if (!entity.Has<T>()) continue;
             if (!entity.Has<Translation>()) continue;
             var pos = entity.Read<Translation>().Value;
             if (Mathf.Abs(center.x - pos.x) <= halfSize.x && Mathf.Abs(center.y - pos.z) <= halfSize.y)
@@ -182,10 +198,15 @@ internal static partial class Helper
         entities.Dispose();
     }
 
-	public static float3 ConvertPosToTileGrid(float3 pos)
+    public static float2 ConvertPosToTileGrid(float2 pos)
+    {
+        return new float2(Mathf.FloorToInt(pos.x * 2) + 6400, Mathf.FloorToInt(pos.y * 2) + 6400);
+    }
+
+    public static float3 ConvertPosToTileGrid(float3 pos)
 	{
 		return new float3(Mathf.FloorToInt(pos.x * 2) + 6400, pos.y, Mathf.FloorToInt(pos.z * 2) + 6400);
-	}
+    }
 
     public static bool GetAabb(Entity entity, out Aabb aabb)
     {
@@ -238,9 +259,18 @@ internal static partial class Helper
 
     public static IEnumerable<Entity> GetAllEntitiesInTileAabb<T>(Aabb aabb)
     {
-        var entities = GetEntitiesByComponentType<T>(includeSpawn: true, includeDisabled: true);
+        var spatialData = Core.GenerateCastle._TileModelLookupSystemData;
+        var tileModelSpatialLookupRO = spatialData.GetSpatialLookupReadOnlyAndComplete(Core.GenerateCastle);
+
+        var gridPosMin = ConvertPosToTileGrid(aabb.Min);
+        var gridPosMax = ConvertPosToTileGrid(aabb.Max);
+        var bounds = new BoundsMinMax(Mathf.FloorToInt(gridPosMin.x), Mathf.FloorToInt(gridPosMin.y),
+                                      Mathf.CeilToInt(gridPosMax.x), Mathf.CeilToInt(gridPosMax.y));
+
+        var entities = tileModelSpatialLookupRO.GetEntities(ref bounds, TileType.All);
         foreach (var entity in entities)
         {
+            if (!entity.Has<T>()) continue;
             if (IsEntityInAabb(entity, aabb))
             {
                 yield return entity;
@@ -318,7 +348,7 @@ internal static partial class Helper
         var spatialData = Core.GenerateCastle._TileModelLookupSystemData;
         var tileModelSpatialLookupRO = spatialData.GetSpatialLookupReadOnlyAndComplete(Core.GenerateCastle);
 
-        var gridPos = Helper.ConvertPosToTileGrid(pos);
+        var gridPos = ConvertPosToTileGrid(pos);
         var bounds = new BoundsMinMax((int)(gridPos.x - 2.5), (int)(gridPos.z - 2.5),
                                       (int)(gridPos.x + 2.5), (int)(gridPos.z + 2.5));
 

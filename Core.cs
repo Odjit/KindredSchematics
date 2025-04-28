@@ -30,6 +30,7 @@ internal static class Core
     public static PrefabCollectionSystem PrefabCollection { get; } = Server.GetExistingSystemManaged<PrefabCollectionSystem>();
 
     public static GlowService GlowService { get; } = new();
+    public static PrefabRemapService PrefabRemap { get; } = new();
     public static RespawnPreventionService RespawnPrevention { get; private set; }
     public static SchematicService SchematicService { get; } = new();
     public static BuildService BuildService { get; } = new();
@@ -127,14 +128,12 @@ internal static class Core
 
     static void AddImmortalToPlayers()
     {
-        EntityQueryDesc queryDesc = new()
-        {
-            All = new ComponentType[] { new(Il2CppType.Of<PlayerCharacter>(), ComponentType.AccessMode.ReadWrite) },
-            None = new ComponentType[] { new(Il2CppType.Of<Immortal>(), ComponentType.AccessMode.ReadWrite) },
-            Options = EntityQueryOptions.IncludeDisabled
-        };
+        var queryBuilder = new EntityQueryBuilder(Allocator.Temp);
+        queryBuilder.AddAll(new(Il2CppType.Of<PlayerCharacter>(), ComponentType.AccessMode.ReadWrite));
+        queryBuilder.AddNone(new(Il2CppType.Of<Immortal>(), ComponentType.AccessMode.ReadWrite));
+        queryBuilder.WithOptions(EntityQueryOptions.IncludeDisabled);
 
-        var query = Core.EntityManager.CreateEntityQuery(queryDesc);
+        var query = Core.EntityManager.CreateEntityQuery(ref queryBuilder);
 
         var entities = query.ToEntityArray(Allocator.Temp);
 

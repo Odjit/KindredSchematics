@@ -119,7 +119,7 @@ static class PaletteCommands
         var sb = new StringBuilder();
         sb.AppendLine("<color=orange>Build Palette</color>:");
 
-        var pageSize = 7;
+        var pageSize = 6;
         var pageCount = (palette.Length + pageSize - 1) / pageSize;
         page = Math.Clamp(page, 0, pageCount - 1);
         foreach(var prefabGuid in palette.Skip(page * pageSize).Take(pageSize))

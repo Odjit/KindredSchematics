@@ -6,6 +6,7 @@ using ProjectM;
 using ProjectM.CastleBuilding;
 using ProjectM.Network;
 using ProjectM.Physics;
+using ProjectM.Roofs;
 using ProjectM.Shared;
 using ProjectM.Tiles;
 using Stunlock.Core;
@@ -14,9 +15,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Entities.UniversalDelegates;
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Transforms;
@@ -63,7 +66,7 @@ namespace KindredSchematics.Services
             schematicSvcGameObject = new GameObject("SchematicService");
             schematicMonoBehaviour = schematicSvcGameObject.AddComponent<IgnorePhysicsDebugSystem>();
 
-            foreach(var (prefabGUID, prefabName) in Core.PrefabCollection._PrefabGuidToNameDictionary)
+            foreach(var (prefabName, prefabGUID) in Core.PrefabCollection.SpawnableNameToPrefabGuidDictionary)
             {
                 if(prefabName.StartsWith("TM_") || prefabName.StartsWith("Chain_") || 
                    (Core.PrefabCollection._PrefabGuidToEntityMap.TryGetValue(prefabGUID, out var prefab) &&
@@ -155,7 +158,7 @@ namespace KindredSchematics.Services
                 if (!entity.Has<PrefabGUID>())
                     return false;
 
-                if (entity.Has<CastleRoof>())
+                if (entity.Has<RoofTileData>())
                     return false;
 
                 var prefabGUID = entity.Read<PrefabGUID>();
@@ -330,7 +333,8 @@ namespace KindredSchematics.Services
             {
                 if (always || Time.realtimeSinceStartup - timeSinceLastMessage > MESSAGE_FREQUENCY)
                 {
-                    ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, userEntity.Read<User>(), message);
+                    var fixedMsg = new FixedString512Bytes(message);
+                    ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, userEntity.Read<User>(), ref fixedMsg);
                     timeSinceLastMessage = Time.realtimeSinceStartup;
                     return true;
                 }
@@ -501,7 +505,11 @@ namespace KindredSchematics.Services
                 dependentGroups.Add(i, new List<int> { i });
             }
 
-            var dependencies = schematic.entities.Select(x => ComponentSaver.ComponentSaver.GetDependencies(x.componentData)).ToArray();
+            var dependencies = schematic.entities
+                                        .Select((x, index) => ComponentSaver.ComponentSaver.GetDependencies(x.componentData)
+                                            .Where(depIndex => depIndex != index+1)
+                                            .ToArray())
+                                        .ToArray();
 
             // Grouping entities that are dependent on each other into groups that load together
             for (var i = 0; i < schematic.entities.Length; ++i)
@@ -568,11 +576,44 @@ namespace KindredSchematics.Services
                             entityGroupToLoad.Add(i);
                 }
 
+                // Check to see if this group has a TransitionWhenInventoryIsEmpty in it and then skip it but say they are loaded
+                var invalidGroup = false;
+                foreach (var i in entityGroupToLoad)
+                {
+                    var entityData = schematic.entities[i];
+                    if (!Core.PrefabCollection._PrefabLookupMap.TryGetValue(entityData.prefab, out var prefab))
+                    {
+                        Core.Log.LogWarning($"Missing prefab {entityData.prefab.GuidHash} so not loading Entity group with {string.Join(", ", entityGroupToLoad.Select(x => x.ToString()))}");
+                        invalidGroup = true;
+                        break;
+                    }
+
+                    if (prefab.Has<TransitionWhenInventoryIsEmpty>())
+                    {
+                        Core.Log.LogWarning($"Can't spawn in {i} as {entityData.prefab.LookupName()} as it has TransitionWhenInventoryIsEmpty on it so not loading Entity group with {string.Join(", ", entityGroupToLoad.Select(x => x.ToString()))}");
+                        invalidGroup = true;
+                        break;
+                    }
+                }
+
+                var missingDependents = dependencies[entityGroupToLoad[0]].Where(x => createdEntities[x] == Entity.Null && !entityGroupToLoad.Contains(x));
+                if (missingDependents.Any())
+                {
+                    Core.Log.LogWarning($"Missing dependents for Entity group with {string.Join(", ", entityGroupToLoad.Select(x => x.ToString()))} so unable to spawn because of missing " +
+                                        $"{String.Join(",", missingDependents.Select(x => $"{x} ({schematic.entities[x].prefab.LookupName()})"))}");
+                    invalidGroup = true;
+                }
+
                 foreach (var i in entityGroupToLoad)
                 {
                     entitiesLoaded.Add(i);
                     entitiesLoadedThisFrame++;
+                }
 
+                if (invalidGroup) continue;
+
+                foreach (var i in entityGroupToLoad)
+                {
                     var entityData = schematic.entities[i];
 
                     if (entityData.prefab.GuidHash == 0)
@@ -580,6 +621,7 @@ namespace KindredSchematics.Services
 
                     if (Core.PrefabCollection._PrefabLookupMap.TryGetValue(entityData.prefab, out var prefab))
                     {
+                        Core.Log.LogInfo($"Spawning {i} as {entityData.prefab.LookupName()}");
                         Entity entity = SpawnEntity(userEntity, translation, entityData, prefab);
 
                         var territoryIndex = Helper.GetEntityTerritoryIndex(entity);
@@ -703,6 +745,8 @@ namespace KindredSchematics.Services
                     if (entity.Equals(Entity.Null))
                         continue;
 
+                    Core.Log.LogInfo($"Modifying {i} which is {diff.prefab.LookupName()}");
+
                     ComponentSaver.ComponentSaver.ApplyComponentData(entity, diff.componentData, createdEntities);
                     ComponentSaver.ComponentSaver.ApplyRemovals(entity, diff.removals);
                 }
@@ -711,15 +755,34 @@ namespace KindredSchematics.Services
                 {
                     Core.Log.LogInfo($"{GetElapseTime():f4} Loaded {entitiesLoadedThisFrame} entities this frame for {100 * (float)entitiesLoaded.Count / (float)schematic.entities.Length:F1}% complete");
                     MessageUser($"Loading {100 * (float)entitiesLoaded.Count / (float)schematic.entities.Length:F1}% complete");
-                    yield return new WaitForSeconds(1);
+                    yield return new WaitForSeconds(1f);
                     entitiesLoadedThisFrame = 0;
                     lastYieldTime = Time.realtimeSinceStartup;
                 }
             } while (entitiesLoaded.Count < schematic.entities.Length);
 
             Core.Log.LogInfo($"{GetElapseTime():f4} Finished Loading Schematic");
-            ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, userEntity.Read<User>(), $"Finished Loading Schematic");
+            var message = new FixedString512Bytes("Finished Loading Schematic");
+            ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, userEntity.Read<User>(), ref message);
             Core.RespawnPrevention.AllowRespawns();
+
+            if (PrefabGUIDConverter.missingPrefabs.Count > 0)
+            {
+                var sb = new StringBuilder("Missing prefabs that could be remapped\n");
+                foreach(var missingPrefab in PrefabGUIDConverter.missingPrefabs.OrderBy(x => x))
+                {
+                    if (sb.Length + missingPrefab.Length > 500)
+                    {
+                        message = new FixedString512Bytes(sb.ToString());
+                        ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, userEntity.Read<User>(), ref message);
+                        sb.Clear();
+                    }
+                    sb.AppendLine(missingPrefab);
+                }
+                message = new FixedString512Bytes(sb.ToString());
+                ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, userEntity.Read<User>(), ref message);
+                PrefabGUIDConverter.missingPrefabs.Clear();
+            }
         }
 
         public void SetFallbackCastleHeart(Entity charEntity, Entity castleHeartEntity, bool ownerDoors=false, bool ownerChests=false)
@@ -787,6 +850,7 @@ namespace KindredSchematics.Services
             if (fallbackHeart.TryGetValue(charEntity, out var heartInfo))
             {
                 castleHeartEntity = heartInfo.CastleHeart;
+                MakeHeartUsableEverywhere(castleHeartEntity);
                 ownerDoors = heartInfo.OwnerDoors;
                 ownerChests = heartInfo.OwnerChests;
                 return;
@@ -801,8 +865,27 @@ namespace KindredSchematics.Services
                     if (allyEntity.Has<CastleTeamData>())
                     {
                         castleHeartEntity = allyEntity.Read<CastleTeamData>().CastleHeart;
+                        MakeHeartUsableEverywhere(castleHeartEntity);
                         break;
                     }
+                }
+            }
+
+            static void MakeHeartUsableEverywhere(Entity heartEntity)
+            {
+                if (heartEntity == Entity.Null) return;
+
+                if (heartEntity.Has<SyncBoundingBox>()) heartEntity.Remove<SyncBoundingBox>();
+                if (!heartEntity.Has<SyncToUserBitMask>())
+                {
+                    heartEntity.Add<SyncToUserBitMask>();
+                    heartEntity.Write(new SyncToUserBitMask()
+                    {
+                        Value = new UserBitMask128()
+                        {
+                            _Value = new int4(-1, -1, -1, -1)
+                        }
+                    });
                 }
             }
         }
@@ -810,6 +893,10 @@ namespace KindredSchematics.Services
         private static Entity SpawnEntity(Entity userEntity, Vector3 translation, EntityData diff, Entity prefab)
         {
             var entity = Core.EntityManager.Instantiate(prefab);
+
+            // Mark this entity as spawned with KindredSchematics
+            entity.Add<PhysicsCustomTags>();
+
             if (diff.pos.HasValue)
             {
                 if (!entity.Has<Translation>())

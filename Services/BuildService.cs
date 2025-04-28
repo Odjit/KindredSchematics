@@ -7,8 +7,10 @@ using Stunlock.Core;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Physics;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -216,6 +218,7 @@ class BuildService
         }
 
         var targetEntity = Core.EntityManager.Instantiate(prefab);
+        targetEntity.Add<PhysicsCustomTags>();
         playerGrabData.Add(charEntity, new GrabData
         {
             TargetEntity = targetEntity,
@@ -239,6 +242,7 @@ class BuildService
             if (grabData.TargetEntity.Has<StaticTransformCompatible>())
             {
                 var actualPlacement = Core.EntityManager.Instantiate(lastPrefabEntity[charEntity]);
+                actualPlacement.Add<PhysicsCustomTags>();
 
                 var translation = grabData.TargetEntity.Read<Translation>();
                 var rotation = grabData.TargetEntity.Read<Rotation>();
@@ -421,8 +425,8 @@ class BuildService
         var palette = GrabPalette(charEntity);
         if (palette.Count == 0)
         {
-            ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, charEntity.Read<PlayerCharacter>().UserEntity.Read<User>(),
-                               "<color=orange>Build palette</color> is <color=red>empty</color>.");
+            var emptyMessage = new FixedString512Bytes("<color=orange>Build palette</color> is <color=red>empty</color>.");
+            ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, charEntity.Read<PlayerCharacter>().UserEntity.Read<User>(), ref emptyMessage);
             return;
         }
 
@@ -435,8 +439,8 @@ class BuildService
         SetCursor(charEntity, palette[index]);
 
         var user = charEntity.Read<PlayerCharacter>().UserEntity.Read<User>();
-        ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, user,
-            $"<color=orange>Switched to </color><color=green>{palette[index].Read<PrefabGUID>().LookupName()}</color> (<color=white>{index + 1}</color>/<color=yellow>{palette.Count}</color>)");
+        var message = new FixedString512Bytes($"<color=orange>Switched to </color><color=green>{palette[index].Read<PrefabGUID>().LookupName()}</color> (<color=white>{index + 1}</color>/<color=yellow>{palette.Count}</color>)");
+        ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, user, ref message);
     }
 
     public void RetreatThroughPalette(Entity charEntity)
@@ -444,8 +448,8 @@ class BuildService
         var palette = GrabPalette(charEntity);
         if (palette.Count == 0)
         {
-            ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, charEntity.Read<PlayerCharacter>().UserEntity.Read<User>(),
-                               "<color=orange>Build palette</color> is <color=red>empty</color>.");
+            var emptyMessage = new FixedString512Bytes("<color=orange>Build palette</color> is <color=red>empty</color>.");
+            ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, charEntity.Read<PlayerCharacter>().UserEntity.Read<User>(), ref emptyMessage);
             return;
         }
 
@@ -459,8 +463,8 @@ class BuildService
         SetCursor(charEntity, palette[index]);
 
         var user = charEntity.Read<PlayerCharacter>().UserEntity.Read<User>();
-        ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, user,
-            $"<color=orange>Switched to </color><color=green>{palette[index].Read<PrefabGUID>().LookupName()}</color> (<color=white>{index + 1}</color>/<color=yellow>{palette.Count}</color>)");
+        var message = new FixedString512Bytes($"<color=orange>Switched to </color><color=green>{palette[index].Read<PrefabGUID>().LookupName()}</color> (<color=white>{index + 1}</color>/<color=yellow>{palette.Count}</color>)");
+        ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, user, ref message);
     }
 
     public void ClearPalette(Entity charEntity)
@@ -518,17 +522,17 @@ class BuildService
 
     static void MoveTargetToCharacterCursor(Entity charEntity, Entity targetEntity)
     {
-        var aimPos = charEntity.Read<EntityAimData>().AimPosition;
+        var aimPos = charEntity.Read<EntityAimData>().AimPositionPlane;
 
         if (targetEntity.Has<StaticTransformCompatible>())
         {
             var stc = targetEntity.Read<StaticTransformCompatible>();
             stc.UseStaticTransform = false;
             stc.NonStaticTransform_Pos = new Vector2(aimPos.x, aimPos.z);
-            stc.NonStaticTransform_Height = aimPos.y;
+            stc.NonStaticTransform_Height = Mathf.Floor(aimPos.y);
             targetEntity.Write(stc);
         }
-        targetEntity.Write(new Translation { Value = aimPos });
+        targetEntity.Write(new Translation { Value = new Vector3(aimPos.x, Mathf.Floor(aimPos.y), aimPos.z) });
     }
 
     void StartPlayerSelection(Entity charEntity)

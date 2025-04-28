@@ -1,5 +1,6 @@
 ﻿using KindredSchematics.Services;
 using ProjectM.CastleBuilding;
+using ProjectM.Network;
 using Stunlock.Core;
 using System.Linq;
 using System.Text.Json;
@@ -70,7 +71,10 @@ internal class CastleBuildingAttachmentActiveBuffsBuffer_Saver : ComponentSaver
             if (applyBuff.Equals(default(CastleBuildingAttachmentApplyBuff)))
                 continue;
 
-            var eventEntity = Core.EntityManager.CreateEntity(ComponentType.ReadWrite<CastleBuildingAttachmentAddedEvent>());
+            var archetype = Core.EntityManager.CreateArchetype(new ComponentType[] {
+                ComponentType.ReadWrite<CastleBuildingAttachmentAddedEvent>(),
+            });
+            var eventEntity = Core.EntityManager.CreateEntity(archetype);
             eventEntity.Write(new CastleBuildingAttachmentAddedEvent()
             {
                 AttachTo = applyBuff.WhenMatchesTypes,

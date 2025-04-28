@@ -1,6 +1,5 @@
 ﻿using ProjectM;
 using Stunlock.Core;
-using Stunlock.Localization;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,7 +7,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Unity.Collections;
-using Unity.Entities.UniversalDelegates;
 using VampireCommandFramework;
 
 namespace KindredSchematics.Commands.Converter;
@@ -75,8 +73,9 @@ public class FoundBuffConverter : CommandArgumentConverter<FoundBuff>
 
                     if (skipBuffs.Contains(prefabGuid)) continue;
 
-                    if (Core.PrefabCollection._PrefabGuidToEntityMap.TryGetValue(prefabGuid, out var entity) && entity.Has<Buff>() && Core.PrefabCollection._PrefabGuidToNameDictionary.TryGetValue(prefabGuid, out var name))
+                    if (Core.PrefabCollection._PrefabGuidToEntityMap.TryGetValue(prefabGuid, out var entity) && entity.Has<Buff>())
                     {
+                        var name = Core.PrefabCollection._PrefabLookupMap.GetName(prefabGuid);
                         buffPrefabs[name] = prefabGuid;
                     }
                 }
@@ -115,8 +114,9 @@ public class FoundBuffConverter : CommandArgumentConverter<FoundBuff>
         try
         {
             var prefab = new PrefabGUID(int.Parse(input));
-            if(Core.PrefabCollection._PrefabGuidToEntityMap.TryGetValue(prefab, out var entity) && entity.Has<Buff>() && Core.PrefabCollection._PrefabGuidToNameDictionary.TryGetValue(prefab, out var name))
+            if(Core.PrefabCollection._PrefabGuidToEntityMap.TryGetValue(prefab, out var entity) && entity.Has<Buff>())
             {
+                var name = Core.PrefabCollection._PrefabLookupMap.GetName(prefab);
                 return new FoundBuff(prefab, name);
             }
         }

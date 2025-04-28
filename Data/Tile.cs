@@ -1,4 +1,5 @@
 ﻿using ProjectM;
+using ProjectM.CastleBuilding;
 using Stunlock.Core;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ internal static class Tile
 {
     public static void Populate()
     {
-        foreach (var (prefabGuid, name) in Core.PrefabCollection.PrefabGuidToNameDictionary)
+        foreach (var (name, prefabGuid) in Core.PrefabCollection.SpawnableNameToPrefabGuidDictionary)
         {
             if (!name.StartsWith("TM_")) continue;
 
@@ -23,6 +24,10 @@ internal static class Tile
 
             if (prefab1 != Entity.Null && prefab1.Has<TransitionWhenInventoryIsEmpty>() ||
                 prefab2 != Entity.Null && prefab2.Has<TransitionWhenInventoryIsEmpty>())
+                continue;
+
+            if (prefab1 != Entity.Null && prefab1.Has<CastleHeart>() ||
+                prefab2 != Entity.Null && prefab2.Has<CastleHeart>())
                 continue;
 
             Named[name] = prefabGuid;
@@ -44,6 +49,10 @@ internal static class Tile
 
             if (prefab1 != Entity.Null && prefab1.Has<TransitionWhenInventoryIsEmpty>() ||
                 prefab2 != Entity.Null && prefab2.Has<TransitionWhenInventoryIsEmpty>())
+                continue;
+
+            if (prefab1 != Entity.Null && prefab1.Has<CastleHeart>() ||
+                prefab2 != Entity.Null && prefab2.Has<CastleHeart>())
                 continue;
 
             Named[name] = prefabGuid;

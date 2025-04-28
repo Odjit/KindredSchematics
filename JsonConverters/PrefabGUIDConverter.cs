@@ -1,12 +1,13 @@
-﻿using ProjectM;
-using Stunlock.Core;
+﻿using Stunlock.Core;
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 
 namespace KindredSchematics.JsonConverters
 {
     public class PrefabGUIDConverter : System.Text.Json.Serialization.JsonConverter<PrefabGUID>
     {
+        public static readonly HashSet<string> missingPrefabs = [];
         public override PrefabGUID Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             if (reader.TokenType != JsonTokenType.String)
@@ -18,19 +19,20 @@ namespace KindredSchematics.JsonConverters
                 return PrefabGUID.Empty;
 
             var prefabName = reader.GetString();
+            prefabName = Core.PrefabRemap.GetPrefabMapping(prefabName);
 
-            if (!Core.PrefabCollection.NameToPrefabGuidDictionary.TryGetValue(prefabName, out var prefabGUID))
+            if (!Core.PrefabCollection.SpawnableNameToPrefabGuidDictionary.TryGetValue(prefabName, out var prefabGUID))
+            {
+                missingPrefabs.Add(prefabName);
                 return new PrefabGUID(0);
-                //throw new JsonException($"Invalid PrefabGUID name {prefabName}");
+            }
+
             return prefabGUID;
         }
 
         public override void Write(Utf8JsonWriter writer, PrefabGUID value, JsonSerializerOptions options)
         {
-            if (!Core.PrefabCollection._PrefabGuidToNameDictionary.TryGetValue(value, out var prefabName))
-                writer.WriteNullValue();
-            else
-                writer.WriteStringValue(prefabName);
+            writer.WriteStringValue(Core.PrefabCollection._PrefabLookupMap.GetName(value));
         }
     }
 }

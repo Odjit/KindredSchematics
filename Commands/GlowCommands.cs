@@ -14,6 +14,7 @@ using System.Text;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Physics;
 using Unity.Transforms;
 using UnityEngine;
 using VampireCommandFramework;
@@ -130,21 +131,18 @@ class GlowCommands
             ctx.Reply("Glow Library is disabled in the config and has to be manually edited to be reenabled");
             return;
         }
-        var dummyQueryDesc = new EntityQueryDesc
-        {
-            All = new ComponentType[] {
-                new(Il2CppType.Of<Health>(), ComponentType.AccessMode.ReadWrite),
-                new(Il2CppType.Of<ArmorLevel>(), ComponentType.AccessMode.ReadWrite),
-                new(Il2CppType.Of<CastleBuildingMaxRange>(), ComponentType.AccessMode.ReadWrite),
-                new(Il2CppType.Of<Translation>(), ComponentType.AccessMode.ReadWrite),
-                new(Il2CppType.Of<TilePosition>(), ComponentType.AccessMode.ReadWrite),
-                new(Il2CppType.Of<PrefabGUID>(), ComponentType.AccessMode.ReadWrite),
-            },
-            Options = EntityQueryOptions.IncludeDisabled
-        };
-        var dummyQuery = Core.EntityManager.CreateEntityQuery(dummyQueryDesc);
-        var entities = dummyQuery.ToEntityArray(Allocator.Temp);
 
+        var dummyQueryBuilder = new EntityQueryBuilder(Allocator.Temp)
+            .AddAll(new(Il2CppType.Of<Health>(), ComponentType.AccessMode.ReadWrite))
+            .AddAll(new(Il2CppType.Of<ArmorLevel>(), ComponentType.AccessMode.ReadWrite))
+            .AddAll(new(Il2CppType.Of<CastleBuildingMaxRange>(), ComponentType.AccessMode.ReadWrite))
+            .AddAll(new(Il2CppType.Of<Translation>(), ComponentType.AccessMode.ReadWrite))
+            .AddAll(new(Il2CppType.Of<TilePosition>(), ComponentType.AccessMode.ReadWrite))
+            .AddAll(new(Il2CppType.Of<PrefabGUID>(), ComponentType.AccessMode.ReadWrite))
+            .WithOptions(EntityQueryOptions.IncludeDisabled);
+        var dummyQuery = Core.EntityManager.CreateEntityQuery(ref dummyQueryBuilder);
+        
+        var entities = dummyQuery.ToEntityArray(Allocator.Temp);
         foreach(var entity in entities)
         {
             if (entity.Read<PrefabGUID>()._Value != 230163020) continue;
@@ -184,6 +182,9 @@ class GlowCommands
         {
             var dummyToAdd = Core.EntityManager.Instantiate(targetDummyPrefab);
             var foundation = Core.EntityManager.Instantiate(foundationPrefab);
+
+            dummyToAdd.Add<PhysicsCustomTags>();
+            foundation.Add<PhysicsCustomTags>();
 
             // Place the dummy in a spiral grid pattern
             var dummyPos = pos + new float3(x * 5f, 0, y * 5f);

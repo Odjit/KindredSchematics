@@ -129,17 +129,11 @@ class RespawnPreventionService
 
     IEnumerator KeepFromRespawning()
     {
-        EntityQueryDesc autoChainQueryDesc = new()
-        {
-            All = new ComponentType[] { new(Il2CppType.Of<AutoChainInstanceData>(), ComponentType.AccessMode.ReadWrite) }
-        };
-        var autoChainQuery = Core.EntityManager.CreateEntityQuery(autoChainQueryDesc);
+        var autoChainQueryBuilder = new EntityQueryBuilder(Allocator.Temp).AddAll(new(Il2CppType.Of<AutoChainInstanceData>(), ComponentType.AccessMode.ReadWrite));
+        var autoChainQuery = Core.EntityManager.CreateEntityQuery(ref autoChainQueryBuilder);
 
-        EntityQueryDesc spawnRegionQueryDesc = new()
-        {
-            All = new ComponentType[] { new(Il2CppType.Of<SpawnRegion>(), ComponentType.AccessMode.ReadWrite) }
-        };
-        var spawnRegionQuery = Core.EntityManager.CreateEntityQuery(spawnRegionQueryDesc);
+        var spawnRegionQueryBuilder = new EntityQueryBuilder(Allocator.Temp).AddAll(new(Il2CppType.Of<SpawnRegion>(), ComponentType.AccessMode.ReadWrite));
+        var spawnRegionQuery = Core.EntityManager.CreateEntityQuery(ref spawnRegionQueryBuilder);
 
         while (preventRespawns)
         {

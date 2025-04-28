@@ -290,11 +290,12 @@ The Palette System offers a powerful toolset for managing prefabs with ease:
   - Teleports you down a floor or specified number of floors.
   - Shortcut: `.fd (NumberofFloors)`
 
-	
-
-  
   
 ## Eventual To-Do/Possible features
 - Come find out in the V Rising Modding Discord!
+- 
+## Credits
+- Thanks to [Mfoltz](https://github.com/mfoltz) for the original build mode idea in VCreate and for his consultation on ability replacement/spatial lookups.
 
-This mod is licensed under the AGPL-3.0 license.
+- 
+- This mod is licensed under the AGPL-3.0 license.

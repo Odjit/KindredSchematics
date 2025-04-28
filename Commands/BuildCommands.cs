@@ -9,6 +9,7 @@ using Stunlock.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
@@ -103,7 +104,8 @@ namespace KindredSchematics.Commands
 
             if (BuildingPlacementRestrictionsDisabledSetting.Value)
             {
-                ServerChatUtils.SendSystemMessageToAllClients(Core.EntityManager, "Building placement restrictions disabled. Respawns are also disabled <color=red>Cannot place castlehearts.</color>");
+                var message = new FixedString512Bytes("Building placement restrictions disabled. Respawns are also disabled <color=red>Cannot place castlehearts.</color>");
+                ServerChatUtils.SendSystemMessageToAllClients(Core.EntityManager, ref message);
             }
             else
             {
@@ -197,6 +199,7 @@ namespace KindredSchematics.Commands
             var rot = ctx.Event.SenderCharacterEntity.Read<Rotation>().Value;
 
             var entity = Core.EntityManager.Instantiate(prefab);
+            entity.Add<PhysicsCustomTags>();
             entity.Write(new Translation { Value = spawnPos });
             entity.Write(new Rotation { Value = rot });
 
@@ -204,7 +207,7 @@ namespace KindredSchematics.Commands
             {
                 var tilePos = entity.Read<TilePosition>();
                 // Get rotation around Y axis
-                var euler = rot.ToEulerAngles();
+                var euler = new Quaternion(rot.value.x, rot.value.y, rot.value.z, rot.value.w).eulerAngles;
                 tilePos.TileRotation = (TileRotation)(Mathf.Floor((360 - math.degrees(euler.y) - 45) / 90) % 4);
                 entity.Write(tilePos);
 
@@ -593,6 +596,30 @@ namespace KindredSchematics.Commands
 
             Core.BuildService.SetCursor(ctx.Event.SenderCharacterEntity, prefab);
             ctx.Reply($"Set cursor to {tile.Value.LookupName()}");
+        }
+
+        [Command("teleporters", adminOnly: true)]
+        public static void TeleportersEveryone(ChatCommandContext ctx)
+        {
+
+            SyncToUserBitMask all = new();
+            all.Value._Value = new int4(-1, -1, -1, -1);
+
+            var teleportEntities = Helper.GetEntitiesByComponentType<CastleTeleporterComponent>(includeDisabled: true);
+            foreach (var teleportEntity in teleportEntities)
+            {
+                if (!teleportEntity.Has<SyncToUserBitMask>())
+                    teleportEntity.Add<SyncToUserBitMask>();
+                if (teleportEntity.Has<DisableWhenNoPlayersInRange>())
+                    teleportEntity.Remove<DisableWhenNoPlayersInRange>();
+                if (!Core.EntityManager.IsEnabled(teleportEntity))
+                {
+                    Core.EntityManager.SetEnabled(teleportEntity, true);
+                    if (teleportEntity.Has<DisabledDueToNoPlayersInRange>())
+                        teleportEntity.Remove<DisabledDueToNoPlayersInRange>();
+                }
+                teleportEntity.Write(all);
+            }
         }
     }
 }

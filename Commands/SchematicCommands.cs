@@ -1,9 +1,11 @@
 ﻿using ProjectM;
+using ProjectM.Shared;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Physics;
 using Unity.Transforms;
 using VampireCommandFramework;
 
@@ -38,11 +40,11 @@ namespace KindredSchematics.Commands
         }
 
         [Command("save", "s", description: "Saves the current area to a schematic", adminOnly: true)]
-        public static void SaveSchematic(ChatCommandContext ctx, string schematicName, float radius=5)
+        public static void SaveSchematic(ChatCommandContext ctx, string schematicName, float radius = 5)
         {
             var userEntity = ctx.Event.SenderUserEntity;
             var userPos = userEntity.Read<Translation>().Value;
-            
+
             Core.SchematicService.SaveSchematic(schematicName, userPos, radius: radius);
             ctx.Reply($"Saved schematic {schematicName}");
         }
@@ -76,7 +78,7 @@ namespace KindredSchematics.Commands
         }
 
         [Command("saveterritory", "st", description: "Saves the current/specified territory to a schematic", adminOnly: true)]
-        public static void SaveTerritorySchematic(ChatCommandContext ctx, string schematicName, int? territoryIndex=null)
+        public static void SaveTerritorySchematic(ChatCommandContext ctx, string schematicName, int? territoryIndex = null)
         {
             if (territoryIndex == null)
             {
@@ -95,7 +97,7 @@ namespace KindredSchematics.Commands
         }
 
         [Command("load", "l", description: "Loads a schematic", adminOnly: true)]
-        public static void LoadSchematic(ChatCommandContext ctx, string schematicName, float expandClear=0)
+        public static void LoadSchematic(ChatCommandContext ctx, string schematicName, float expandClear = 0)
         {
             var failReason = Core.SchematicService.LoadSchematic(schematicName, ctx.Event.SenderUserEntity, ctx.Event.SenderCharacterEntity, expandClear);
             if (failReason == null)
@@ -113,7 +115,7 @@ namespace KindredSchematics.Commands
         }
 
         [Command("loadatpos", "lp", description: "Loads a schematic where you are standing", adminOnly: true)]
-        public static void LoadSchematicAtPosition(ChatCommandContext ctx, string schematicName, float expandClear=1, float heightOffset=0)
+        public static void LoadSchematicAtPosition(ChatCommandContext ctx, string schematicName, float expandClear = 1, float heightOffset = 0)
         {
             var failReason = Core.SchematicService.LoadSchematic(schematicName, ctx.Event.SenderUserEntity, ctx.Event.SenderCharacterEntity, expandClear,
                 ctx.Event.SenderCharacterEntity.Read<Translation>().Value + new float3(0, heightOffset, 0));
@@ -161,6 +163,68 @@ namespace KindredSchematics.Commands
             {
                 ctx.Reply("Placing on the grid");
             }
+        }
+
+        [Command("remap", description: "Remaps one prefab to another for loading schematics", adminOnly: true)]
+        public static void Remap(ChatCommandContext ctx, string sourcePrefabName, string targetPrefabName)
+        {
+            // Validate the target name
+            if (!Core.PrefabCollection._SpawnableNameToPrefabGuidDictionary.ContainsKey(targetPrefabName))
+            {
+                ctx.Reply($"Target prefab name {targetPrefabName} isn't a valid prefab");
+                return;
+            }
+
+            Core.PrefabRemap.AddPrefabMapping(sourcePrefabName, targetPrefabName);
+            ctx.Reply($"Prefab '{sourcePrefabName}' will now be loaded as {targetPrefabName}");
+        }
+
+        [Command("removeremap", description: "Removes a single specified remap", adminOnly: true)]
+        public static void RemoveRemap(ChatCommandContext ctx, string remapPrefabName)
+        {
+            if (Core.PrefabRemap.RemovePrefabMapping(remapPrefabName))
+            {
+                ctx.Reply("Removed remap for " + remapPrefabName);
+            }
+            else
+            {
+                ctx.Reply("There wasn't a prefab remap for " + remapPrefabName);
+            }
+        }
+
+        [Command("clearremaps", description: "Clears all prefab remappings", adminOnly: true)]
+        public static void ClearRemaps(ChatCommandContext ctx)
+        {
+            Core.PrefabRemap.ClearMappings();
+            ctx.Reply("Prefab remappings all cleared.");
+        }
+
+        [Command("listremaps", description: "List all prefab remappings", adminOnly: true)]
+        public static void ListRemaps(ChatCommandContext ctx)
+        {
+            var i = 0;
+            var sb = new StringBuilder("Prefab Remaps");
+            foreach (var mapping in Core.PrefabRemap.GetMappings())
+            {
+                sb.AppendLine($"{mapping.Key} -> {mapping.Value}");
+                if (++i == 7)
+                {
+                    ctx.Reply(sb.ToString());
+                    sb.Clear();
+                    i = 0;
+                }
+            }
+        }
+
+        [Command("deleteallschematicentities", description: "Delete all schematic spawned entities", adminOnly: true)]
+        public static void DeleteAllSchematicEntities(ChatCommandContext ctx)
+        {
+            var entitiesToDestroy = Helper.GetEntitiesByComponentType<PhysicsCustomTags>(includeDisabled: true);
+            foreach (var entity in entitiesToDestroy)
+            {
+                DestroyUtility.Destroy(Core.EntityManager, entity);
+            }
+            ctx.Reply($"All {entitiesToDestroy.Length} schematic spawned entities marked for deletion");
         }
     }
 }

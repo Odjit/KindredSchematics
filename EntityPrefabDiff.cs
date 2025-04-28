@@ -1,5 +1,6 @@
 ﻿using Il2CppInterop.Runtime;
 using ProjectM;
+using ProjectM.Gameplay.Systems;
 using Stunlock.Core;
 using System.Collections.Generic;
 using System.Linq;

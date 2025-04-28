@@ -23,7 +23,8 @@ static class PlaceTileModelSystemPatch
             {
                 var fromCharacter = buildEvent.Read<FromCharacter>();
                 var user = fromCharacter.User.Read<User>();
-                ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, user, "Can't place Castle Hearts while build restrictions are disabled.");
+                var message = new FixedString512Bytes("Can't place Castle Hearts while build restrictions are disabled.");
+                ServerChatUtils.SendSystemMessageToClient(Core.EntityManager, user, ref message);
                 buildEvent.Add<Disabled>();
                 Core.EntityManager.DestroyEntity(buildEvent);
                 DestroyUtility.CreateDestroyEvent(Core.EntityManager, buildEvent, DestroyReason.Default, DestroyDebugReason.ByScript);
