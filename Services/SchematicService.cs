@@ -515,7 +515,8 @@ namespace KindredSchematics.Services
             for (var i = 0; i < schematic.entities.Length; ++i)
             {
                 var group = dependentGroups[i];
-                foreach (var dependentOn in dependencies[i])
+                var curDependencies = dependencies[i][..]; // Copy as we are modifying the dependencies
+                foreach (var dependentOn in curDependencies)
                 {
                     var dependentIndex = dependentOn - 1;
 
@@ -534,7 +535,7 @@ namespace KindredSchematics.Services
 
                         var newDependencies = dependencies[dependentIndex]
                                                 .Union(dependencies[i])
-                                                .Where(x => x != (i + 1) && x != dependentOn)
+                                                .Where(x => !group.Contains(x-1))
                                                 .ToArray();
 
                         foreach (var k in group)
@@ -553,7 +554,7 @@ namespace KindredSchematics.Services
                 var time = Core.ServerTime;
 
                 List<int> entityGroupToLoad = [];
-                for (var i = 0; i < schematic.entities.Length; ++i)
+                for (var i = schematic.entities.Length - 1; i >= 0; --i)
                 {
                     if (entitiesLoaded.Contains(i))
                         continue;

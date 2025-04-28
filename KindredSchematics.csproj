@@ -200,6 +200,6 @@
 		<Reference Include="__Generated" HintPath="..\interop\__Generated.dll" />
 	</ItemGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Exec Command="copy &quot;$(TargetPath)&quot; &quot;C:\Program Files (x86)\Steam\steamapps\common\VRisingBeta\VRising_Server\BepInEx\plugins&quot; " ContinueOnError="true" />
+		<Exec Command="copy &quot;$(TargetPath)&quot; &quot;C:\Program Files (x86)\Steam\steamapps\common\VRisingDedicatedServer\BepInEx\plugins&quot; " ContinueOnError="true" />
 	</Target>
 </Project>

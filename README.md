@@ -94,7 +94,7 @@ The Palette System offers a powerful toolset for managing prefabs with ease:
 
 - `.build check`  
   - Checks the tile you are looking at for a prefab name.  
-  - This will only fetch an entity’s prefab—if it is not a placeable entity you won’t get a read on it. (invalid models)
+  - This will only fetch an entity's prefab—if it is not a placeable entity you won't get a read on it. (invalid models)
 
 - `.build delete`  
   - Deletes the tile model you are looking at.
@@ -129,6 +129,9 @@ The Palette System offers a powerful toolset for managing prefabs with ease:
 
 - `.build settings`  
   - Shows the current settings for the `.build` commands — current heart, and what doors/chests will be placed as.
+
+- `.build teleporters`  
+  - Makes all teleporters able to traverse any distance across the world (WIP not optimal how it works currently)
 
 ### Palette Commands
 
@@ -191,11 +194,11 @@ The Palette System offers a powerful toolset for managing prefabs with ease:
   - Shortcut: `.modt moveunlockterritory (territoryIndex)`
 
 - `.modifytile immortal`  
-  - Makes the tile you are looking at immortal (can’t be broken).  
+  - Makes the tile you are looking at immortal (can't be broken).  
   - Shortcut: `.modt immortal`
 
 - `.modifytile immortalrange (radius)`  
-  - Makes all tiles in a radius immortal (can’t be broken).  
+  - Makes all tiles in a radius immortal (can't be broken).  
   - Shortcut: `.modt immortalrange (radius)`  
   - Alias: `.modt ir (radius)`
 
@@ -240,6 +243,16 @@ The Palette System offers a powerful toolset for managing prefabs with ease:
   - Shortcut: `.sc la (schematicName) (x) (y) (z) (expandclear=1)`
 - `.schematic toggleplacegrid`
   - on = will attempt to paste in any schematic along grid lines or off grid will allow for offgrid (and thus, misaligned) placement.
+- `.schematic remap (sourcePrefabName) (targetPrefabName)`
+  - Remaps one prefab to another for loading schematics.
+- `.schematic removeremap (remapPrefabName)`
+  - Removes a single specified remap.
+- `.schematic clearremaps`
+  - Clears all prefab remappings.
+- `.schematic listremaps`
+  - Lists all prefab remappings.
+- `.schematic deleteallschematicentities`
+  - Deletes all schematic spawned entities.
 
 ### HeartLimit Commands
 - `.heartlimit floorcount (#)`
