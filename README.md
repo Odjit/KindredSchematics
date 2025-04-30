@@ -42,10 +42,10 @@ Sneak Peek for **Build Mode** and **Palette System** aimed at making constructio
 ### Palette System
 
 The Palette System offers a powerful toolset for managing prefabs with ease:
-- **Adding Prefabs to Palette** (`.palette add`) – Search for and add prefabs to your palette for easy access.
-- **Removing Prefabs from Palette** (`.palette remove`) – Remove unwanted prefabs from your palette.
-- **Listing Palette Contents** (`.palette list`) – Display all prefabs currently stored in your palette.
-- **Clearing Palette** (`.palette clear`) – Wipe the palette clean and start fresh.
+- **Adding Prefabs to Palette** (`.palette add`) - Search for and add prefabs to your palette for easy access.
+- **Removing Prefabs from Palette** (`.palette remove`) - Remove unwanted prefabs from your palette.
+- **Listing Palette Contents** (`.palette list`) - Display all prefabs currently stored in your palette.
+- **Clearing Palette** (`.palette clear`) - Wipe the palette clean and start fresh.
 - **Cycling Through Palette**: While in Build Mode, use **C** and **T** to cycle backwards and forwards through your current palette respectively.
 
 
@@ -94,7 +94,7 @@ The Palette System offers a powerful toolset for managing prefabs with ease:
 
 - `.build check`  
   - Checks the tile you are looking at for a prefab name.  
-  - This will only fetch an entity's prefab—if it is not a placeable entity you won't get a read on it. (invalid models)
+  - This will only fetch an entity's prefab-if it is not a placeable entity you won't get a read on it. (invalid models)
 
 - `.build delete`  
   - Deletes the tile model you are looking at.
@@ -128,7 +128,7 @@ The Palette System offers a powerful toolset for managing prefabs with ease:
   - Any chests you place will belong to your fallback heart (normal chest behavior).
 
 - `.build settings`  
-  - Shows the current settings for the `.build` commands — current heart, and what doors/chests will be placed as.
+  - Shows the current settings for the `.build` commands - current heart, and what doors/chests will be placed as.
 
 - `.build teleporters`  
   - Makes all teleporters able to traverse any distance across the world (WIP not optimal how it works currently)
