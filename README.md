@@ -1,6 +1,8 @@
 ![](logo.png)
 # KindredSchematics for V Rising
 KindredSchematics is a build mod meant for use on offline maps, with capabilities to load into live maps for new creative opportunities.
+   - **Note:** Until BepInEx is updated for 1.1, please do not use the thunderstore version. Get the correct testing version https://wiki.vrisingmods.com/user/game_update.html.
+
 
 This mod will allow you to take building to another level- literally.
 Save out castles or designs, and load them into other maps. Share your castle designs with friends.
