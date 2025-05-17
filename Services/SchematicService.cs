@@ -161,6 +161,9 @@ namespace KindredSchematics.Services
                 if (entity.Has<RoofTileData>())
                     return false;
 
+                if (entity.Has<ChunkWaypoint>() && !entity.Has<BlueprintData>())
+                    return false;
+
                 var prefabGUID = entity.Read<PrefabGUID>();
 
                 // For some reason this prefab is missing the correct stuff on the server
