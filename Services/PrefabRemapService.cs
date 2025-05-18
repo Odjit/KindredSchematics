@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Utilities;
+using Newtonsoft.Json.Utilities;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -61,7 +61,13 @@ class PrefabRemapService
 
     void LoadMappings()
     {
-        if (!File.Exists(PREFAB_REMAP_PATH)) return;
+        if (!File.Exists(PREFAB_REMAP_PATH))
+        {
+            // Default mappings
+            AddPrefabMapping("TM_Castle_ObjectDecor_Table_3x3_Cabal01", "TM_Castle_Module_Parent_RoundTable_3x3_Cabal01");
+            AddPrefabMapping("TM_Castle_ObjectDecor_Table_10x6_Gothic01", "TM_Castle_Module_Parent_RectangularTable_10x6_Gothic01");
+            return;
+        }
 
         remap.Clear();
         var lines = File.ReadAllLines(PREFAB_REMAP_PATH);

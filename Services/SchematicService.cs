@@ -319,6 +319,8 @@ namespace KindredSchematics.Services
                 return $"Has an unsupported version '{schematic.version}' loading old versions is coming soon";
             }
 
+            Core.Log.LogInfo($"Loading Schematic {name}");
+
             Core.StartCoroutine(FinishLoadingSchematic(userEntity, charEntity, expandClear, newCenter, schematic));
 
             return null;
@@ -625,7 +627,7 @@ namespace KindredSchematics.Services
 
                     if (Core.PrefabCollection._PrefabLookupMap.TryGetValue(entityData.prefab, out var prefab))
                     {
-                        Core.Log.LogInfo($"Spawning {i} as {entityData.prefab.LookupName()}");
+                        //Core.Log.LogInfo($"Spawning {i} as {entityData.prefab.LookupName()}");
                         Entity entity = SpawnEntity(userEntity, translation, entityData, prefab);
 
                         var territoryIndex = Helper.GetEntityTerritoryIndex(entity);
@@ -749,7 +751,7 @@ namespace KindredSchematics.Services
                     if (entity.Equals(Entity.Null))
                         continue;
 
-                    Core.Log.LogInfo($"Modifying {i} which is {diff.prefab.LookupName()}");
+                    //Core.Log.LogInfo($"Modifying {i} which is {diff.prefab.LookupName()}");
 
                     ComponentSaver.ComponentSaver.ApplyComponentData(entity, diff.componentData, createdEntities);
                     ComponentSaver.ComponentSaver.ApplyRemovals(entity, diff.removals);
