@@ -1,4 +1,4 @@
-﻿using Il2CppInterop.Runtime;
+using Il2CppInterop.Runtime;
 using KindredSchematics.Commands.Converter;
 using ProjectM;
 using ProjectM.Behaviours;
@@ -184,12 +184,14 @@ class GlowCommands
             var foundation = Core.EntityManager.Instantiate(foundationPrefab);
 
             dummyToAdd.Add<PhysicsCustomTags>();
+            dummyToAdd.Add<Immortal>();
             foundation.Add<PhysicsCustomTags>();
 
             // Place the dummy in a spiral grid pattern
             var dummyPos = pos + new float3(x * 5f, 0, y * 5f);
 
             dummyToAdd.Write(new Translation { Value = dummyPos });
+            dummyToAdd.Write(new Immortal { IsImmortal = true });
             foundation.Write(new Translation { Value = dummyPos });
 
             entityAndBuff[dummyToAdd] = buffEntry.Value;
