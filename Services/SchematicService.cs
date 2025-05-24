@@ -164,6 +164,9 @@ namespace KindredSchematics.Services
                 if (entity.Has<ChunkWaypoint>() && !entity.Has<BlueprintData>())
                     return false;
 
+                if (entity.Has<ChunkPortal>())
+                    return false;
+
                 var prefabGUID = entity.Read<PrefabGUID>();
 
                 // For some reason this prefab is missing the correct stuff on the server
@@ -597,6 +600,20 @@ namespace KindredSchematics.Services
                     if (prefab.Has<TransitionWhenInventoryIsEmpty>())
                     {
                         Core.Log.LogWarning($"Can't spawn in {i} as {entityData.prefab.LookupName()} as it has TransitionWhenInventoryIsEmpty on it so not loading Entity group with {string.Join(", ", entityGroupToLoad.Select(x => x.ToString()))}");
+                        invalidGroup = true;
+                        break;
+                    }
+
+                    if (prefab.Has<ChunkPortal>())
+                    {
+                        Core.Log.LogWarning($"Can't spawn in {i} as {entityData.prefab.LookupName()} as it has ChunkPortal on it so not loading Entity group with {string.Join(", ", entityGroupToLoad.Select(x => x.ToString()))}");
+                        invalidGroup = true;
+                        break;
+                    }
+
+                    if (prefab.Has<ChunkWaypoint>() && !prefab.Has<BlueprintData>())
+                    {
+                        Core.Log.LogWarning($"Can't spawn in {i} as {entityData.prefab.LookupName()} as it has ChunkWaypoint on it so not loading Entity group with {string.Join(", ", entityGroupToLoad.Select(x => x.ToString()))}");
                         invalidGroup = true;
                         break;
                     }

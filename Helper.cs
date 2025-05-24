@@ -279,7 +279,7 @@ internal static partial class Helper
         entities.Dispose();
     }
 
-    public static void DestroyEntitiesForBuilding(IEnumerable<Entity> entities)
+    public static void DestroyEntitiesForBuilding(IEnumerable<Entity> entities, bool ignorePortalsAndWaygates = true)
 	{
 		foreach (var entity in entities)
 		{
@@ -290,6 +290,9 @@ internal static partial class Helper
             {
                 continue;
             }
+
+            if (ignorePortalsAndWaygates && (entity.Has<ChunkPortal>() || (entity.Has<ChunkWaypoint>() && !entity.Has<BlueprintData>())))
+                continue;
 
             DestroyEntityAndCastleAttachments(entity);
         }
@@ -342,7 +345,7 @@ internal static partial class Helper
         DestroyUtility.Destroy(Core.EntityManager, entity);
     }
 
-    public static Entity FindClosestTilePosition(Vector3 pos, bool ignoreFloors=false)
+    public static Entity FindClosestTilePosition(Vector3 pos, bool ignoreFloors=false, bool validBuildTilesOnly=false)
     {
         var spatialData = Core.GenerateCastle._TileModelLookupSystemData;
         var tileModelSpatialLookupRO = spatialData.GetSpatialLookupReadOnlyAndComplete(Core.GenerateCastle);
@@ -360,6 +363,8 @@ internal static partial class Helper
             if (!entity.Has<TilePosition>()) continue;
             if (!entity.Has<Translation>()) continue;
             if (ignoreFloors && entity.Has<CastleFloor>()) continue;
+            var prefabGuid = GetPrefabGUID(entity);
+            if (validBuildTilesOnly && !Tile.ValidPrefabsForBuilding.Contains(prefabGuid)) continue;
             var entityPos = entity.Read<Translation>().Value;
             var distance = math.distancesq(pos, entityPos);
             if (distance < closestDistance)

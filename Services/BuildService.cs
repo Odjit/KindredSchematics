@@ -1,4 +1,4 @@
-﻿using ProjectM;
+using ProjectM;
 using ProjectM.CastleBuilding;
 using ProjectM.Network;
 using ProjectM.Shared;
@@ -558,7 +558,7 @@ class BuildService
         while (true)
         {
             var aimPos = charEntity.Read<EntityAimData>().AimPosition;
-            var closest = Helper.FindClosestTilePosition(aimPos, true);
+            var closest = Helper.FindClosestTilePosition(aimPos, true, true);
 
             if (selectData.TargetEntity != closest)
             {

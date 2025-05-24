@@ -1,4 +1,4 @@
-﻿using ProjectM;
+using ProjectM;
 using ProjectM.CastleBuilding;
 using Stunlock.Core;
 using System;
@@ -26,6 +26,14 @@ internal static class Tile
                 prefab2 != Entity.Null && prefab2.Has<TransitionWhenInventoryIsEmpty>())
                 continue;
 
+            if (prefab1 != Entity.Null && prefab1.Has<ChunkWaypoint>() ||
+                prefab2 != Entity.Null && prefab2.Has<ChunkWaypoint>())
+                continue;
+
+            if (prefab1 != Entity.Null && prefab1.Has<ChunkPortal>() ||
+                prefab2 != Entity.Null && prefab2.Has<ChunkPortal>())
+                continue;
+
             if (prefab1 != Entity.Null && prefab1.Has<CastleHeart>() ||
                 prefab2 != Entity.Null && prefab2.Has<CastleHeart>())
                 continue;
@@ -33,6 +41,7 @@ internal static class Tile
             Named[name] = prefabGuid;
             NameFromPrefab[prefabGuid.GuidHash] = name;
             LowerCaseNameToPrefab[name.ToLower()] = prefabGuid;
+            ValidPrefabsForBuilding.Add(prefabGuid);
         }
 
         foreach (var (name, prefabGuid) in Core.PrefabCollection._SpawnableNameToPrefabGuidDictionary)
@@ -51,6 +60,14 @@ internal static class Tile
                 prefab2 != Entity.Null && prefab2.Has<TransitionWhenInventoryIsEmpty>())
                 continue;
 
+            if (prefab1 != Entity.Null && prefab1.Has<ChunkWaypoint>() ||
+                prefab2 != Entity.Null && prefab2.Has<ChunkWaypoint>())
+                continue;
+
+            if (prefab1 != Entity.Null && prefab1.Has<ChunkPortal>() ||
+                prefab2 != Entity.Null && prefab2.Has<ChunkPortal>())
+                continue;
+
             if (prefab1 != Entity.Null && prefab1.Has<CastleHeart>() ||
                 prefab2 != Entity.Null && prefab2.Has<CastleHeart>())
                 continue;
@@ -58,6 +75,7 @@ internal static class Tile
             Named[name] = prefabGuid;
             NameFromPrefab[prefabGuid.GuidHash] = name;
             LowerCaseNameToPrefab[name.ToLower()] = prefabGuid;
+            ValidPrefabsForBuilding.Add(prefabGuid);
         }
     }
 
@@ -65,5 +83,6 @@ internal static class Tile
     
     public static Dictionary<int, string> NameFromPrefab = [];
     public static Dictionary<string, PrefabGUID> LowerCaseNameToPrefab = [];
+    public static HashSet<PrefabGUID> ValidPrefabsForBuilding = [];
 
 }

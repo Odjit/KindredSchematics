@@ -1,4 +1,4 @@
-﻿using Il2CppSystem.Text;
+using Il2CppSystem.Text;
 using KindredSchematics.Commands.Converter;
 using KindredSchematics.Services;
 using ProjectM;
@@ -180,7 +180,7 @@ namespace KindredSchematics.Commands
             var prefabName = closest.Read<PrefabGUID>().LookupName();
             Core.Log.LogInfo($"{Time.realtimeSinceStartup - startTime} Deleting tile {prefabName}");
 
-            Helper.DestroyEntitiesForBuilding(new Entity[] { closest });
+            Helper.DestroyEntitiesForBuilding(new Entity[] { closest }, ignorePortalsAndWaygates: false);
             Core.Log.LogInfo($"{Time.realtimeSinceStartup - startTime} Deleted tile {prefabName}");
             ctx.Reply($"Deleted tile {prefabName}");
         }
