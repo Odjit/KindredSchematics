@@ -1,6 +1,5 @@
-﻿using Il2CppInterop.Runtime;
+using Il2CppInterop.Runtime;
 using ProjectM;
-using ProjectM.Gameplay.Systems;
 using Stunlock.Core;
 using System.Collections.Generic;
 using System.Linq;
@@ -72,7 +71,7 @@ namespace KindredSchematics
 
                 // Compare the two lists of components
                 var prefabIndex = 0;
-                for(var entityIndex = 0; entityIndex < entityComponents.Count; entityIndex++)
+                for(var entityIndex = 0; entityIndex < entityComponents.Count && prefabIndex < prefabComponents.Count; entityIndex++)
                 {
                     var entityComponent = entityComponents[entityIndex];
                     var prefabComponent = prefabComponents[prefabIndex];
