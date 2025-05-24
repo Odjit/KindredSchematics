@@ -1,4 +1,4 @@
-﻿using ProjectM;
+using ProjectM;
 using ProjectM.Shared;
 using System.Collections.Generic;
 using System.Linq;
@@ -225,6 +225,19 @@ namespace KindredSchematics.Commands
                 DestroyUtility.Destroy(Core.EntityManager, entity);
             }
             ctx.Reply($"All {entitiesToDestroy.Length} schematic spawned entities marked for deletion");
+        }
+
+        [Command("removeschematicrange", description: "Deletes all schematic spawned entities within a range", adminOnly: true)]
+        public static void RemoveSchematicRange(ChatCommandContext ctx, float range = 5)
+        {
+            var charEntity = ctx.Event.SenderCharacterEntity;
+            var charPos = charEntity.Read<Translation>().Value;
+            var entitiesToDestroy = Helper.GetAllEntitiesInRadius<PhysicsCustomTags>(charPos.xz, range).ToList();
+            foreach (var entity in entitiesToDestroy)
+            {
+                DestroyUtility.Destroy(Core.EntityManager, entity);
+            }
+            ctx.Reply($"Removed {entitiesToDestroy.Count} schematic spawned entities within {range}m");
         }
     }
 }
