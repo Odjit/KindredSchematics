@@ -58,6 +58,12 @@ class BuildService
     Dictionary<Entity, float> lastAction = [];
     const float ACTION_COOLDOWN = 0.2f;
 
+    Dictionary<Entity, bool> playerPlaneModeEnabled = [];
+    Dictionary<Entity, float> playerYOffset = [];
+    Dictionary<Entity, bool> playerXSnapEnabled = [];
+    Dictionary<Entity, bool> playerYSnapEnabled = [];
+    Dictionary<Entity, bool> playerZSnapEnabled = [];
+
     static ModifyUnitStatBuff_DOTS Cooldown = new()
     {
         StatType = UnitStatType.CooldownRecoveryRate,
@@ -510,6 +516,90 @@ class BuildService
         GrabPalette(charEntity).RemoveAll(x => prefabs.Contains(x));
     }
 
+    public bool TogglePlaneMode(Entity charEntity)
+    {
+        bool enabled = true;
+        if (playerPlaneModeEnabled.TryGetValue(charEntity, out var cur))
+        {
+            enabled = !cur;
+        }
+        playerPlaneModeEnabled[charEntity] = enabled;
+        return enabled;
+    }
+
+    public bool IsPlaneModeEnabled(Entity charEntity)
+    {
+        if (playerPlaneModeEnabled.TryGetValue(charEntity, out var enabled))
+            return enabled;
+        return true;
+    }
+
+    public float GetYOffset(Entity charEntity)
+    {
+        if (playerYOffset.TryGetValue(charEntity, out var offset))
+            return offset;
+        return 0f;
+    }
+
+    public void SetYOffset(Entity charEntity, float offset)
+    {
+        playerYOffset[charEntity] = offset;
+    }
+
+    public bool ToggleXSnapping(Entity charEntity)
+    {
+        if (!playerXSnapEnabled.TryGetValue(charEntity, out var isEnabled))
+        {
+            isEnabled = false;
+        }
+        
+        playerXSnapEnabled[charEntity] = !isEnabled;
+        return !isEnabled;
+    }
+
+    public bool IsXSnappingEnabled(Entity charEntity)
+    {
+        if (playerXSnapEnabled.TryGetValue(charEntity, out var enabled))
+            return enabled;
+        return false;
+    }
+
+    public bool ToggleYSnapping(Entity charEntity)
+    {
+        if (!playerYSnapEnabled.TryGetValue(charEntity, out var isEnabled))
+        {
+            isEnabled = true;
+        }
+        
+        playerYSnapEnabled[charEntity] = !isEnabled;
+        return !isEnabled;
+    }
+
+    public bool IsYSnappingEnabled(Entity charEntity)
+    {
+        if (playerYSnapEnabled.TryGetValue(charEntity, out var enabled))
+            return enabled;
+        return true;
+    }
+
+    public bool ToggleZSnapping(Entity charEntity)
+    {
+        if (!playerZSnapEnabled.TryGetValue(charEntity, out var isEnabled))
+        {
+            isEnabled = false;
+        }
+        
+        playerZSnapEnabled[charEntity] = !isEnabled;
+        return !isEnabled;
+    }
+
+    public bool IsZSnappingEnabled(Entity charEntity)
+    {
+        if (playerZSnapEnabled.TryGetValue(charEntity, out var enabled))
+            return enabled;
+        return false;
+    }
+
     static IEnumerator MoveCoroutine(Entity charEntity, Entity targetEntity)
     {
         var sleepYield = new WaitForSeconds(0.033f);
@@ -522,17 +612,27 @@ class BuildService
 
     static void MoveTargetToCharacterCursor(Entity charEntity, Entity targetEntity)
     {
-        var aimPos = charEntity.Read<EntityAimData>().AimPositionPlane;
+        var aimData = charEntity.Read<EntityAimData>();
+        bool usePlane = Core.BuildService.IsPlaneModeEnabled(charEntity);
+        var aimPos = usePlane ? aimData.AimPositionPlane : aimData.AimPosition;
+        bool snapXEnabled = Core.BuildService.IsXSnappingEnabled(charEntity);
+        bool snapYEnabled = Core.BuildService.IsYSnappingEnabled(charEntity);
+        bool snapZEnabled = Core.BuildService.IsZSnappingEnabled(charEntity);
+        float yOffset = Core.BuildService.GetYOffset(charEntity);
+
+        float x = snapXEnabled ? Mathf.Round(aimPos.x) : aimPos.x;
+        float y = snapYEnabled ? Mathf.Floor(aimPos.y) + yOffset : aimPos.y + yOffset;
+        float z = snapZEnabled ? Mathf.Round(aimPos.z) : aimPos.z;
 
         if (targetEntity.Has<StaticTransformCompatible>())
         {
             var stc = targetEntity.Read<StaticTransformCompatible>();
             stc.UseStaticTransform = false;
-            stc.NonStaticTransform_Pos = new Vector2(aimPos.x, aimPos.z);
-            stc.NonStaticTransform_Height = Mathf.Floor(aimPos.y);
+            stc.NonStaticTransform_Pos = new Vector2(x, z);
+            stc.NonStaticTransform_Height = y;
             targetEntity.Write(stc);
         }
-        targetEntity.Write(new Translation { Value = new Vector3(aimPos.x, Mathf.Floor(aimPos.y), aimPos.z) });
+        targetEntity.Write(new Translation { Value = new Vector3(x, y, z) });
     }
 
     void StartPlayerSelection(Entity charEntity)

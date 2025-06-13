@@ -562,6 +562,7 @@ namespace KindredSchematics.Commands
             var ownerName = "<None>";
             if (owner != Entity.Null)
                 ownerName = owner.Read<User>().CharacterName.ToString();
+
             ctx.Reply($"Fallback castle heart owned by {ownerName} set on territory {territoryIndex} at {fallbackHeartPos} ({distance}m away to the {stringDirections[direction]})\n{usingNeutralDoors}\n{usingNeutralChests}");
         }
 
@@ -596,6 +597,96 @@ namespace KindredSchematics.Commands
 
             Core.BuildService.SetCursor(ctx.Event.SenderCharacterEntity, prefab);
             ctx.Reply($"Set cursor to {tile.Value.LookupName()}");
+        }
+
+        [Command("ysnap", description: "Toggles Y-value snapping when placing objects in build mode", adminOnly: true)]
+        public static void ToggleBuildSnapping(ChatCommandContext ctx)
+        {
+            var charEntity = ctx.Event.SenderCharacterEntity;
+            bool isNowEnabled = Core.BuildService.ToggleYSnapping(charEntity);
+            
+            if (isNowEnabled)
+            {
+                ctx.Reply("Y-value snapping is now <color=green>enabled</color>");
+            }
+            else
+            {
+                ctx.Reply("Y-value snapping is now <color=red>disabled</color>");
+            }
+        }
+
+        [Command("plane", description: "Toggles using AimPositionPlane (default ON) or AimPosition for object movement in build mode", adminOnly: true)]
+        public static void ToggleBuildPlane(ChatCommandContext ctx)
+        {
+            var charEntity = ctx.Event.SenderCharacterEntity;
+            bool isNowEnabled = Core.BuildService.TogglePlaneMode(charEntity);
+
+            if (isNowEnabled)
+            {
+                ctx.Reply("Now using <color=green>AimPositionPlane</color> for object movement.");
+            }
+            else
+            {
+                ctx.Reply("Now using <color=yellow>AimPosition</color> for object movement.");
+            }
+        }
+
+        [Command("yoffset", description: "Sets Y-axis offset when placing objects in build mode", adminOnly: true)]
+        public static void SetYOffset(ChatCommandContext ctx, float offset = 0f)
+        {
+            var charEntity = ctx.Event.SenderCharacterEntity;
+            Core.BuildService.SetYOffset(charEntity, offset);
+            ctx.Reply($"Y offset set to: <color=green>{offset}</color>");
+        }
+
+        [Command("xsnap", description: "Toggles X-value snapping when placing objects in build mode", adminOnly: true)]
+        public static void ToggleXSnapping(ChatCommandContext ctx)
+        {
+            var charEntity = ctx.Event.SenderCharacterEntity;
+            bool isNowEnabled = Core.BuildService.ToggleXSnapping(charEntity);
+            
+            if (isNowEnabled)
+            {
+                ctx.Reply("X-value snapping is now <color=green>enabled</color>");
+            }
+            else
+            {
+                ctx.Reply("X-value snapping is now <color=red>disabled</color>");
+            }
+        }
+
+        [Command("zsnap", description: "Toggles Z-value snapping when placing objects in build mode", adminOnly: true)]
+        public static void ToggleZSnapping(ChatCommandContext ctx)
+        {
+            var charEntity = ctx.Event.SenderCharacterEntity;
+            bool isNowEnabled = Core.BuildService.ToggleZSnapping(charEntity);
+            
+            if (isNowEnabled)
+            {
+                ctx.Reply("Z-value snapping is now <color=green>enabled</color>");
+            }
+            else
+            {
+                ctx.Reply("Z-value snapping is now <color=red>disabled</color>");
+            }
+        }
+
+        [Command("snapstatus", description: "Shows current snapping settings for build mode", adminOnly: true)]
+        public static void ShowSnappingStatus(ChatCommandContext ctx)
+        {
+            var charEntity = ctx.Event.SenderCharacterEntity;
+            bool xSnap = Core.BuildService.IsXSnappingEnabled(charEntity);
+            bool ySnap = Core.BuildService.IsYSnappingEnabled(charEntity);
+            bool zSnap = Core.BuildService.IsZSnappingEnabled(charEntity);
+            float yOffset = Core.BuildService.GetYOffset(charEntity);
+            bool planeMode = Core.BuildService.IsPlaneModeEnabled(charEntity);
+
+            ctx.Reply($"Build settings:\n" +
+                      $"X Snapping: {(xSnap ? "<color=green>ON</color>" : "<color=red>OFF</color>")}\n" +
+                      $"Y Snapping: {(ySnap ? "<color=green>ON</color>" : "<color=red>OFF</color>")}\n" +
+                      $"Z Snapping: {(zSnap ? "<color=green>ON</color>" : "<color=red>OFF</color>")}\n" +
+                      $"Y Offset: <color=yellow>{yOffset}</color>\n" +
+                      $"Using Plane Mode: {(planeMode ? "<color=green>YES</color> (AimPositionPlane)" : "<color=yellow>NO</color> (AimPosition)")}");
         }
 
         [Command("teleporters", adminOnly: true)]
