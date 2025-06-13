@@ -1,8 +1,6 @@
 ![](logo.png)
 # KindredSchematics for V Rising
 KindredSchematics is a build mod meant for use on offline maps, with capabilities to load into live maps for new creative opportunities.
-   - **Note:** Until BepInEx is updated for 1.1, please do not use the thunderstore version. Get the correct testing version https://wiki.vrisingmods.com/user/game_update.html.
-
 
 This mod will allow you to take building to another level- literally.
 Save out castles or designs, and load them into other maps. Share your castle designs with friends.
@@ -31,6 +29,7 @@ Feel free to reach out to me on discord (odjit) if you have any questions or nee
 ## Build Mode & Palette System (Preview for Testing)
 
 Sneak Peek for **Build Mode** and **Palette System** aimed at making construction more intuitive and efficient. These features allow you to quickly browse through prefabs, place tiles down, and manage your build palette. Try them out and [share your feedback](https://discord.gg/Tp4yBzhKVs)!
+Again, DO NOT use this on a live server! Some tilemodels will not work properly and can cause issues. This is a preview for testing purposes only. D:<
 
 ### Build Mode
 
@@ -255,6 +254,8 @@ The Palette System offers a powerful toolset for managing prefabs with ease:
   - Lists all prefab remappings.
 - `.schematic deleteallschematicentities`
   - Deletes all schematic spawned entities.
+- `.schematic removeschematicrange (radius)`
+  - Removes all schematic spawned entities in a radius.`
 
 ### HeartLimit Commands
 - `.heartlimit floorcount (#)`
@@ -311,6 +312,7 @@ The Palette System offers a powerful toolset for managing prefabs with ease:
 - 
 ## Credits
 - Thanks to [Mfoltz](https://github.com/mfoltz) for the original build mode idea in VCreate and for his consultation on ability replacement/spatial lookups.
+- Thanks to Rendy for the consult on snap.
 
-- 
-- This mod is licensed under the AGPL-3.0 license.
+
+This mod is licensed under the AGPL-3.0 license.
